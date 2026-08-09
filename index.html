@@ -1,0 +1,1086 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gestión de Negocios</title>
+  
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  
+  <style>
+    /* =========== ESTILOS GENERALES =========== */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { 
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+      background: #f0f2f5; 
+      padding: 20px; 
+      color: #333; 
+    }
+    .container { max-width: 1400px; margin: 0 auto; }
+    
+    /* =========== HEADER =========== */
+    .header { 
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+      color: white; 
+      padding: 20px 30px; 
+      border-radius: 16px; 
+      margin-bottom: 25px; 
+      display: flex; 
+      justify-content: space-between; 
+      align-items: center; 
+      flex-wrap: wrap; 
+      gap: 12px;
+      box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
+    }
+    .header h1 { font-size: 26px; font-weight: 700; }
+    .header-actions { display: flex; gap: 12px; }
+    
+    /* =========== BOTONES =========== */
+    .btn { 
+      padding: 10px 24px; 
+      border: none; 
+      border-radius: 10px; 
+      cursor: pointer; 
+      font-weight: 600; 
+      font-size: 14px; 
+      transition: all 0.3s ease; 
+      display: inline-flex; 
+      align-items: center; 
+      gap: 8px; 
+    }
+    .btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+    .btn:active { transform: translateY(0); }
+    .btn-primary { background: #667eea; color: white; }
+    .btn-success { background: #28a745; color: white; }
+    .btn-danger { background: #dc3545; color: white; }
+    .btn-warning { background: #ffc107; color: #333; }
+    .btn-info { background: #17a2b8; color: white; }
+    .btn-outline { background: transparent; border: 2px solid white; color: white; }
+    .btn-outline:hover { background: white; color: #667eea; }
+    .btn-sm { padding: 6px 14px; font-size: 12px; }
+    .btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+    
+    /* =========== ESTADÍSTICAS =========== */
+    .stats-grid { 
+      display: grid; 
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
+      gap: 15px; 
+      margin-bottom: 25px; 
+    }
+    .stat-card { 
+      background: white; 
+      padding: 18px 20px; 
+      border-radius: 12px; 
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      transition: transform 0.2s;
+    }
+    .stat-card:hover { transform: translateY(-2px); }
+    .stat-card .number { font-size: 32px; font-weight: 700; color: #667eea; }
+    .stat-card .label { font-size: 13px; color: #888; margin-top: 4px; }
+    
+    /* =========== TOOLBAR =========== */
+    .toolbar { 
+      display: flex; 
+      justify-content: space-between; 
+      align-items: center; 
+      margin-bottom: 20px; 
+      flex-wrap: wrap; 
+      gap: 12px; 
+    }
+    .search-box { flex: 1; max-width: 400px; }
+    .search-box input { 
+      width: 100%;
+      padding: 12px 18px; 
+      border: 2px solid #e0e0e0; 
+      border-radius: 10px; 
+      font-size: 14px;
+      transition: border-color 0.3s;
+    }
+    .search-box input:focus { outline: none; border-color: #667eea; }
+    
+    /* =========== TABLA DE NEGOCIOS =========== */
+    .table-container {
+      background: white;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+      margin-bottom: 20px;
+    }
+    .table-wrapper { overflow-x: auto; }
+    table { 
+      width: 100%; 
+      border-collapse: collapse; 
+      min-width: 1200px;
+    }
+    table th { 
+      background: #667eea; 
+      color: white; 
+      padding: 14px 12px; 
+      text-align: left; 
+      font-size: 12px; 
+      font-weight: 600;
+      text-transform: uppercase;
+      white-space: nowrap;
+      position: sticky;
+      top: 0;
+    }
+    table td { 
+      padding: 10px 12px; 
+      border-bottom: 1px solid #f0f0f0; 
+      font-size: 13px;
+      max-width: 200px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    table tr:hover { background: #f8f9ff; }
+    table tr:last-child td { border-bottom: none; }
+    
+    .foto-mini { 
+      width: 40px; 
+      height: 40px; 
+      object-fit: cover; 
+      border-radius: 6px; 
+      cursor: pointer;
+      border: 2px solid #e0e0e0;
+      margin: 2px;
+    }
+    .foto-mini:hover { border-color: #667eea; transform: scale(1.5); }
+    
+    .status-badge {
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+      display: inline-block;
+    }
+    .status-active { background: #d4edda; color: #155724; }
+    .status-inactive { background: #f8d7da; color: #721c24; }
+    
+    /* =========== MODAL =========== */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.6);
+      z-index: 1000;
+      overflow-y: auto;
+      padding: 20px;
+      backdrop-filter: blur(4px);
+    }
+    .modal-overlay.active { display: flex; align-items: flex-start; justify-content: center; }
+    
+    .modal {
+      background: white;
+      max-width: 800px;
+      width: 100%;
+      border-radius: 20px;
+      padding: 30px;
+      margin-top: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      animation: slideDown 0.3s ease;
+    }
+    @keyframes slideDown {
+      from { opacity: 0; transform: translateY(-50px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .modal-header { 
+      display: flex; 
+      justify-content: space-between; 
+      align-items: center; 
+      margin-bottom: 25px;
+      padding-bottom: 15px;
+      border-bottom: 2px solid #f0f0f0;
+    }
+    .modal-header h2 { font-size: 22px; color: #333; }
+    .modal-close { 
+      background: none; 
+      border: none; 
+      font-size: 32px; 
+      cursor: pointer; 
+      color: #999;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+    .modal-close:hover { background: #f0f0f0; color: #333; }
+    
+    /* =========== FORMULARIOS =========== */
+    .form-section {
+      margin-bottom: 20px;
+      padding: 20px;
+      background: #f8f9fa;
+      border-radius: 12px;
+      border: 1px solid #e0e0e0;
+    }
+    .form-section h3 {
+      font-size: 16px;
+      margin-bottom: 15px;
+      color: #667eea;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .form-group { margin-bottom: 15px; }
+    .form-group label { 
+      display: block; 
+      font-weight: 600; 
+      font-size: 13px; 
+      margin-bottom: 5px; 
+      color: #555; 
+    }
+    .form-group input, 
+    .form-group textarea, 
+    .form-group select { 
+      width: 100%; 
+      padding: 10px 14px; 
+      border: 2px solid #e0e0e0; 
+      border-radius: 8px; 
+      font-size: 14px;
+      transition: border-color 0.3s;
+      font-family: inherit;
+    }
+    .form-group input:focus, 
+    .form-group textarea:focus, 
+    .form-group select:focus { 
+      outline: none; 
+      border-color: #667eea; 
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+    .form-group textarea { min-height: 80px; resize: vertical; }
+    .form-group small { color: #888; font-size: 11px; display: block; margin-top: 3px; }
+    
+    .form-row { 
+      display: grid; 
+      grid-template-columns: 1fr 1fr; 
+      gap: 15px; 
+    }
+    
+    /* =========== MAPA =========== */
+    .map-section {
+      margin-bottom: 20px;
+    }
+    #map { 
+      height: 300px; 
+      border-radius: 12px; 
+      border: 2px solid #e0e0e0;
+      margin-bottom: 10px;
+      z-index: 1;
+    }
+    .map-status {
+      padding: 10px 15px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      text-align: center;
+    }
+    .map-status.pending { background: #fff3cd; color: #856404; }
+    .map-status.confirmed { background: #d4edda; color: #155724; }
+    .map-status.error { background: #f8d7da; color: #721c24; }
+    
+    /* =========== FOTOS =========== */
+    .fotos-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+    .foto-card {
+      border: 2px dashed #d0d0d0;
+      border-radius: 12px;
+      padding: 10px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s;
+      min-height: 160px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: #fafafa;
+    }
+    .foto-card:hover { border-color: #667eea; background: #f0f3ff; }
+    .foto-card.has-foto { border-style: solid; border-color: #28a745; }
+    .foto-card img {
+      width: 100%;
+      height: 120px;
+      object-fit: cover;
+      border-radius: 8px;
+      margin-bottom: 8px;
+    }
+    .foto-card .placeholder {
+      font-size: 40px;
+      color: #ccc;
+      margin-bottom: 8px;
+    }
+    .foto-card .foto-label {
+      font-size: 11px;
+      color: #888;
+    }
+    .foto-card input[type="file"] { display: none; }
+    .foto-card .foto-desc {
+      width: 100%;
+      padding: 5px 8px;
+      border: 1px solid #e0e0e0;
+      border-radius: 4px;
+      font-size: 11px;
+      margin-top: 5px;
+    }
+    .btn-remove-foto {
+      background: #dc3545;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 24px;
+      height: 24px;
+      font-size: 14px;
+      cursor: pointer;
+      position: absolute;
+      top: -8px;
+      right: -8px;
+      display: none;
+    }
+    .foto-card.has-foto .btn-remove-foto { display: flex; align-items: center; justify-content: center; }
+    
+    /* =========== TOAST =========== */
+    .toast {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      padding: 16px 28px;
+      border-radius: 12px;
+      color: white;
+      font-weight: 600;
+      z-index: 2000;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+      animation: slideIn 0.3s ease;
+      max-width: 400px;
+    }
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateX(100px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+    .toast-success { background: linear-gradient(135deg, #28a745, #20c997); }
+    .toast-error { background: linear-gradient(135deg, #dc3545, #e74c3c); }
+    .toast-warning { background: linear-gradient(135deg, #ffc107, #fd7e14); }
+    
+    /* =========== LOADING =========== */
+    .loading-overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(255,255,255,0.8);
+      z-index: 3000;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+    }
+    .loading-overlay.active { display: flex; }
+    .spinner {
+      width: 50px;
+      height: 50px;
+      border: 4px solid #f0f0f0;
+      border-top: 4px solid #667eea;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin-bottom: 15px;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    /* =========== RESPONSIVE =========== */
+    @media (max-width: 768px) {
+      .header { flex-direction: column; text-align: center; }
+      .form-row { grid-template-columns: 1fr; }
+      .fotos-grid { grid-template-columns: repeat(2, 1fr); }
+      .modal { padding: 20px; margin: 10px; }
+    }
+  </style>
+</head>
+<body>
+  <!-- ========== LOADING OVERLAY ========== -->
+  <div class="loading-overlay" id="loadingOverlay">
+    <div class="spinner"></div>
+    <p style="color: #667eea; font-weight: 600;">Procesando...</p>
+  </div>
+
+  <!-- ========== HEADER ========== -->
+  <div class="container">
+    <div class="header">
+      <h1>🏪 Gestión de Negocios</h1>
+      <div class="header-actions">
+        <button class="btn btn-outline" onclick="cargarNegocios()">🔄 Actualizar</button>
+        <button class="btn btn-success" onclick="abrirModalNuevo()">➕ Nuevo Negocio</button>
+      </div>
+    </div>
+
+    <!-- ========== ESTADÍSTICAS ========== -->
+    <div class="stats-grid" id="stats"></div>
+
+    <!-- ========== TOOLBAR ========== -->
+    <div class="toolbar">
+      <div class="search-box">
+        <input type="text" id="searchInput" placeholder="🔍 Buscar por nombre, ID, dirección..." oninput="filtrarNegocios()">
+      </div>
+      <span id="contador" style="font-size:14px;color:#888;"></span>
+    </div>
+
+    <!-- ========== TABLA DE NEGOCIOS ========== -->
+    <div class="table-container">
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Fotos</th>
+              <th>Nombre</th>
+              <th>Usuario</th>
+              <th>Dirección</th>
+              <th>Teléfono</th>
+              <th>WhatsApp</th>
+              <th>Horario</th>
+              <th>Rol</th>
+              <th>Activo</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="negociosTableBody">
+            <tr><td colspan="11" style="text-align:center;padding:40px;">Cargando...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== MODAL NUEVO/EDITAR ========== -->
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 id="modalTitle">Nuevo Negocio</h2>
+        <button class="modal-close" onclick="cerrarModal()">&times;</button>
+      </div>
+      
+      <form id="formNegocio" onsubmit="guardarNegocio(event)">
+        <input type="hidden" id="editId" value="">
+        
+        <!-- DATOS BÁSICOS -->
+        <div class="form-section">
+          <h3>📋 Datos Básicos</h3>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Usuario *</label>
+              <input type="text" id="usuario" required placeholder="Nombre de usuario">
+            </div>
+            <div class="form-group">
+              <label>Contraseña *</label>
+              <input type="password" id="password" required placeholder="Contraseña">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Nombre del Negocio *</label>
+            <input type="text" id="nombre" required placeholder="Nombre comercial">
+          </div>
+          <div class="form-group">
+            <label>Slogan</label>
+            <input type="text" id="slogan" placeholder="Lema del negocio">
+          </div>
+          <div class="form-group">
+            <label>Descripción</label>
+            <textarea id="descripcion" placeholder="Describe el negocio..."></textarea>
+          </div>
+        </div>
+        
+        <!-- UBICACIÓN CON MAPA -->
+        <div class="form-section">
+          <h3>📍 Ubicación (OBLIGATORIO)</h3>
+          <div class="map-section">
+            <div id="map"></div>
+            <div class="map-status pending" id="mapStatus">
+              ⚠️ Haz clic en el mapa para seleccionar la ubicación exacta
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Ubicación (Referencia)</label>
+              <input type="text" id="ubicacion" placeholder="Ej: Centro, Zona Norte...">
+            </div>
+            <div class="form-group">
+              <label>Dirección</label>
+              <input type="text" id="direccion" placeholder="Calle, número, colonia...">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Latitud</label>
+              <input type="text" id="latitud" readonly placeholder="Selecciona en el mapa">
+            </div>
+            <div class="form-group">
+              <label>Longitud</label>
+              <input type="text" id="longitud" readonly placeholder="Selecciona en el mapa">
+            </div>
+          </div>
+        </div>
+        
+        <!-- CONTACTO -->
+        <div class="form-section">
+          <h3>📞 Contacto</h3>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Teléfono</label>
+              <input type="text" id="telefono" placeholder="1234567890">
+            </div>
+            <div class="form-group">
+              <label>WhatsApp</label>
+              <input type="text" id="whatsapp" placeholder="1234567890">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Correo Electrónico</label>
+              <input type="email" id="correo" placeholder="correo@ejemplo.com">
+            </div>
+            <div class="form-group">
+              <label>Horario</label>
+              <input type="text" id="horario" placeholder="Ej: Lun-Vie 9:00-18:00">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Facebook URL</label>
+              <input type="text" id="urlFacebook" placeholder="https://facebook.com/...">
+            </div>
+            <div class="form-group">
+              <label>Rol</label>
+              <select id="rol">
+                <option value="Admin">Admin</option>
+                <option value="Usuario">Usuario</option>
+                <option value="Supervisor">Supervisor</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Estado</label>
+            <select id="activo">
+              <option value="true">✅ Activo</option>
+              <option value="false">❌ Inactivo</option>
+            </select>
+          </div>
+        </div>
+        
+        <!-- FOTOS -->
+        <div class="form-section">
+          <h3>📸 Fotos (hasta 4)</h3>
+          <div class="fotos-grid" id="fotosGrid">
+            <!-- Se generan dinámicamente -->
+          </div>
+          <small style="color:#888;">Toca cada cuadro para tomar foto con cámara o seleccionar de galería</small>
+        </div>
+        
+        <!-- BOTONES -->
+        <div style="display:flex;gap:12px;justify-content:flex-end;margin-top:20px;padding-top:20px;border-top:2px solid #f0f0f0;">
+          <button type="button" class="btn btn-warning" onclick="cerrarModal()">Cancelar</button>
+          <button type="submit" class="btn btn-primary" id="btnGuardar">💾 Guardar Negocio</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    // ============================================================
+    // CONFIGURACIÓN - REEMPLAZAR CON TUS DATOS
+    // ============================================================
+    const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/TU_SCRIPT_ID/exec';
+    
+    // ============================================================
+    // VARIABLES GLOBALES
+    // ============================================================
+    let negocios = [];
+    let map = null;
+    let marker = null;
+    let ubicacionSeleccionada = false;
+    let fotosSeleccionadas = [null, null, null, null]; // {url, descripcion}
+    
+    // ============================================================
+    // INICIALIZACIÓN
+    // ============================================================
+    document.addEventListener('DOMContentLoaded', function() {
+      console.log('🚀 App iniciada');
+      inicializarMapa();
+      generarSlotsFotos();
+      cargarNegocios();
+    });
+    
+    // ============================================================
+    // API CALLS
+    // ============================================================
+    async function callAPI(action, data = {}) {
+      showLoading();
+      try {
+        let response;
+        if (action === 'obtenerNegocios' || action === 'obtenerEstadisticas') {
+          const url = `${APPS_SCRIPT_URL}?action=${action}`;
+          response = await fetch(url);
+        } else {
+          response = await fetch(APPS_SCRIPT_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action, ...data })
+          });
+        }
+        const result = await response.json();
+        hideLoading();
+        return result;
+      } catch (error) {
+        hideLoading();
+        console.error('❌ Error API:', error);
+        return { success: false, error: error.message };
+      }
+    }
+    
+    function showLoading() {
+      document.getElementById('loadingOverlay').classList.add('active');
+    }
+    
+    function hideLoading() {
+      document.getElementById('loadingOverlay').classList.remove('active');
+    }
+    
+    // ============================================================
+    // CARGAR NEGOCIOS
+    // ============================================================
+    async function cargarNegocios() {
+      console.log('📡 Cargando negocios...');
+      const result = await callAPI('obtenerNegocios');
+      
+      if (result.success) {
+        negocios = result.negocios || [];
+        console.log(`✅ ${negocios.length} negocios cargados`);
+        renderizarTabla();
+        cargarEstadisticas();
+      } else {
+        console.error('❌ Error:', result.error);
+        showToast('Error al cargar: ' + result.error, 'error');
+      }
+    }
+    
+    async function cargarEstadisticas() {
+      const result = await callAPI('obtenerEstadisticas');
+      if (result.success) {
+        const s = result.estadisticas;
+        document.getElementById('stats').innerHTML = `
+          <div class="stat-card"><div class="number">${s.total}</div><div class="label">Total Negocios</div></div>
+          <div class="stat-card"><div class="number">${s.activos}</div><div class="label">Activos</div></div>
+          <div class="stat-card"><div class="number">${s.inactivos}</div><div class="label">Inactivos</div></div>
+          <div class="stat-card"><div class="number">${s.ubicacionesUnicas}</div><div class="label">Ubicaciones</div></div>
+        `;
+      }
+    }
+    
+    // ============================================================
+    // RENDERIZAR TABLA
+    // ============================================================
+    function renderizarTabla() {
+      const tbody = document.getElementById('negociosTableBody');
+      const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+      
+      const filtrados = negocios.filter(n => 
+        (n.nombre || '').toLowerCase().includes(searchTerm) ||
+        (n.id || '').toLowerCase().includes(searchTerm) ||
+        (n.direccion || '').toLowerCase().includes(searchTerm) ||
+        (n.telefono || '').toLowerCase().includes(searchTerm)
+      );
+      
+      document.getElementById('contador').textContent = 
+        `Mostrando ${filtrados.length} de ${negocios.length} negocios`;
+      
+      if (filtrados.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="11" style="text-align:center;padding:40px;color:#888;">
+          📭 No se encontraron negocios</td></tr>`;
+        return;
+      }
+      
+      tbody.innerHTML = filtrados.map(n => `
+        <tr>
+          <td><strong>${n.id || '-'}</strong></td>
+          <td>
+            ${n.fotos && n.fotos.length > 0 ? 
+              n.fotos.slice(0, 2).map(f => 
+                `<img src="${f.url}" class="foto-mini" title="${f.descripcion || ''}" onclick="window.open('${f.url}')" onerror="this.style.display='none'">`
+              ).join('') + (n.fotos.length > 2 ? `<span style="font-size:11px;">+${n.fotos.length - 2}</span>` : '')
+              : '<span style="color:#ccc;">Sin fotos</span>'
+            }
+          </td>
+          <td><strong>${n.nombre || '-'}</strong></td>
+          <td>${n.usuario || '-'}</td>
+          <td>${n.direccion || '-'}</td>
+          <td>${n.telefono || '-'}</td>
+          <td>${n.whatsapp || '-'}</td>
+          <td>${n.horario || '-'}</td>
+          <td>${n.rol || '-'}</td>
+          <td><span class="status-badge ${n.activo ? 'status-active' : 'status-inactive'}">
+            ${n.activo ? '✅ Activo' : '❌ Inactivo'}</span></td>
+          <td>
+            <button class="btn btn-primary btn-sm" onclick="abrirModalEditar('${n.id}')">✏️</button>
+            <button class="btn btn-danger btn-sm" onclick="eliminarNegocio('${n.id}')">🗑️</button>
+          </td>
+        </tr>
+      `).join('');
+    }
+    
+    function filtrarNegocios() {
+      renderizarTabla();
+    }
+    
+    // ============================================================
+    // MAPA LEAFLET
+    // ============================================================
+    function inicializarMapa() {
+      map = L.map('map').setView([20.5888, -100.3899], 13); // Querétaro por defecto
+      
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors',
+        maxZoom: 19
+      }).addTo(map);
+      
+      // Intentar geolocalizar
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            const { latitude, longitude } = pos.coords;
+            map.setView([latitude, longitude], 15);
+            colocarMarcador(latitude, longitude);
+          },
+          () => {
+            console.log('Geolocalización no disponible, usando ubicación por defecto');
+          }
+        );
+      }
+      
+      // Click en el mapa
+      map.on('click', function(e) {
+        colocarMarcador(e.latlng.lat, e.latlng.lng);
+      });
+      
+      // Invalidar tamaño al mostrar modal
+      document.getElementById('modalOverlay').addEventListener('transitionend', function() {
+        if (map) map.invalidateSize();
+      });
+    }
+    
+    function colocarMarcador(lat, lng) {
+      if (marker) map.removeLayer(marker);
+      
+      marker = L.marker([lat, lng]).addTo(map)
+        .bindPopup('📍 Ubicación seleccionada')
+        .openPopup();
+      
+      document.getElementById('latitud').value = lat.toFixed(6);
+      document.getElementById('longitud').value = lng.toFixed(6);
+      ubicacionSeleccionada = true;
+      
+      const statusEl = document.getElementById('mapStatus');
+      statusEl.textContent = '✅ Ubicación confirmada: ' + lat.toFixed(4) + ', ' + lng.toFixed(4);
+      statusEl.className = 'map-status confirmed';
+      
+      // Obtener dirección inversa (opcional)
+      obtenerDireccionInversa(lat, lng);
+    }
+    
+    async function obtenerDireccionInversa(lat, lng) {
+      try {
+        const response = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`
+        );
+        const data = await response.json();
+        if (data.display_name) {
+          document.getElementById('direccion').value = data.display_name;
+        }
+      } catch (e) {
+        console.log('No se pudo obtener dirección inversa');
+      }
+    }
+    
+    function setUbicacionEnMapa(lat, lng) {
+      if (!lat || !lng) return;
+      map.setView([parseFloat(lat), parseFloat(lng)], 16);
+      colocarMarcador(parseFloat(lat), parseFloat(lng));
+    }
+    
+    // ============================================================
+    // FOTOS (Cámara/Galería)
+    // ============================================================
+    function generarSlotsFotos() {
+      const grid = document.getElementById('fotosGrid');
+      grid.innerHTML = '';
+      
+      for (let i = 0; i < 4; i++) {
+        const foto = fotosSeleccionadas[i];
+        const card = document.createElement('div');
+        card.className = 'foto-card' + (foto ? ' has-foto' : '');
+        card.style.position = 'relative';
+        card.onclick = function(e) {
+          if (e.target.classList.contains('btn-remove-foto')) return;
+          abrirSelectorFoto(i);
+        };
+        
+        card.innerHTML = foto ? `
+          <button class="btn-remove-foto" onclick="event.stopPropagation(); removerFoto(${i})">×</button>
+          <img src="${foto.url}" alt="Foto ${i+1}">
+          <input type="text" class="foto-desc" placeholder="Descripción" 
+            value="${foto.descripcion || ''}" 
+            oninput="actualizarDescFoto(${i}, this.value)"
+            onclick="event.stopPropagation();">
+        ` : `
+          <div class="placeholder">📷</div>
+          <div class="foto-label">Foto ${i+1}</div>
+          <div class="foto-label" style="font-size:10px;">Tocar para agregar</div>
+        `;
+        
+        grid.appendChild(card);
+      }
+    }
+    
+    function abrirSelectorFoto(index) {
+      // Crear input file temporal
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = 'image/*';
+      input.capture = 'environment'; // Cámara trasera en móviles
+      
+      input.onchange = function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        
+        const reader = new FileReader();
+        reader.onload = function(ev) {
+          fotosSeleccionadas[index] = {
+            url: ev.target.result,
+            descripcion: fotosSeleccionadas[index]?.descripcion || ''
+          };
+          generarSlotsFotos();
+        };
+        reader.readAsDataURL(file);
+      };
+      
+      input.click();
+    }
+    
+    function removerFoto(index) {
+      fotosSeleccionadas[index] = null;
+      generarSlotsFotos();
+    }
+    
+    function actualizarDescFoto(index, valor) {
+      if (fotosSeleccionadas[index]) {
+        fotosSeleccionadas[index].descripcion = valor;
+      }
+    }
+    
+    // ============================================================
+    // MODAL
+    // ============================================================
+    function abrirModalNuevo() {
+      document.getElementById('modalTitle').textContent = '➕ Nuevo Negocio';
+      document.getElementById('btnGuardar').textContent = '💾 Guardar Negocio';
+      document.getElementById('editId').value = '';
+      document.getElementById('formNegocio').reset();
+      document.getElementById('activo').value = 'true';
+      document.getElementById('rol').value = 'Admin';
+      fotosSeleccionadas = [null, null, null, null];
+      ubicacionSeleccionada = false;
+      
+      document.getElementById('latitud').value = '';
+      document.getElementById('longitud').value = '';
+      
+      const statusEl = document.getElementById('mapStatus');
+      statusEl.textContent = '⚠️ Haz clic en el mapa para seleccionar la ubicación exacta';
+      statusEl.className = 'map-status pending';
+      
+      if (marker) {
+        map.removeLayer(marker);
+        marker = null;
+      }
+      
+      generarSlotsFotos();
+      document.getElementById('modalOverlay').classList.add('active');
+      setTimeout(() => { if (map) map.invalidateSize(); }, 300);
+    }
+    
+    function abrirModalEditar(id) {
+      const negocio = negocios.find(n => n.id === id);
+      if (!negocio) {
+        showToast('Negocio no encontrado', 'error');
+        return;
+      }
+      
+      document.getElementById('modalTitle').textContent = '✏️ Editar Negocio';
+      document.getElementById('btnGuardar').textContent = '💾 Actualizar Negocio';
+      document.getElementById('editId').value = id;
+      
+      document.getElementById('usuario').value = negocio.usuario || '';
+      document.getElementById('password').value = negocio.password || '';
+      document.getElementById('nombre').value = negocio.nombre || '';
+      document.getElementById('slogan').value = negocio.slogan || '';
+      document.getElementById('descripcion').value = negocio.descripcion || '';
+      document.getElementById('ubicacion').value = negocio.ubicacion || '';
+      document.getElementById('direccion').value = negocio.direccion || '';
+      document.getElementById('latitud').value = negocio.latitud || '';
+      document.getElementById('longitud').value = negocio.longitud || '';
+      document.getElementById('telefono').value = negocio.telefono || '';
+      document.getElementById('whatsapp').value = negocio.whatsapp || '';
+      document.getElementById('correo').value = negocio.correo || '';
+      document.getElementById('horario').value = negocio.horario || '';
+      document.getElementById('rol').value = negocio.rol || 'Admin';
+      document.getElementById('urlFacebook').value = negocio.urlFacebook || '';
+      document.getElementById('activo').value = negocio.activo ? 'true' : 'false';
+      
+      // Cargar fotos existentes
+      fotosSeleccionadas = [null, null, null, null];
+      if (negocio.fotos && Array.isArray(negocio.fotos)) {
+        negocio.fotos.forEach((f, i) => {
+          if (i < 4 && f && f.url) {
+            fotosSeleccionadas[i] = { url: f.url, descripcion: f.descripcion || '' };
+          }
+        });
+      }
+      
+      // Establecer ubicación en mapa
+      if (negocio.latitud && negocio.longitud) {
+        setUbicacionEnMapa(negocio.latitud, negocio.longitud);
+        ubicacionSeleccionada = true;
+      } else {
+        ubicacionSeleccionada = false;
+        const statusEl = document.getElementById('mapStatus');
+        statusEl.textContent = '⚠️ Haz clic en el mapa para seleccionar la ubicación';
+        statusEl.className = 'map-status pending';
+      }
+      
+      generarSlotsFotos();
+      document.getElementById('modalOverlay').classList.add('active');
+      setTimeout(() => { if (map) map.invalidateSize(); }, 300);
+    }
+    
+    function cerrarModal() {
+      document.getElementById('modalOverlay').classList.remove('active');
+      document.getElementById('formNegocio').reset();
+    }
+    
+    // ============================================================
+    // GUARDAR
+    // ============================================================
+    async function guardarNegocio(event) {
+      event.preventDefault();
+      
+      // Validar ubicación
+      if (!ubicacionSeleccionada) {
+        showToast('⚠️ Debes seleccionar una ubicación en el mapa para continuar', 'error');
+        document.getElementById('mapStatus').textContent = '❌ Debes seleccionar una ubicación en el mapa';
+        document.getElementById('mapStatus').className = 'map-status error';
+        return;
+      }
+      
+      const editId = document.getElementById('editId').value;
+      const btnGuardar = document.getElementById('btnGuardar');
+      btnGuardar.disabled = true;
+      btnGuardar.textContent = '⏳ Guardando...';
+      
+      const datos = {
+        usuario: document.getElementById('usuario').value.trim(),
+        password: document.getElementById('password').value.trim(),
+        nombre: document.getElementById('nombre').value.trim(),
+        slogan: document.getElementById('slogan').value.trim(),
+        descripcion: document.getElementById('descripcion').value.trim(),
+        ubicacion: document.getElementById('ubicacion').value.trim(),
+        direccion: document.getElementById('direccion').value.trim(),
+        latitud: document.getElementById('latitud').value,
+        longitud: document.getElementById('longitud').value,
+        telefono: document.getElementById('telefono').value.trim(),
+        whatsapp: document.getElementById('whatsapp').value.trim(),
+        correo: document.getElementById('correo').value.trim(),
+        horario: document.getElementById('horario').value.trim(),
+        rol: document.getElementById('rol').value,
+        urlFacebook: document.getElementById('urlFacebook').value.trim(),
+        activo: document.getElementById('activo').value === 'true',
+        fotos: fotosSeleccionadas.filter(f => f && f.url)
+      };
+      
+      // Validaciones
+      if (!datos.usuario || !datos.password || !datos.nombre) {
+        showToast('❌ Usuario, Contraseña y Nombre son obligatorios', 'error');
+        btnGuardar.disabled = false;
+        btnGuardar.textContent = '💾 Guardar Negocio';
+        return;
+      }
+      
+      console.log('📤 Guardando:', { ...datos, fotos: datos.fotos.length + ' fotos' });
+      
+      let result;
+      if (editId) {
+        result = await callAPI('editarNegocio', { id: editId, datos });
+      } else {
+        result = await callAPI('agregarNegocio', { datos });
+      }
+      
+      btnGuardar.disabled = false;
+      btnGuardar.textContent = '💾 Guardar Negocio';
+      
+      if (result.success) {
+        showToast(editId ? '✅ Negocio actualizado' : '✅ Negocio creado', 'success');
+        cerrarModal();
+        cargarNegocios();
+      } else {
+        showToast('❌ Error: ' + result.error, 'error');
+      }
+    }
+    
+    // ============================================================
+    // ELIMINAR
+    // ============================================================
+    async function eliminarNegocio(id) {
+      if (!confirm('⚠️ ¿Estás seguro de eliminar este negocio?\n\nEsta acción no se puede deshacer.')) return;
+      
+      const result = await callAPI('eliminarNegocio', { id });
+      
+      if (result.success) {
+        showToast('✅ Negocio eliminado', 'success');
+        cargarNegocios();
+      } else {
+        showToast('❌ Error: ' + result.error, 'error');
+      }
+    }
+    
+    // ============================================================
+    // TOAST
+    // ============================================================
+    function showToast(mensaje, tipo = 'success') {
+      // Eliminar toasts anteriores
+      document.querySelectorAll('.toast').forEach(t => t.remove());
+      
+      const toast = document.createElement('div');
+      toast.className = `toast toast-${tipo}`;
+      toast.textContent = mensaje;
+      document.body.appendChild(toast);
+      
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateX(100px)';
+        toast.style.transition = 'all 0.3s ease';
+        setTimeout(() => toast.remove(), 300);
+      }, 3500);
+    }
+    
+    console.log('✅ Sistema de Gestión de Negocios listo');
+  </script>
+</body>
+</html>
