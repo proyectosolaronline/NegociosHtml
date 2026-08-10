@@ -1,0 +1,26 @@
+function doGet(e) {
+  const action = e?.parameter?.action;
+  let result;
+  
+  try {
+    switch(action) {
+      case 'obtenerNegocios': result = obtenerNegocios(); break;
+      case 'obtenerEstadisticas': result = obtenerEstadisticas(); break;
+      case 'agregarNegocio': result = agregarNegocio(JSON.parse(e.parameter.datos || '{}')); break;
+      case 'editarNegocio': result = editarNegocio(e.parameter.id, JSON.parse(e.parameter.datos || '{}')); break;
+      case 'eliminarNegocio': result = eliminarNegocio(e.parameter.id); break;
+      default: result = { success: false, error: 'Acción no válida' };
+    }
+  } catch(error) {
+    result = { success: false, error: error.toString() };
+  }
+  
+  const callback = e?.parameter?.callback || '';
+  const jsonStr = JSON.stringify(result);
+  
+  if (callback) {
+    return ContentService.createTextOutput(callback + '(' + jsonStr + ')').setMimeType(ContentService.MimeType.JAVASCRIPT);
+  }
+  
+  return ContentService.createTextOutput(jsonStr).setMimeType(ContentService.MimeType.JSON);
+}
