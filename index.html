@@ -979,70 +979,97 @@
     // ============================================================
     // GUARDAR
     // ============================================================
-    async function guardarNegocio(event) {
-      event.preventDefault();
-      
-      // Validar ubicación
-      if (!ubicacionSeleccionada) {
-        showToast('⚠️ Debes seleccionar una ubicación en el mapa para continuar', 'error');
-        document.getElementById('mapStatus').textContent = '❌ Debes seleccionar una ubicación en el mapa';
-        document.getElementById('mapStatus').className = 'map-status error';
-        return;
-      }
-      
-      const editId = document.getElementById('editId').value;
-      const btnGuardar = document.getElementById('btnGuardar');
-      btnGuardar.disabled = true;
-      btnGuardar.textContent = '⏳ Guardando...';
-      
-      const datos = {
-        usuario: document.getElementById('usuario').value.trim(),
-        password: document.getElementById('password').value.trim(),
-        nombre: document.getElementById('nombre').value.trim(),
-        slogan: document.getElementById('slogan').value.trim(),
-        descripcion: document.getElementById('descripcion').value.trim(),
-        ubicacion: document.getElementById('ubicacion').value.trim(),
-        direccion: document.getElementById('direccion').value.trim(),
-        latitud: document.getElementById('latitud').value,
-        longitud: document.getElementById('longitud').value,
-        telefono: document.getElementById('telefono').value.trim(),
-        whatsapp: document.getElementById('whatsapp').value.trim(),
-        correo: document.getElementById('correo').value.trim(),
-        horario: document.getElementById('horario').value.trim(),
-        rol: document.getElementById('rol').value,
-        urlFacebook: document.getElementById('urlFacebook').value.trim(),
-        activo: document.getElementById('activo').value === 'true',
-        fotos: fotosSeleccionadas.filter(f => f && f.url)
-      };
-      
-      // Validaciones
-      if (!datos.usuario || !datos.password || !datos.nombre) {
-        showToast('❌ Usuario, Contraseña y Nombre son obligatorios', 'error');
-        btnGuardar.disabled = false;
-        btnGuardar.textContent = '💾 Guardar Negocio';
-        return;
-      }
-      
-      console.log('📤 Guardando:', { ...datos, fotos: datos.fotos.length + ' fotos' });
-      
-      let result;
-      if (editId) {
-        result = await callAPI('editarNegocio', { id: editId, datos });
-      } else {
-        result = await callAPI('agregarNegocio', { datos });
-      }
-      
-      btnGuardar.disabled = false;
-      btnGuardar.textContent = '💾 Guardar Negocio';
-      
-      if (result.success) {
-        showToast(editId ? '✅ Negocio actualizado' : '✅ Negocio creado', 'success');
-        cerrarModal();
-        cargarNegocios();
-      } else {
-        showToast('❌ Error: ' + result.error, 'error');
-      }
+async function guardarNegocio(event) {
+  event.preventDefault();
+  
+  console.log('💾 Iniciando guardado...');
+  
+  // Validar ubicación
+  if (!ubicacionSeleccionada) {
+    showToast('⚠️ Debes seleccionar una ubicación en el mapa', 'error');
+    return;
+  }
+  
+  const editId = document.getElementById('editId').value;
+  const btnGuardar = document.getElementById('btnGuardar');
+  btnGuardar.disabled = true;
+  btnGuardar.textContent = '⏳ Guardando...';
+  
+  // Recopilar datos
+  const datos = {
+    usuario: document.getElementById('usuario').value.trim(),
+    password: document.getElementById('password').value.trim(),
+    nombre: document.getElementById('nombre').value.trim(),
+    slogan: document.getElementById('slogan').value.trim(),
+    descripcion: document.getElementById('descripcion').value.trim(),
+    ubicacion: document.getElementById('ubicacion').value.trim(),
+    direccion: document.getElementById('direccion').value.trim(),
+    latitud: document.getElementById('latitud').value,
+    longitud: document.getElementById('longitud').value,
+    telefono: document.getElementById('telefono').value.trim(),
+    whatsapp: document.getElementById('whatsapp').value.trim(),
+    correo: document.getElementById('correo').value.trim(),
+    horario: document.getElementById('horario').value.trim(),
+    rol: document.getElementById('rol').value,
+    urlFacebook: document.getElementById('urlFacebook').value.trim(),
+    activo: document.getElementById('activo').value === 'true',
+    fotos: fotosSeleccionadas.filter(f => f && f.url)
+  };
+  
+  // Validar campos obligatorios
+  if (!datos.usuario || !datos.password || !datos.nombre) {
+    showToast('❌ Usuario, Contraseña y Nombre son obligatorios', 'error');
+    btnGuardar.disabled = false;
+    btnGuardar.textContent = '💾 Guardar Negocio';
+    return;
+  }
+  
+  console.log('📤 Enviando datos...', { 
+    ...datos, 
+    password: '***', 
+    fotos: datos.fotos.length + ' foto(s)' 
+  });
+  
+  try {
+    const action = editId ? 'editarNegocio' : 'agregarNegocio';
+    const body = editId 
+      ? { action, id: editId, datos }
+      : { action, datos };
+    
+    console.log('📡 URL:', APPS_SCRIPT_URL);
+    console.log('📦 Body:', JSON.stringify({ ...body, datos: { ...body.datos, fotos: body.datos.fotos.length + ' fotos' } }));
+    
+    const response = await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    
+    console.log('📨 Response status:', response.status);
+    
+    const result = await response.json();
+    console.log('✅ Result:', result);
+    
+    btnGuardar.disabled = false;
+    btnGuardar.textContent = '💾 Guardar Negocio';
+    
+    if (result.success) {
+      showToast(editId ? '✅ Negocio actualizado' : '✅ Negocio creado - ID: ' + result.id, 'success');
+      cerrarModal();
+      cargarNegocios();
+    } else {
+      showToast('❌ Error: ' + (result.error || 'Desconocido'), 'error');
+      console.error('❌ Error del servidor:', result);
     }
+    
+  } catch (error) {
+    console.error('❌ Error de conexión:', error);
+    btnGuardar.disabled = false;
+    btnGuardar.textContent = '💾 Guardar Negocio';
+    showToast('❌ Error de conexión: ' + error.message, 'error');
+  }
+}
+
     
     // ============================================================
     // ELIMINAR
