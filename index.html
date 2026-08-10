@@ -979,7 +979,9 @@
     // ============================================================
     // GUARDAR
     // ============================================================
-async function guardarNegocio(event) {
+let pendingCallback = null;
+
+function guardarNegocio(event) {
   event.preventDefault();
   
   console.log('💾 Iniciando guardado...');
@@ -1016,7 +1018,6 @@ async function guardarNegocio(event) {
     fotos: fotosSeleccionadas.filter(f => f && f.url)
   };
   
-  // Validar campos obligatorios
   if (!datos.usuario || !datos.password || !datos.nombre) {
     showToast('❌ Usuario, Contraseña y Nombre son obligatorios', 'error');
     btnGuardar.disabled = false;
@@ -1024,32 +1025,8 @@ async function guardarNegocio(event) {
     return;
   }
   
-  console.log('📤 Enviando datos...', { 
-    ...datos, 
-    password: '***', 
-    fotos: datos.fotos.length + ' foto(s)' 
-  });
-  
-  try {
-    const action = editId ? 'editarNegocio' : 'agregarNegocio';
-    const body = editId 
-      ? { action, id: editId, datos }
-      : { action, datos };
-    
-    console.log('📡 URL:', APPS_SCRIPT_URL);
-    console.log('📦 Body:', JSON.stringify({ ...body, datos: { ...body.datos, fotos: body.datos.fotos.length + ' fotos' } }));
-    
-    const response = await fetch(APPS_SCRIPT_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body)
-    });
-    
-    console.log('📨 Response status:', response.status);
-    
-    const result = await response.json();
-    console.log('✅ Result:', result);
-    
+  // Guardar callback
+  pendingCallback = function(result) {
     btnGuardar.disabled = false;
     btnGuardar.textContent = '💾 Guardar Negocio';
     
@@ -1059,17 +1036,54 @@ async function guardarNegocio(event) {
       cargarNegocios();
     } else {
       showToast('❌ Error: ' + (result.error || 'Desconocido'), 'error');
-      console.error('❌ Error del servidor:', result);
     }
-    
-  } catch (error) {
-    console.error('❌ Error de conexión:', error);
-    btnGuardar.disabled = false;
-    btnGuardar.textContent = '💾 Guardar Negocio';
-    showToast('❌ Error de conexión: ' + error.message, 'error');
-  }
+  };
+  
+  // Crear iframe oculto para enviar POST
+  const iframe = document.createElement('iframe');
+  iframe.name = 'submitFrame';
+  iframe.style.display = 'none';
+  document.body.appendChild(iframe);
+  
+  // Crear formulario
+  const form = document.createElement('form');
+  form.method = 'POST';
+  form.action = APPS_SCRIPT_URL;
+  form.target = 'submitFrame';
+  
+  const input = document.createElement('input');
+  input.type = 'hidden';
+  input.name = 'data';
+  input.value = JSON.stringify({
+    action: editId ? 'editarNegocio' : 'agregarNegocio',
+    id: editId || undefined,
+    datos: datos
+  });
+  
+  form.appendChild(input);
+  document.body.appendChild(form);
+  form.submit();
+  
+  // Limpiar después de enviar
+  setTimeout(() => {
+    document.body.removeChild(form);
+    setTimeout(() => document.body.removeChild(iframe), 5000);
+  }, 1000);
 }
 
+// Escuchar mensajes del iframe
+window.addEventListener('message', function(event) {
+  try {
+    const result = JSON.parse(event.data);
+    console.log('📨 Resultado recibido:', result);
+    if (pendingCallback) {
+      pendingCallback(result);
+      pendingCallback = null;
+    }
+  } catch(e) {
+    console.log('Mensaje no JSON:', event.data);
+  }
+});
     
     // ============================================================
     // ELIMINAR
