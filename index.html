@@ -1,25 +1,25 @@
-<!DOCTYPE html>
+<!DOCTYPE html> otro
 <html lang="es">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Gestión de Negocios</title>
-
+  
   <!-- Leaflet CSS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-
+  
   <!-- Leaflet JS -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
+  
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; padding: 20px; color: #333; }
     .container { max-width: 1400px; margin: 0 auto; }
-
+    
     .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px 30px; border-radius: 16px; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3); }
     .header h1 { font-size: 26px; font-weight: 700; }
     .header-actions { display: flex; gap: 12px; }
-
+    
     .btn { padding: 10px 24px; border: none; border-radius: 10px; cursor: pointer; font-weight: 600; font-size: 14px; transition: all 0.3s ease; display: inline-flex; align-items: center; gap: 8px; }
     .btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
     .btn:active { transform: translateY(0); }
@@ -32,18 +32,18 @@
     .btn-outline:hover { background: white; color: #667eea; }
     .btn-sm { padding: 6px 14px; font-size: 12px; }
     .btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
-
+    
     .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 25px; }
     .stat-card { background: white; padding: 18px 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); transition: transform 0.2s; }
     .stat-card:hover { transform: translateY(-2px); }
     .stat-card .number { font-size: 32px; font-weight: 700; color: #667eea; }
     .stat-card .label { font-size: 13px; color: #888; margin-top: 4px; }
-
+    
     .toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }
     .search-box { flex: 1; max-width: 400px; }
     .search-box input { width: 100%; padding: 12px 18px; border: 2px solid #e0e0e0; border-radius: 10px; font-size: 14px; transition: border-color 0.3s; }
     .search-box input:focus { outline: none; border-color: #667eea; }
-
+    
     .table-container { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 12px rgba(0,0,0,0.08); margin-bottom: 20px; }
     .table-wrapper { overflow-x: auto; }
     table { width: 100%; border-collapse: collapse; min-width: 1200px; }
@@ -51,42 +51,42 @@
     table td { padding: 10px 12px; border-bottom: 1px solid #f0f0f0; font-size: 13px; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     table tr:hover { background: #f8f9ff; }
     table tr:last-child td { border-bottom: none; }
-
+    
     .foto-mini { width: 40px; height: 40px; object-fit: cover; border-radius: 6px; cursor: pointer; border: 2px solid #e0e0e0; margin: 2px; }
     .foto-mini:hover { border-color: #667eea; transform: scale(1.5); }
-
+    
     .status-badge { padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; display: inline-block; }
     .status-active { background: #d4edda; color: #155724; }
     .status-inactive { background: #f8d7da; color: #721c24; }
-
+    
     .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); z-index: 1000; overflow-y: auto; padding: 20px; backdrop-filter: blur(4px); }
     .modal-overlay.active { display: flex; align-items: flex-start; justify-content: center; }
-
+    
     .modal { background: white; max-width: 800px; width: 100%; border-radius: 20px; padding: 30px; margin-top: 20px; margin-bottom: 20px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); animation: slideDown 0.3s ease; }
     @keyframes slideDown { from { opacity: 0; transform: translateY(-50px); } to { opacity: 1; transform: translateY(0); } }
-
+    
     .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 2px solid #f0f0f0; }
     .modal-header h2 { font-size: 22px; color: #333; }
     .modal-close { background: none; border: none; font-size: 32px; cursor: pointer; color: #999; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
     .modal-close:hover { background: #f0f0f0; color: #333; }
-
+    
     .form-section { margin-bottom: 20px; padding: 20px; background: #f8f9fa; border-radius: 12px; border: 1px solid #e0e0e0; }
     .form-section h3 { font-size: 16px; margin-bottom: 15px; color: #667eea; display: flex; align-items: center; gap: 8px; }
-
+    
     .form-group { margin-bottom: 15px; }
     .form-group label { display: block; font-weight: 600; font-size: 13px; margin-bottom: 5px; color: #555; }
     .form-group input, .form-group textarea, .form-group select { width: 100%; padding: 10px 14px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px; transition: border-color 0.3s; font-family: inherit; }
     .form-group input:focus, .form-group textarea:focus, .form-group select:focus { outline: none; border-color: #667eea; box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1); }
     .form-group textarea { min-height: 80px; resize: vertical; }
     .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-
+    
     .map-section { margin-bottom: 20px; }
     #map { height: 300px; border-radius: 12px; border: 2px solid #e0e0e0; margin-bottom: 10px; z-index: 1; }
     .map-status { padding: 10px 15px; border-radius: 8px; font-size: 13px; font-weight: 600; text-align: center; }
     .map-status.pending { background: #fff3cd; color: #856404; }
     .map-status.confirmed { background: #d4edda; color: #155724; }
     .map-status.error { background: #f8d7da; color: #721c24; }
-
+    
     .fotos-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
     .foto-card { border: 2px dashed #d0d0d0; border-radius: 12px; padding: 10px; text-align: center; cursor: pointer; transition: all 0.3s; min-height: 160px; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #fafafa; position: relative; }
     .foto-card:hover { border-color: #667eea; background: #f0f3ff; }
@@ -98,22 +98,22 @@
     .foto-card .foto-desc { width: 100%; padding: 5px 8px; border: 1px solid #e0e0e0; border-radius: 4px; font-size: 11px; margin-top: 5px; }
     .btn-remove-foto { background: #dc3545; color: white; border: none; border-radius: 50%; width: 24px; height: 24px; font-size: 14px; cursor: pointer; position: absolute; top: -8px; right: -8px; display: none; }
     .foto-card.has-foto .btn-remove-foto { display: flex; align-items: center; justify-content: center; }
-
+    
     .toast { position: fixed; bottom: 30px; right: 30px; padding: 16px 28px; border-radius: 12px; color: white; font-weight: 600; z-index: 2000; box-shadow: 0 8px 30px rgba(0,0,0,0.3); animation: slideIn 0.3s ease; max-width: 400px; }
     @keyframes slideIn { from { opacity: 0; transform: translateX(100px); } to { opacity: 1; transform: translateX(0); } }
     .toast-success { background: linear-gradient(135deg, #28a745, #20c997); }
     .toast-error { background: linear-gradient(135deg, #dc3545, #e74c3c); }
-
+    
     .loading-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.8); z-index: 3000; justify-content: center; align-items: center; flex-direction: column; }
     .loading-overlay.active { display: flex; }
     .spinner { width: 50px; height: 50px; border: 4px solid #f0f0f0; border-top: 4px solid #667eea; border-radius: 50%; animation: spin 0.8s linear infinite; margin-bottom: 15px; }
     @keyframes spin { to { transform: rotate(360deg); } }
-
+    
     @media (max-width: 768px) { .header { flex-direction: column; text-align: center; } .form-row { grid-template-columns: 1fr; } .fotos-grid { grid-template-columns: repeat(2, 1fr); } .modal { padding: 20px; margin: 10px; } }
   </style>
 </head>
 <body>
-  <div class="loading-overlay" id="loadingOverlay"><div class="spinner"></div><p style="color:#667eea;font-weight:600;" id="loadingText">Procesando...</p></div>
+  <div class="loading-overlay" id="loadingOverlay"><div class="spinner"></div><p style="color:#667eea;font-weight:600;">Procesando...</p></div>
 
   <div class="container">
     <div class="header">
@@ -158,7 +158,7 @@
       </div>
       <form id="formNegocio" onsubmit="guardarNegocio(event)">
         <input type="hidden" id="editId" value="">
-
+        
         <div class="form-section">
           <h3>📋 Datos Básicos</h3>
           <div class="form-row">
@@ -169,7 +169,7 @@
           <div class="form-group"><label>Slogan</label><input type="text" id="slogan"></div>
           <div class="form-group"><label>Descripción</label><textarea id="descripcion"></textarea></div>
         </div>
-
+        
         <div class="form-section">
           <h3>📍 Ubicación (OBLIGATORIO)</h3>
           <div class="map-section"><div id="map"></div>
@@ -184,7 +184,7 @@
             <div class="form-group"><label>Longitud</label><input type="text" id="longitud" readonly></div>
           </div>
         </div>
-
+        
         <div class="form-section">
           <h3>📞 Contacto</h3>
           <div class="form-row">
@@ -201,13 +201,13 @@
           </div>
           <div class="form-group"><label>Estado</label><select id="activo"><option value="true">✅ Activo</option><option value="false">❌ Inactivo</option></select></div>
         </div>
-
+        
         <div class="form-section">
           <h3>📸 Fotos (hasta 4)</h3>
           <div class="fotos-grid" id="fotosGrid"></div>
           <small style="color:#888;">Toca cada cuadro para tomar foto o seleccionar de galería</small>
         </div>
-
+        
         <div style="display:flex;gap:12px;justify-content:flex-end;margin-top:20px;padding-top:20px;border-top:2px solid #f0f0f0;">
           <button type="button" class="btn btn-warning" onclick="cerrarModal()">Cancelar</button>
           <button type="submit" class="btn btn-primary" id="btnGuardar">💾 Guardar Negocio</button>
@@ -221,7 +221,7 @@
     // CONFIGURACIÓN
     // ============================================================
     const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzZU47U-mGAPq9nF1WwqsIYdXsx9CQE1cnpJP7Rd7_g2fc3nUskq5jdqe0o4nAxMGU_LQ/exec';
-
+    
     // ============================================================
     // VARIABLES GLOBALES
     // ============================================================
@@ -230,7 +230,7 @@
     let marker = null;
     let ubicacionSeleccionada = false;
     let fotosSeleccionadas = [null, null, null, null];
-
+    
     // ============================================================
     // INICIALIZACIÓN
     // ============================================================
@@ -240,25 +240,25 @@
       generarSlotsFotos();
       cargarNegocios();
     });
-
+    
     // ============================================================
-    // API CALLS - LECTURA (JSONP - SIN CORS, payload chico)
+    // API CALLS (JSONP - SIN CORS)
     // ============================================================
     function callAPI(action, params = {}) {
       return new Promise((resolve, reject) => {
         const callbackName = 'cb_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-
+        
         window[callbackName] = function(result) {
           delete window[callbackName];
           document.body.removeChild(script);
           resolve(result);
         };
-
+        
         let url = `${APPS_SCRIPT_URL}?action=${action}&callback=${callbackName}`;
         for (const key in params) {
           url += `&${key}=${encodeURIComponent(typeof params[key] === 'object' ? JSON.stringify(params[key]) : params[key])}`;
         }
-
+        
         const script = document.createElement('script');
         script.src = url;
         script.onerror = function() {
@@ -269,74 +269,13 @@
         document.body.appendChild(script);
       });
     }
-
-    // ============================================================
-    // API CALL - GUARDAR (POST via iframe oculto)
-    // Evita el límite de tamaño de una URL de GET/JSONP, que es lo
-    // que rompía el guardado de fotos en base64.
-    // ============================================================
-    function guardarNegocioPOST(action, id, datos) {
-      return new Promise((resolve, reject) => {
-        const iframeName = 'uploadFrame_' + Date.now();
-        const iframe = document.createElement('iframe');
-        iframe.name = iframeName;
-        iframe.style.display = 'none';
-        document.body.appendChild(iframe);
-
-        let resuelto = false;
-
-        function limpiar() {
-          window.removeEventListener('message', onMessage);
-          if (iframe.parentNode) iframe.parentNode.removeChild(iframe);
-        }
-
-        function onMessage(ev) {
-          if (ev.source !== iframe.contentWindow) return; // solo mensajes de nuestro iframe
-          if (resuelto) return;
-          resuelto = true;
-          limpiar();
-          resolve(ev.data);
-        }
-        window.addEventListener('message', onMessage);
-
-        const form = document.createElement('form');
-        form.method = 'POST';
-        form.action = APPS_SCRIPT_URL;
-        form.target = iframeName;
-        form.style.display = 'none';
-
-        function addField(name, value) {
-          const input = document.createElement('input');
-          input.type = 'hidden';
-          input.name = name;
-          input.value = value;
-          form.appendChild(input);
-        }
-        addField('action', action);
-        if (id) addField('id', id);
-        addField('datos', JSON.stringify(datos));
-
-        document.body.appendChild(form);
-        form.submit();
-        document.body.removeChild(form);
-
-        // Si por alguna razón el postMessage no llega (ej. subida de
-        // fotos muy lenta), no dejamos al usuario esperando para siempre.
-        setTimeout(() => {
-          if (resuelto) return;
-          resuelto = true;
-          limpiar();
-          reject(new Error('Tiempo de espera agotado. Verifica tu conexión e intenta de nuevo.'));
-        }, 45000);
-      });
-    }
-
+    
     // ============================================================
     // CARGAR NEGOCIOS
     // ============================================================
     async function cargarNegocios() {
       console.log('📡 Cargando negocios...');
-      showLoading('Cargando...');
+      showLoading();
       try {
         const result = await callAPI('obtenerNegocios');
         hideLoading();
@@ -355,7 +294,7 @@
         showToast('Error de conexión', 'error');
       }
     }
-
+    
     async function cargarEstadisticas() {
       try {
         const result = await callAPI('obtenerEstadisticas');
@@ -370,33 +309,30 @@
         }
       } catch(e) { console.error('Error stats:', e); }
     }
-
-    function showLoading(texto) {
-      document.getElementById('loadingText').textContent = texto || 'Procesando...';
-      document.getElementById('loadingOverlay').classList.add('active');
-    }
+    
+    function showLoading() { document.getElementById('loadingOverlay').classList.add('active'); }
     function hideLoading() { document.getElementById('loadingOverlay').classList.remove('active'); }
-
+    
     // ============================================================
     // RENDERIZAR TABLA
     // ============================================================
     function renderizarTabla() {
       const tbody = document.getElementById('negociosTableBody');
       const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-
-      const filtrados = negocios.filter(n =>
+      
+      const filtrados = negocios.filter(n => 
         (n.nombre||'').toLowerCase().includes(searchTerm) ||
         (n.id||'').toLowerCase().includes(searchTerm) ||
         (n.direccion||'').toLowerCase().includes(searchTerm)
       );
-
+      
       document.getElementById('contador').textContent = `Mostrando ${filtrados.length} de ${negocios.length}`;
-
+      
       if (filtrados.length === 0) {
         tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;padding:40px;color:#888;">📭 No se encontraron negocios</td></tr>';
         return;
       }
-
+      
       tbody.innerHTML = filtrados.map(n => `
         <tr>
           <td><strong>${n.id||'-'}</strong></td>
@@ -416,26 +352,26 @@
         </tr>
       `).join('');
     }
-
+    
     function filtrarNegocios() { renderizarTabla(); }
-
+    
     // ============================================================
     // MAPA LEAFLET
     // ============================================================
     function inicializarMapa() {
       map = L.map('map').setView([20.5888, -100.3899], 13);
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap', maxZoom: 19 }).addTo(map);
-
+      
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
           (pos) => { map.setView([pos.coords.latitude, pos.coords.longitude], 15); colocarMarcador(pos.coords.latitude, pos.coords.longitude); },
           () => console.log('Geolocalización no disponible')
         );
       }
-
+      
       map.on('click', function(e) { colocarMarcador(e.latlng.lat, e.latlng.lng); });
     }
-
+    
     function colocarMarcador(lat, lng) {
       if (marker) map.removeLayer(marker);
       marker = L.marker([lat, lng]).addTo(map).bindPopup('📍 Ubicación seleccionada').openPopup();
@@ -446,7 +382,7 @@
       document.getElementById('mapStatus').className = 'map-status confirmed';
       obtenerDireccionInversa(lat, lng);
     }
-
+    
     async function obtenerDireccionInversa(lat, lng) {
       try {
         const r = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`);
@@ -454,13 +390,13 @@
         if (d.display_name) document.getElementById('direccion').value = d.display_name;
       } catch(e) {}
     }
-
+    
     function setUbicacionEnMapa(lat, lng) {
       if (!lat || !lng) return;
       map.setView([parseFloat(lat), parseFloat(lng)], 16);
       colocarMarcador(parseFloat(lat), parseFloat(lng));
     }
-
+    
     // ============================================================
     // FOTOS
     // ============================================================
@@ -481,7 +417,7 @@
         grid.appendChild(card);
       }
     }
-
+    
     function abrirSelectorFoto(index) {
       const input = document.createElement('input');
       input.type = 'file';
@@ -491,40 +427,18 @@
         const file = e.target.files[0];
         if (!file) return;
         const reader = new FileReader();
-        reader.onload = async function(ev) {
-          // Redimensiona/comprime antes de guardar: sube más rápido
-          // y ocupa menos espacio en Drive.
-          const comprimida = await redimensionarImagen(ev.target.result, 1280, 0.75);
-          fotosSeleccionadas[index] = { url: comprimida, descripcion: fotosSeleccionadas[index]?.descripcion || '' };
+        reader.onload = function(ev) {
+          fotosSeleccionadas[index] = { url: ev.target.result, descripcion: fotosSeleccionadas[index]?.descripcion || '' };
           generarSlotsFotos();
         };
         reader.readAsDataURL(file);
       };
       input.click();
     }
-
-    function redimensionarImagen(dataUrl, maxDim, calidad) {
-      return new Promise((resolve) => {
-        const img = new Image();
-        img.onload = function() {
-          let w = img.width, h = img.height;
-          if (w > maxDim || h > maxDim) {
-            if (w >= h) { h = Math.round(h * (maxDim / w)); w = maxDim; }
-            else { w = Math.round(w * (maxDim / h)); h = maxDim; }
-          }
-          const canvas = document.createElement('canvas');
-          canvas.width = w; canvas.height = h;
-          canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-          resolve(canvas.toDataURL('image/jpeg', calidad));
-        };
-        img.onerror = function() { resolve(dataUrl); }; // si falla, usa la original
-        img.src = dataUrl;
-      });
-    }
-
+    
     function removerFoto(index) { fotosSeleccionadas[index] = null; generarSlotsFotos(); }
     function actualizarDescFoto(index, valor) { if (fotosSeleccionadas[index]) fotosSeleccionadas[index].descripcion = valor; }
-
+    
     // ============================================================
     // MODAL
     // ============================================================
@@ -546,11 +460,11 @@
       document.getElementById('modalOverlay').classList.add('active');
       setTimeout(() => { if (map) map.invalidateSize(); }, 300);
     }
-
+    
     function abrirModalEditar(id) {
       const negocio = negocios.find(n => n.id === id);
       if (!negocio) { showToast('Negocio no encontrado', 'error'); return; }
-
+      
       document.getElementById('modalTitle').textContent = '✏️ Editar Negocio';
       document.getElementById('btnGuardar').textContent = '💾 Actualizar';
       document.getElementById('editId').value = id;
@@ -570,33 +484,33 @@
       document.getElementById('rol').value = negocio.rol || 'Admin';
       document.getElementById('urlFacebook').value = negocio.urlFacebook || '';
       document.getElementById('activo').value = negocio.activo ? 'true' : 'false';
-
+      
       fotosSeleccionadas = [null, null, null, null];
       if (negocio.fotos) negocio.fotos.forEach((f, i) => { if (i < 4 && f && f.url) fotosSeleccionadas[i] = { url: f.url, descripcion: f.descripcion || '' }; });
-
+      
       if (negocio.latitud && negocio.longitud) { setUbicacionEnMapa(negocio.latitud, negocio.longitud); ubicacionSeleccionada = true; }
       else { ubicacionSeleccionada = false; document.getElementById('mapStatus').textContent = '⚠️ Haz clic en el mapa'; document.getElementById('mapStatus').className = 'map-status pending'; }
-
+      
       generarSlotsFotos();
       document.getElementById('modalOverlay').classList.add('active');
       setTimeout(() => { if (map) map.invalidateSize(); }, 300);
     }
-
+    
     function cerrarModal() { document.getElementById('modalOverlay').classList.remove('active'); }
-
+    
     // ============================================================
-    // GUARDAR (POST via iframe oculto)
+    // GUARDAR (JSONP - FIX CORS)
     // ============================================================
     async function guardarNegocio(event) {
       event.preventDefault();
-
+      
       if (!ubicacionSeleccionada) { showToast('⚠️ Debes seleccionar una ubicación en el mapa', 'error'); return; }
-
+      
       const editId = document.getElementById('editId').value;
       const btnGuardar = document.getElementById('btnGuardar');
       btnGuardar.disabled = true;
       btnGuardar.textContent = '⏳ Guardando...';
-
+      
       const datos = {
         usuario: document.getElementById('usuario').value.trim(),
         password: document.getElementById('password').value.trim(),
@@ -616,26 +530,29 @@
         activo: document.getElementById('activo').value === 'true',
         fotos: fotosSeleccionadas.filter(f => f && f.url)
       };
-
+      
       if (!datos.usuario || !datos.password || !datos.nombre) {
         showToast('❌ Campos obligatorios faltantes', 'error');
         btnGuardar.disabled = false;
         btnGuardar.textContent = '💾 Guardar Negocio';
         return;
       }
-
-      console.log('📤 Guardando via POST...');
-      showLoading('Guardando datos y fotos...');
-
+      
+      console.log('📤 Guardando via JSONP...');
+      showLoading();
+      
       try {
         const action = editId ? 'editarNegocio' : 'agregarNegocio';
-        const result = await guardarNegocioPOST(action, editId, datos);
+        const params = { datos: JSON.stringify(datos) };
+        if (editId) params.id = editId;
+        
+        const result = await callAPI(action, params);
         hideLoading();
         console.log('✅ Resultado:', result);
-
+        
         btnGuardar.disabled = false;
         btnGuardar.textContent = '💾 Guardar Negocio';
-
+        
         if (result.success) {
           showToast(editId ? '✅ Negocio actualizado' : '✅ Negocio creado - ID: ' + result.id, 'success');
           cerrarModal();
@@ -648,16 +565,16 @@
         console.error('❌ Error:', e);
         btnGuardar.disabled = false;
         btnGuardar.textContent = '💾 Guardar Negocio';
-        showToast('❌ ' + (e.message || 'Error de conexión'), 'error');
+        showToast('❌ Error de conexión', 'error');
       }
     }
-
+    
     // ============================================================
     // ELIMINAR
     // ============================================================
     async function eliminarNegocio(id) {
       if (!confirm('⚠️ ¿Eliminar este negocio?')) return;
-      showLoading('Eliminando...');
+      showLoading();
       try {
         const result = await callAPI('eliminarNegocio', { id });
         hideLoading();
@@ -665,7 +582,7 @@
         else showToast('❌ Error: ' + result.error, 'error');
       } catch(e) { hideLoading(); showToast('❌ Error de conexión', 'error'); }
     }
-
+    
     // ============================================================
     // TOAST
     // ============================================================
@@ -677,8 +594,8 @@
       document.body.appendChild(toast);
       setTimeout(() => { toast.style.opacity = '0'; toast.style.transform = 'translateX(100px)'; toast.style.transition = 'all 0.3s ease'; setTimeout(() => toast.remove(), 300); }, 3500);
     }
-
-    console.log('✅ Sistema listo - POST mode para guardado');
+    
+    console.log('✅ Sistema listo - JSONP mode');
   </script>
 </body>
 </html>
