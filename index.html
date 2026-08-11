@@ -940,4 +940,72 @@
     console.log('✅ Sistema listo - POST/iframe mode para guardado');
   </script>
 </body>
+  <!-- ============================================================
+     BOTÓN FLOTANTE - Acceso al Panel de Administración
+     Pega este bloque completo justo antes de </body>
+     ============================================================ -->
+<style>
+  .fab-admin {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 26px;
+    text-decoration: none;
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.45);
+    z-index: 99999;
+    border: none;
+    cursor: pointer;
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+  }
+  .fab-admin:hover {
+    transform: translateY(-4px) scale(1.05);
+    box-shadow: 0 10px 26px rgba(102, 126, 234, 0.6);
+  }
+  .fab-admin:active {
+    transform: translateY(0) scale(0.97);
+  }
+  .fab-admin .fab-tooltip {
+    position: absolute;
+    right: 70px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: #222;
+    color: white;
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+  }
+  .fab-admin:hover .fab-tooltip {
+    opacity: 1;
+  }
+
+  @media (max-width: 768px) {
+    .fab-admin { bottom: 16px; right: 16px; width: 54px; height: 54px; font-size: 22px; }
+    .fab-admin .fab-tooltip { display: none; } /* en móvil no hay hover, se oculta el tooltip */
+  }
+</style>
+
+<a
+  href="URL_DE_TU_ADMIN_HTML_AQUI"
+  target="_blank"
+  rel="noopener"
+  class="fab-admin"
+  aria-label="Abrir panel de administración"
+>
+  ⚙️
+  <span class="fab-tooltip">Panel Admin</span>
+</a>
 </html>
