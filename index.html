@@ -597,5 +597,15 @@
     
     console.log('✅ Sistema listo - JSONP mode');
   </script>
+
+
+
+  <!-- Iframe y form ocultos para guardar/editar vía POST -->
+<iframe name="hiddenSaveFrame" style="display:none;"></iframe>
+<form id="hiddenSaveForm" method="POST" target="hiddenSaveFrame" style="display:none;">
+  <input type="hidden" name="action" id="hf_action">
+  <input type="hidden" name="id" id="hf_id">
+  <input type="hidden" name="datos" id="hf_datos">
+</form>
 </body>
 </html>
