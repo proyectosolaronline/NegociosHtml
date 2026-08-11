@@ -831,28 +831,31 @@ ${whatsappDigits?`<a href="https://wa.me/${whatsappDigits}" class="wa-flotante" 
     // ============================================================
     // PREVIEW LANDING PAGE (MODAL)
     // ============================================================
-    function previsualizarLanding(id) {
-      const negocio = negocios.find(n => n.id === id);
-      if (!negocio) { showToast('❌ Negocio no encontrado', 'error'); return; }
+  function previsualizarLanding(id) {
+  const negocio = negocios.find(n => n.id === id);
+  if (!negocio) { showToast('❌ Negocio no encontrado', 'error'); return; }
 
-      currentPreviewHTML = construirLandingHTML(negocio);
-      currentPreviewNombre = (negocio.nombre || 'negocio').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'') + '.html';
+  currentPreviewHTML = construirLandingHTML(negocio);
+  currentPreviewNombre = (negocio.nombre || 'negocio').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'') + '.html';
 
-      document.getElementById('previewTitle').textContent = negocio.nombre || 'Landing Page';
-      document.getElementById('previewUrlInput').value = '';
-      document.getElementById('qrPreview').style.display = 'none';
-      document.getElementById('btnCompartirLink').style.display = 'none';
+  document.getElementById('previewTitle').textContent = negocio.nombre || 'Landing Page';
+  
+  // Generar URL automática para el QR
+  const urlGitHub = `https://proyectosolaronline.github.io/NegociosHtml/${currentPreviewNombre}`;
+  document.getElementById('previewUrlInput').value = urlGitHub;
+  
+  // Generar QR automáticamente
+  generarQR();
 
-      // Mostrar modal de preview
-      document.getElementById('previewOverlay').classList.add('active');
+  // Mostrar modal de preview
+  document.getElementById('previewOverlay').classList.add('active');
 
-      // Cargar en iframe
-      const iframe = document.getElementById('previewFrame');
-      iframe.srcdoc = currentPreviewHTML;
+  // Cargar en iframe
+  const iframe = document.getElementById('previewFrame');
+  iframe.srcdoc = currentPreviewHTML;
 
-      showToast('✅ Vista previa generada', 'success');
-    }
-
+  showToast('✅ Vista previa generada', 'success');
+}
     function cerrarPreview() {
       document.getElementById('previewOverlay').classList.remove('active');
       // Limpiar iframe
@@ -912,20 +915,19 @@ ${whatsappDigits?`<a href="https://wa.me/${whatsappDigits}" class="wa-flotante" 
     }
 
     function generarQR() {
-      const url = document.getElementById('previewUrlInput').value.trim();
-      if (!url || !/^https?:\/\//i.test(url)) {
-        showToast('⚠️ Pega primero una URL válida (empieza con https://)', 'error');
-        return;
-      }
+  const url = document.getElementById('previewUrlInput').value.trim();
+  if (!url) {
+    showToast('⚠️ No hay URL para generar QR', 'error');
+    return;
+  }
 
-      const qrImg = document.getElementById('qrPreview');
-      qrImg.src = 'https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=' + encodeURIComponent(url);
-      qrImg.style.display = 'block';
-      document.getElementById('btnCompartirLink').style.display = 'inline-flex';
-      
-      showToast('✅ QR generado', 'success');
-    }
-
+  const qrImg = document.getElementById('qrPreview');
+  qrImg.src = 'https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=' + encodeURIComponent(url);
+  qrImg.style.display = 'block';
+  document.getElementById('btnCompartirLink').style.display = 'inline-flex';
+  
+  showToast('✅ QR generado para: ' + url, 'success');
+}
     async function compartirLink() {
       const url = document.getElementById('previewUrlInput').value.trim();
       if (!url) {
