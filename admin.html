@@ -737,144 +737,177 @@
     // ============================================================
     // LANDING PAGE HTML
     // ============================================================
-    function construirLandingHTML(n) {
-      const fotos = (n.fotos || []).filter(f => f && f.url);
-      const fotoHero = fotos[0] ? fotos[0].url : '';const whatsappDigits = String(n.whatsapp || '').replace(/\D/g, '');
-const telDigits = String(n.telefono || '').replace(/\D/g, '');
-      const tieneMapa = n.latitud && n.longitud;
+function construirLandingHTML(n) {
+  const whatsappDigits = String(n.whatsapp || '').replace(/\D/g, '');
+  const telDigits = String(n.telefono || '').replace(/\D/g, '');
+  const fotos = (n.fotos || []).filter(f => f && f.url);
+  const fotoHero = fotos[0] ? fotos[0].url : '';
+  const tieneMapa = n.latitud && n.longitud;
 
-      const galeriaHTML = fotos.length ? `
-        <section class="seccion galeria">
-          <h2>Galería</h2>
-          <div class="grid-galeria">
-            ${fotos.map(f => `
-              <figure>
-                <img src="${f.url}" alt="${(f.descripcion||n.nombre||'').replace(/"/g,'')}" loading="lazy">
-                ${f.descripcion ? `<figcaption>${f.descripcion}</figcaption>` : ''}
-              </figure>
-            `).join('')}
+  const serviciosHTML = `
+    <section class="section servicios">
+      <h2>🌟 Nuestros Servicios</h2>
+      <div class="divider"></div>
+      <div class="services-grid">
+        <div class="service-card">
+          <div class="service-icon">🚀</div>
+          <h3>Servicio Rápido</h3>
+          <p>Entrega inmediata y eficiente</p>
+        </div>
+        <div class="service-card">
+          <div class="service-icon">💎</div>
+          <h3>Calidad Premium</h3>
+          <p>Materiales de primera calidad</p>
+        </div>
+        <div class="service-card">
+          <div class="service-icon">💰</div>
+          <h3>Mejor Precio</h3>
+          <p>Garantizado al mejor precio</p>
+        </div>
+      </div>
+    </section>`;
+
+  const galeriaHTML = fotos.length ? `
+    <section class="section galeria">
+      <h2>📸 Galería</h2>
+      <div class="divider"></div>
+      <div class="gallery-grid">
+        ${fotos.map(f => `
+          <div class="gallery-item">
+            <img src="${f.url}" alt="${(f.descripcion||n.nombre||'')}" loading="lazy">
+            ${f.descripcion ? `<div class="gallery-caption">${f.descripcion}</div>` : ''}
           </div>
-        </section>` : '';
+        `).join('')}
+      </div>
+    </section>` : '';
 
-      const mapaHTML = tieneMapa ? `
-        <section class="seccion ubicacion">
-          <h2>Ubicación</h2>
-          <p class="direccion-texto">📍 ${n.direccion || n.ubicacion || ''}</p>
-          <iframe class="mapa-embed" loading="lazy"
-            src="https://www.openstreetmap.org/export/embed.html?bbox=${parseFloat(n.longitud)-0.006}%2C${parseFloat(n.latitud)-0.006}%2C${parseFloat(n.longitud)+0.006}%2C${parseFloat(n.latitud)+0.006}&layer=mapnik&marker=${n.latitud}%2C${n.longitud}">
-          </iframe>
-        </section>` : '';
+  const mapaHTML = tieneMapa ? `
+    <section class="section ubicacion">
+      <h2>📍 Encuéntranos</h2>
+      <div class="divider"></div>
+      <div class="map-card">
+        <iframe loading="lazy" src="https://www.openstreetmap.org/export/embed.html?bbox=${parseFloat(n.longitud)-0.006}%2C${parseFloat(n.latitud)-0.006}%2C${parseFloat(n.longitud)+0.006}%2C${parseFloat(n.latitud)+0.006}&layer=mapnik&marker=${n.latitud}%2C${n.longitud}"></iframe>
+      </div>
+      <p class="direccion">📍 ${n.direccion || n.ubicacion || ''}</p>
+      <a href="https://www.google.com/maps/dir/?api=1&destination=${n.latitud},${n.longitud}" target="_blank" class="btn-mapa">🧭 Cómo llegar</a>
+    </section>` : '';
 
-      const contactoBotones = `
-        ${whatsappDigits ? `<a class="btn-cta btn-whatsapp" href="https://wa.me/${whatsappDigits}?text=${encodeURIComponent('Hola, vi su página de ' + (n.nombre||'') + ' y quisiera más información')}" target="_blank" rel="noopener">💬 WhatsApp</a>` : ''}
-        ${telDigits ? `<a class="btn-cta btn-llamar" href="tel:${telDigits}">📞 Llamar</a>` : ''}
-        ${tieneMapa ? `<a class="btn-cta btn-llegar" href="https://www.google.com/maps/dir/?api=1&destination=${n.latitud},${n.longitud}" target="_blank" rel="noopener">🧭 Cómo llegar</a>` : ''}
-        ${n.urlFacebook ? `<a class="btn-cta btn-facebook" href="${n.urlFacebook}" target="_blank" rel="noopener">📘 Facebook</a>` : ''}
-      `;
+  const contactoBotones = `
+    ${whatsappDigits ? `<a href="https://wa.me/${whatsappDigits}" class="btn-cta btn-whatsapp" target="_blank">💬 WhatsApp</a>` : ''}
+    ${telDigits ? `<a href="tel:${telDigits}" class="btn-cta btn-call">📞 Llamar</a>` : ''}
+    ${tieneMapa ? `<a href="https://www.google.com/maps/dir/?api=1&destination=${n.latitud},${n.longitud}" class="btn-cta btn-maps" target="_blank">🧭 Cómo llegar</a>` : ''}
+    ${n.urlFacebook ? `<a href="${n.urlFacebook}" class="btn-cta btn-facebook" target="_blank">📘 Facebook</a>` : ''}
+  `;
 
-      return `<!DOCTYPE html>
+  return `<!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>${n.nombre || 'Negocio'}</title>
-<meta name="description" content="${(n.slogan || n.descripcion || '').replace(/"/g,'').slice(0,160)}">
+<title>${n.nombre || 'Negocio'} | ${n.slogan || ''}</title>
 <style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  html { scroll-behavior: smooth; }
-  body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; color: #222; line-height: 1.6; background: #fff; }
-  .hero {
-    min-height: 78vh; display: flex; flex-direction: column; align-items: center; justify-content: center;
-    text-align: center; color: white; padding: 40px 20px; position: relative;
-    background: linear-gradient(135deg, rgba(102,126,234,0.88) 0%, rgba(118,75,162,0.88) 100%)${fotoHero ? `, url('${fotoHero}') center/cover no-repeat` : ''};
-    background-blend-mode: multiply;
-  }
-  .hero h1 { font-size: clamp(28px, 6vw, 52px); font-weight: 800; margin-bottom: 12px; text-shadow: 0 2px 12px rgba(0,0,0,0.3); }
-  .hero .slogan { font-size: clamp(15px, 2.5vw, 20px); opacity: 0.95; max-width: 600px; margin-bottom: 28px; }
-  .hero .cta-group { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
-  .btn-cta {
-    display: inline-flex; align-items: center; gap: 8px; padding: 14px 26px; border-radius: 50px;
-    text-decoration: none; font-weight: 700; font-size: 15px; transition: transform 0.2s, box-shadow 0.2s;
-    box-shadow: 0 4px 14px rgba(0,0,0,0.15);
-  }
-  .btn-cta:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(0,0,0,0.25); }
-  .btn-whatsapp { background: #25D366; color: white; }
-  .btn-llamar { background: white; color: #333; }
-  .btn-llegar { background: #4285F4; color: white; }
-  .btn-facebook { background: #1877F2; color: white; }
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'Segoe UI',system-ui,sans-serif; color:#333; background:#f8f9fb; line-height:1.6; }
 
-  .seccion { max-width: 900px; margin: 0 auto; padding: 60px 24px; }
-  .seccion h2 { font-size: 28px; font-weight: 800; color: #333; margin-bottom: 20px; text-align: center; }
-  .seccion h2::after { content: ''; display: block; width: 50px; height: 4px; background: linear-gradient(135deg, #667eea, #764ba2); margin: 12px auto 0; border-radius: 4px; }
+.hero {
+  min-height:90vh; display:flex; align-items:center; justify-content:center; text-align:center;
+  background:linear-gradient(135deg,rgba(102,126,234,0.9),rgba(118,75,162,0.9))${fotoHero ? `,url('${fotoHero}') center/cover no-repeat` : ''};
+  background-blend-mode:multiply; color:white; padding:40px 20px;
+}
+.hero-content { max-width:700px; }
+.hero h1 { font-size:clamp(32px,6vw,56px); font-weight:800; margin-bottom:10px; text-shadow:0 2px 12px rgba(0,0,0,0.3); }
+.hero .slogan { font-size:clamp(16px,2.5vw,22px); opacity:0.95; margin-bottom:30px; }
+.hero .btn-group { display:flex; gap:12px; flex-wrap:wrap; justify-content:center; }
 
-  .sobre-nosotros p { font-size: 17px; color: #555; text-align: center; max-width: 700px; margin: 0 auto; }
+.btn-cta {
+  padding:14px 28px; border-radius:50px; font-weight:700; font-size:16px;
+  text-decoration:none; display:inline-flex; align-items:center; gap:8px;
+  transition:all .3s; box-shadow:0 4px 15px rgba(0,0,0,0.2);
+}
+.btn-cta:hover { transform:translateY(-3px); box-shadow:0 8px 25px rgba(0,0,0,0.3); }
+.btn-whatsapp { background:#25D366; color:white; }
+.btn-call { background:white; color:#333; }
+.btn-maps { background:#4285F4; color:white; }
+.btn-facebook { background:#1877F2; color:white; }
 
-  .grid-galeria { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 18px; }
-  .grid-galeria figure { border-radius: 16px; overflow: hidden; box-shadow: 0 6px 20px rgba(0,0,0,0.1); background: #f5f5f5; }
-  .grid-galeria img { width: 100%; height: 220px; object-fit: cover; display: block; }
-  .grid-galeria figcaption { padding: 10px 14px; font-size: 13px; color: #666; }
+.section { max-width:1000px; margin:70px auto; padding:0 24px; text-align:center; }
+.section h2 { font-size:clamp(24px,4vw,36px); font-weight:800; color:#333; margin-bottom:15px; }
+.divider { width:50px; height:4px; background:linear-gradient(135deg,#667eea,#764ba2); margin:0 auto 30px; border-radius:2px; }
+.section p { font-size:17px; color:#666; max-width:700px; margin:0 auto; line-height:1.8; }
 
-  .direccion-texto { text-align: center; margin-bottom: 16px; color: #555; font-size: 15px; }
-  .mapa-embed { width: 100%; height: 320px; border: 0; border-radius: 16px; box-shadow: 0 6px 20px rgba(0,0,0,0.1); }
+.services-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:25px; margin-top:30px; }
+.service-card { background:white; padding:40px 25px; border-radius:20px; box-shadow:0 10px 30px rgba(0,0,0,0.06); transition:transform .3s; }
+.service-card:hover { transform:translateY(-8px); }
+.service-icon { font-size:55px; margin-bottom:15px; }
+.service-card h3 { font-weight:700; margin-bottom:8px; }
+.service-card p { font-size:15px; }
 
-  .contacto { background: #f8f9fb; }
-  .contacto .info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px; }
-  .contacto .info-card { background: white; border-radius: 14px; padding: 20px; text-align: center; box-shadow: 0 4px 14px rgba(0,0,0,0.06); }
-  .contacto .info-card .label { font-size: 12px; text-transform: uppercase; color: #999; font-weight: 700; margin-bottom: 6px; }
-  .contacto .info-card .valor { font-size: 15px; color: #333; font-weight: 600; }
-  .contacto .cta-group { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
+.gallery-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:18px; margin-top:30px; }
+.gallery-item { border-radius:16px; overflow:hidden; box-shadow:0 8px 25px rgba(0,0,0,0.1); position:relative; }
+.gallery-item img { width:100%; height:220px; object-fit:cover; display:block; }
+.gallery-caption { position:absolute; bottom:0; left:0; right:0; background:rgba(0,0,0,0.7); color:white; padding:8px 12px; font-size:13px; }
 
-  footer { text-align: center; padding: 30px 20px; color: #999; font-size: 13px; }
+.map-card { border-radius:20px; overflow:hidden; box-shadow:0 10px 30px rgba(0,0,0,0.1); margin-top:30px; }
+.map-card iframe { width:100%; height:350px; border:0; }
+.direccion { margin-top:15px; font-size:16px; color:#555; }
+.btn-mapa { display:inline-block; margin-top:15px; padding:12px 24px; background:#667eea; color:white; border-radius:50px; text-decoration:none; font-weight:600; }
 
-  .wa-flotante {
-    position: fixed; bottom: 20px; right: 20px; background: #25D366; color: white; width: 58px; height: 58px;
-    border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 28px;
-    text-decoration: none; box-shadow: 0 6px 20px rgba(0,0,0,0.25); z-index: 500;
-  }
+.contacto { background:linear-gradient(135deg,#667eea,#764ba2); color:white; padding:70px 24px; margin-top:70px; }
+.contacto h2 { color:white; }
+.contacto .info-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:20px; max-width:800px; margin:30px auto; }
+.info-card { background:rgba(255,255,255,0.15); backdrop-filter:blur(10px); padding:25px; border-radius:15px; }
+.info-card .label { font-size:13px; opacity:0.8; margin-bottom:5px; }
+.info-card .valor { font-size:17px; font-weight:700; }
+.contacto .btn-group { margin-top:20px; }
 
-  @media (max-width: 600px) {
-    .seccion { padding: 40px 18px; }
-    .hero { min-height: 70vh; padding: 30px 16px; }
-  }
+footer { text-align:center; padding:30px; color:#999; font-size:14px; background:#f0f2f5; }
+
+.wa-flotante { position:fixed; bottom:25px; right:25px; background:#25D366; color:white; width:60px; height:60px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:30px; text-decoration:none; box-shadow:0 6px 25px rgba(37,211,102,0.4); z-index:999; animation:pulse 2s infinite; }
+@keyframes pulse { 0%{box-shadow:0 0 0 0 rgba(37,211,102,0.4)} 70%{box-shadow:0 0 0 20px rgba(37,211,102,0)} 100%{box-shadow:0 0 0 0 rgba(37,211,102,0)} }
+
+@media(max-width:600px){ .section{padding:0 16px; margin:50px auto;} .hero{min-height:70vh;} }
 </style>
 </head>
 <body>
 
-  <section class="hero">
+<section class="hero">
+  <div class="hero-content">
     <h1>${n.nombre || ''}</h1>
-    ${n.slogan ? `<p class="slogan">${n.slogan}</p>` : ''}
-    <div class="cta-group">${contactoBotones}</div>
-  </section>
+    ${n.slogan ? `<p class="slogan">✨ ${n.slogan}</p>` : ''}
+    <div class="btn-group">${contactoBotones}</div>
+  </div>
+</section>
 
-  ${n.descripcion ? `
-  <section class="seccion sobre-nosotros">
-    <h2>Sobre Nosotros</h2>
-    <p>${n.descripcion}</p>
-  </section>` : ''}
+${n.descripcion ? `
+<section class="section sobre-nosotros">
+  <h2>✨ Sobre Nosotros</h2>
+  <div class="divider"></div>
+  <p>${n.descripcion}</p>
+</section>` : ''}
 
-  ${galeriaHTML}
+${serviciosHTML}
+${galeriaHTML}
+${mapaHTML}
 
-  ${mapaHTML}
+<section class="contacto">
+  <h2>📞 Contáctanos</h2>
+  <div class="divider" style="background:rgba(255,255,255,0.5);"></div>
+  <div class="info-grid">
+    ${n.telefono ? `<div class="info-card"><div class="label">📞 Teléfono</div><div class="valor">${n.telefono}</div></div>` : ''}
+    ${n.whatsapp ? `<div class="info-card"><div class="label">💬 WhatsApp</div><div class="valor">${n.whatsapp}</div></div>` : ''}
+    ${n.correo ? `<div class="info-card"><div class="label">✉️ Correo</div><div class="valor">${n.correo}</div></div>` : ''}
+    ${n.horario ? `<div class="info-card"><div class="label">🕐 Horario</div><div class="valor">${n.horario}</div></div>` : ''}
+  </div>
+  <div class="btn-group">${contactoBotones}</div>
+</section>
 
-  <section class="seccion contacto">
-    <h2>Contacto</h2>
-    <div class="info-grid">
-      ${n.telefono ? `<div class="info-card"><div class="label">Teléfono</div><div class="valor">${n.telefono}</div></div>` : ''}
-      ${n.whatsapp ? `<div class="info-card"><div class="label">WhatsApp</div><div class="valor">${n.whatsapp}</div></div>` : ''}
-      ${n.correo ? `<div class="info-card"><div class="label">Correo</div><div class="valor">${n.correo}</div></div>` : ''}
-      ${n.horario ? `<div class="info-card"><div class="label">Horario</div><div class="valor">${n.horario}</div></div>` : ''}
-    </div>
-    <div class="cta-group">${contactoBotones}</div>
-  </section>
+<footer>© ${new Date().getFullYear()} ${n.nombre || ''} — Todos los derechos reservados</footer>
 
-  <footer>© ${new Date().getFullYear()} ${n.nombre || ''} — Todos los derechos reservados</footer>
-
-  ${whatsappDigits ? `<a class="wa-flotante" href="https://wa.me/${whatsappDigits}" target="_blank" rel="noopener" title="Escríbenos por WhatsApp">💬</a>` : ''}
+${whatsappDigits ? `<a href="https://wa.me/${whatsappDigits}" class="wa-flotante" target="_blank" title="¡Escríbenos!">💬</a>` : ''}
 
 </body>
 </html>`;
-    }
-
+}
     // ============================================================
     // PREVIEW LANDING PAGE (MODAL)
     // ============================================================
