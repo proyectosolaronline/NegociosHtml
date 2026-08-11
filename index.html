@@ -1,4 +1,4 @@
-<!DOCTYPE html> otro 1
+<!DOCTYPE html> otro 2
 <html lang="es">
 <head>
   <meta charset="UTF-8">
@@ -577,8 +577,8 @@
         btnGuardar.textContent = '💾 Guardar Negocio';
         return;
       }
-      
       console.log('📤 Guardando via POST (iframe)...');
+console.log('🖼️ Fotos a enviar:', datos.fotos.map(f => ({ descripcion: f.descripcion, largoUrl: f.url ? f.url.length : 0 })));
       showLoading();
       
       try {
