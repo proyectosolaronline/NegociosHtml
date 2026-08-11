@@ -1,4 +1,4 @@
-<!DOCTYPE html> otro 2
+<!DOCTYPE html> otro 23
 <html lang="es">
 <head>
   <meta charset="UTF-8">
@@ -577,9 +577,8 @@
         btnGuardar.textContent = '💾 Guardar Negocio';
         return;
       }
-      console.log('📤 Guardando via POST (iframe)...');
-console.log('🖼️ Fotos a enviar:', datos.fotos.map(f => ({ descripcion: f.descripcion, largoUrl: f.url ? f.url.length : 0 })));
-      showLoading();
+console.log('📤 Guardando via POST (iframe)...');
+console.log('🖼️ Fotos a enviar:', JSON.stringify(datos.fotos.map(f => ({ descripcion: f.descripcion, largoUrl: f.url ? f.url.length : 0, empieza: f.url ? f.url.substring(0,30) : '(vacío)' }))));      showLoading();
       
       try {
         const action = editId ? 'editarNegocio' : 'agregarNegocio';
