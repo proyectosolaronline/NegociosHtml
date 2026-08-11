@@ -739,9 +739,8 @@
     // ============================================================
     function construirLandingHTML(n) {
       const fotos = (n.fotos || []).filter(f => f && f.url);
-      const fotoHero = fotos[0] ? fotos[0].url : '';
-      const whatsappDigits = (n.whatsapp || '').replace(/\D/g, '');
-      const telDigits = (n.telefono || '').replace(/\D/g, '');
+      const fotoHero = fotos[0] ? fotos[0].url : '';const whatsappDigits = String(n.whatsapp || '').replace(/\D/g, '');
+const telDigits = String(n.telefono || '').replace(/\D/g, '');
       const tieneMapa = n.latitud && n.longitud;
 
       const galeriaHTML = fotos.length ? `
