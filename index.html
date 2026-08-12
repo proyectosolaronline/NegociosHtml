@@ -931,7 +931,37 @@ function construirLandingHTML(n) {
 
   const fotosJS = JSON.stringify(fotos.map(f => ({ url: f.url, descripcion: f.descripcion || '' })));
 
-  return `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>${n.nombre||'Negocio'}</title><style>
+return `<!DOCTYPE html><html lang="es"><head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${n.nombre||'Negocio'}</title>
+  
+  <!-- SEO -->
+  <meta name="description" content="${(n.descripcion||'Descubre ' + (n.nombre||'este negocio') + ' y sus servicios. Visítanos y conoce más.')}">
+  <meta name="keywords" content="${(n.nombre||'negocio')}, ${(n.slogan||'')}, servicios, local, ${(n.direccion||'').split(' ').slice(0,3).join(' ')}">
+  <meta name="author" content="${n.nombre||''}">
+  <meta name="robots" content="index, follow">
+  <meta name="googlebot" content="index, follow">
+  
+  <!-- Open Graph -->
+  <meta property="og:title" content="${n.nombre||'Negocio'}">
+  <meta property="og:description" content="${(n.descripcion||'Descubre ' + (n.nombre||'este negocio') + ' y sus servicios.')}">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="${window.location.href}">
+  <meta property="og:image" content="${fotos.length > 0 ? fotos[0].url : (n.logo || '')}">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="${n.nombre||'Negocio'}">
+  <meta name="twitter:description" content="${(n.descripcion||'Descubre ' + (n.nombre||'este negocio') + ' y sus servicios.')}">
+  <meta name="twitter:image" content="${fotos.length > 0 ? fotos[0].url : (n.logo || '')}">
+  
+  <!-- Theme -->
+  <meta name="theme-color" content="#667eea">
+  
+  <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:'Segoe UI',system-ui,sans-serif;color:#333;background:#f0f2f5;line-height:1.6;padding:20px}
 .l-wrap{max-width:640px;margin:0 auto;background:white;border-radius:20px;overflow:hidden;box-shadow:0 10px 40px rgba(0,0,0,0.1)}
