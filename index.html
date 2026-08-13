@@ -937,8 +937,35 @@ function construirLandingHTML(n) {
 
   const fotosJS = JSON.stringify(fotos.map(f => ({ url: f.url, descripcion: f.descripcion || '' })));
 
-  return `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>${n.nombre||'Negocio'}</title><style>
-*{margin:0;padding:0;box-sizing:border-box}
+return `<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+
+<!-- ============================================ -->
+<!-- META TAGS PARA GOOGLE                       -->
+<!-- ============================================ -->
+<title>${n.nombre||'Negocio'} | ${n.slogan||'Tu mejor opción'}</title>
+<meta name="description" content="${(n.descripcion||n.nombre||'Negocio').substring(0, 155)}">
+<meta name="keywords" content="${n.nombre||'negocio'}, ${n.ubicacion||'local'}, ${n.direccion||'dirección'}, ${n.telefono||'contacto'}">
+<meta name="robots" content="index, follow">
+<meta name="googlebot" content="index, follow">
+<meta http-equiv="content-language" content="es">
+
+<!-- Open Graph para Facebook/WhatsApp -->
+<meta property="og:title" content="${n.nombre||'Negocio'}">
+<meta property="og:description" content="${(n.descripcion||n.slogan||'').substring(0, 155)}">
+<meta property="og:type" content="website">
+${n.banner?`<meta property="og:image" content="${n.banner}">`:''}
+
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="${n.nombre||'Negocio'}">
+<meta name="twitter:description" content="${(n.descripcion||n.slogan||'').substring(0, 155)}">
+${n.banner?`<meta name="twitter:image" content="${n.banner}">`:''}
+
+<style>*{margin:0;padding:0;box-sizing:border-box}
 body{font-family:'Segoe UI',system-ui,sans-serif;color:#333;background:#f0f2f5;line-height:1.6;padding:20px}
 .l-wrap{max-width:640px;margin:0 auto;background:white;border-radius:20px;overflow:hidden;box-shadow:0 10px 40px rgba(0,0,0,0.1)}
 .l-banner-wrap{padding:24px 24px 0}
