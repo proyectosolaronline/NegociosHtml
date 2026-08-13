@@ -603,14 +603,31 @@
                 }
             };
             
-            function abrirWhatsApp() {
-                const adminWA = document.getElementById('admin-whatsapp').value || ADMIN_WHATSAPP;
-                const mensaje = '✅ *Datos de mi negocio para Landing Page:*%0A%0A```%0A' + encodeURIComponent(datosGenerados) + '%0A```%0A%0A_Enviado desde el formulario de configuración_';
-                const urlWA = 'https://wa.me/' + adminWA + '?text=' + mensaje;
-                window.open(urlWA, '_blank');
-                mostrarToast('📱 Abriendo WhatsApp...');
-            }
-            
+          function abrirWhatsApp() {
+    // Crear objeto JSON con los datos
+    const datosJSON = {
+        nombre: document.getElementById('nombre').value.trim(),
+        eslogan: document.getElementById('eslogan').value.trim(),
+        descripcion: document.getElementById('descripcion').value.trim(),
+        direccion: document.getElementById('direccion').value.trim(),
+        telefono: document.getElementById('telefono').value.trim(),
+        whatsapp: document.getElementById('whatsapp').value.trim(),
+        email: document.getElementById('email').value.trim(),
+        facebook: document.getElementById('facebook').value.trim() || '',
+        horarios: document.getElementById('horarios').value.trim()
+    };
+    
+    // URL de tu panel con los datos
+    const PANEL_URL = 'https://TU-URL-DEL-PANEL.com/index.html';
+    const urlConDatos = PANEL_URL + '?datos=' + encodeURIComponent(JSON.stringify(datosJSON));
+    
+    const adminWA = document.getElementById('admin-whatsapp').value || ADMIN_WHATSAPP;
+    const mensaje = '✅ *Datos recibidos:*%0A%0A🔗 *Abrir en el panel:*%0A' + encodeURIComponent(urlConDatos);
+    
+    const urlWA = 'https://wa.me/' + adminWA + '?text=' + mensaje;
+    window.open(urlWA, '_blank');
+    mostrarToast('📱 Abriendo WhatsApp...');
+}
             // ============================================
             // TOAST
             // ============================================
