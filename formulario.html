@@ -7,23 +7,23 @@
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
         :root {
-            --primary: #2563eb;
-            --primary-hover: #1d4ed8;
-            --primary-light: #dbeafe;
-            --success: #16a34a;
-            --success-light: #dcfce7;
+            --primary: #667eea;
+            --primary-hover: #5a67d8;
+            --primary-light: #eef2ff;
+            --success: #28a745;
+            --success-light: #d4edda;
             --warning: #f59e0b;
             --warning-light: #fef3c7;
-            --danger: #dc2626;
-            --danger-light: #fef2f2;
-            --bg: #f8fafc;
+            --danger: #dc3545;
+            --danger-light: #f8d7da;
+            --bg: #f0f2f5;
             --card-bg: #ffffff;
-            --text: #1e293b;
-            --text-secondary: #64748b;
-            --border: #e2e8f0;
-            --border-focus: #2563eb;
-            --shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -2px rgba(0,0,0,0.1);
-            --shadow-lg: 0 20px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1);
+            --text: #333;
+            --text-secondary: #666;
+            --border: #e0e0e0;
+            --border-focus: #667eea;
+            --shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+            --shadow-lg: 0 20px 40px rgba(0,0,0,0.15);
             --radius: 16px;
             --radius-sm: 10px;
             --transition: 0.2s ease;
@@ -32,7 +32,7 @@
 
         body {
             font-family: 'Inter', sans-serif;
-            background: linear-gradient(135deg, #eff6ff 0%, #f0f9ff 50%, #ecfdf5 100%);
+            background: linear-gradient(135deg, #eef2ff 0%, #f0f9ff 50%, #ecfdf5 100%);
             color: var(--text);
             min-height: 100vh;
             display: flex;
@@ -42,27 +42,7 @@
             -webkit-tap-highlight-color: transparent;
         }
 
-        body::before {
-            content: '';
-            position: fixed;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(circle at 30% 50%, rgba(37,99,235,0.03) 0%, transparent 50%),
-                        radial-gradient(circle at 70% 20%, rgba(22,163,74,0.03) 0%, transparent 50%);
-            z-index: 0;
-            animation: bgFloat 20s ease-in-out infinite;
-        }
-        @keyframes bgFloat {
-            0%, 100% { transform: translate(0, 0) rotate(0deg); }
-            33% { transform: translate(1%, -1%) rotate(1deg); }
-            66% { transform: translate(-1%, 1%) rotate(-1deg); }
-        }
-
         .container {
-            position: relative;
-            z-index: 1;
             background: var(--card-bg);
             border-radius: 24px;
             padding: 36px 28px 32px;
@@ -70,6 +50,7 @@
             width: 100%;
             box-shadow: var(--shadow-lg);
             border: 1px solid var(--border);
+            position: relative;
         }
 
         .header {
@@ -82,11 +63,11 @@
             justify-content: center;
             width: 64px;
             height: 64px;
-            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            background: linear-gradient(135deg, #667eea, #764ba2);
             border-radius: 20px;
             font-size: 32px;
             margin-bottom: 16px;
-            box-shadow: 0 8px 24px rgba(37,99,235,0.25);
+            box-shadow: 0 8px 24px rgba(102,126,234,0.35);
         }
         .header h1 {
             font-family: 'Outfit', sans-serif;
@@ -96,7 +77,7 @@
             margin-bottom: 6px;
         }
         .header h1 span {
-            background: linear-gradient(135deg, #2563eb, #16a34a);
+            background: linear-gradient(135deg, #667eea, #28a745);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
@@ -113,7 +94,7 @@
             justify-content: center;
             gap: 10px;
             background: var(--primary-light);
-            border: 1px solid #bfdbfe;
+            border: 1px solid #c7d2fe;
             border-radius: 50px;
             padding: 12px 20px;
             margin-bottom: 24px;
@@ -197,7 +178,7 @@
             outline: none;
             border-color: var(--border-focus);
             background: #fff;
-            box-shadow: 0 0 0 4px rgba(37,99,235,0.08);
+            box-shadow: 0 0 0 4px rgba(102,126,234,0.1);
         }
         .form-group input::placeholder,
         .form-group textarea::placeholder { color: #cbd5e1; }
@@ -224,7 +205,7 @@
             gap: 10px;
             width: 100%;
             padding: 16px;
-            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            background: linear-gradient(135deg, #667eea, #764ba2);
             color: #fff;
             border: none;
             border-radius: 50px;
@@ -233,19 +214,19 @@
             font-weight: 700;
             cursor: pointer;
             letter-spacing: 0.3px;
-            box-shadow: 0 4px 16px rgba(37,99,235,0.3);
+            box-shadow: 0 4px 16px rgba(102,126,234,0.35);
             transition: all var(--transition);
             margin-top: 8px;
             -webkit-tap-highlight-color: transparent;
         }
         .btn-submit:hover {
-            background: linear-gradient(135deg, #1d4ed8, #1e40af);
-            box-shadow: 0 6px 20px rgba(37,99,235,0.4);
+            background: linear-gradient(135deg, #5a67d8, #6b46c1);
+            box-shadow: 0 6px 20px rgba(102,126,234,0.45);
             transform: translateY(-1px);
         }
         .btn-submit:active {
             transform: scale(0.98);
-            box-shadow: 0 2px 8px rgba(37,99,235,0.3);
+            box-shadow: 0 2px 8px rgba(102,126,234,0.3);
         }
         .btn-submit:disabled {
             background: #cbd5e1;
@@ -300,7 +281,6 @@
             color: #94a3b8;
             margin-top: 20px;
         }
-        .footer-note a { color: var(--primary); text-decoration: none; font-weight: 600; }
 
         .overlay-expired {
             display: none;
@@ -453,7 +433,7 @@
         </div>
 
         <p class="footer-note">
-            Tus datos se procesan de forma segura. Powered by <a href="#" onclick="return false;">LandingPro</a>
+            Tus datos se procesan de forma segura. Powered by LandingPro
         </p>
     </div>
 
@@ -461,28 +441,40 @@
 
     <script>
         (function() {
-            const ADMIN_WHATSAPP = '646269506';
+            // ============================================
+            // CONFIGURACIÓN - CAMBIA ESTOS VALORES
+            // ============================================
+            const ADMIN_WHATSAPP = '646269506'; // ← TU NÚMERO DE WHATSAPP
             const FORM_URL = window.location.href;
+            
             document.getElementById('admin-whatsapp').value = ADMIN_WHATSAPP;
             document.getElementById('form-url').value = FORM_URL;
+            
+            // ============================================
+            // TEMPORIZADOR (2 HORAS)
+            // ============================================
             const DURACION_MS = 2 * 60 * 60 * 1000;
             let startTime = localStorage.getItem('form_start_time');
             const now = Date.now();
+            
             if (!startTime || (now - parseInt(startTime)) > DURACION_MS) {
                 startTime = now;
                 localStorage.setItem('form_start_time', startTime);
             } else {
                 startTime = parseInt(startTime);
             }
+            
             const endTime = startTime + DURACION_MS;
             const timerBox = document.getElementById('timer-box');
             const timerText = document.getElementById('timer-text');
             const overlayExpired = document.getElementById('overlay-expired');
             const btnSubmit = document.getElementById('btn-submit');
             let timerInterval;
+            
             function actualizarTimer() {
                 const ahora = Date.now();
                 const restante = endTime - ahora;
+                
                 if (restante <= 0) {
                     clearInterval(timerInterval);
                     timerText.textContent = '00:00:00';
@@ -494,78 +486,134 @@
                     localStorage.removeItem('form_start_time');
                     return;
                 }
+                
                 const hrs = Math.floor(restante / 3600000);
                 const mins = Math.floor((restante % 3600000) / 60000);
                 const segs = Math.floor((restante % 60000) / 1000);
                 timerText.textContent = String(hrs).padStart(2, '0') + ':' + String(mins).padStart(2, '0') + ':' + String(segs).padStart(2, '0');
+                
                 if (restante < 30 * 60 * 1000 && restante > 0) {
                     timerBox.classList.add('warning');
                     timerBox.querySelector('.timer-icon').textContent = '⚠️';
                 }
             }
+            
             function deshabilitarCampos(disabled) {
                 const campos = document.querySelectorAll('#client-form input:not([type="hidden"]), #client-form textarea');
                 campos.forEach(c => c.disabled = disabled);
             }
+            
             actualizarTimer();
             timerInterval = setInterval(actualizarTimer, 1000);
+            
+            // ============================================
+            // VALIDACIÓN DEL FORMULARIO
+            // ============================================
             const form = document.getElementById('client-form');
             const resultBox = document.getElementById('result-box');
             let datosGenerados = '';
+            
             const camposRequeridos = form.querySelectorAll('[required]');
             camposRequeridos.forEach(campo => {
-                campo.addEventListener('input', () => { if (campo.value.trim()) campo.classList.remove('error'); });
-                campo.addEventListener('blur', () => { if (!campo.value.trim()) campo.classList.add('error'); else campo.classList.remove('error'); });
+                campo.addEventListener('input', () => { 
+                    if (campo.value.trim()) campo.classList.remove('error'); 
+                });
+                campo.addEventListener('blur', () => { 
+                    if (!campo.value.trim()) campo.classList.add('error'); 
+                    else campo.classList.remove('error'); 
+                });
             });
+            
             form.addEventListener('submit', function(e) {
                 e.preventDefault();
-                if (Date.now() > endTime) { mostrarToast('⛔ El enlace ha expirado. Solicita uno nuevo.'); return; }
+                
+                if (Date.now() > endTime) { 
+                    mostrarToast('⛔ El enlace ha expirado. Solicita uno nuevo.'); 
+                    return; 
+                }
+                
                 let valido = true;
                 const campos = [
-                    { id: 'nombre' }, { id: 'eslogan' }, { id: 'descripcion' }, { id: 'direccion' },
-                    { id: 'telefono' }, { id: 'whatsapp' }, { id: 'email' }, { id: 'horarios' }
+                    { id: 'nombre' }, { id: 'eslogan' }, { id: 'descripcion' }, 
+                    { id: 'direccion' }, { id: 'telefono' }, { id: 'whatsapp' }, 
+                    { id: 'email' }, { id: 'horarios' }
                 ];
+                
                 campos.forEach(c => {
                     const input = document.getElementById(c.id);
-                    if (!input.value.trim()) { input.classList.add('error'); valido = false; }
-                    else { input.classList.remove('error'); }
+                    if (!input.value.trim()) { 
+                        input.classList.add('error'); 
+                        valido = false; 
+                    } else { 
+                        input.classList.remove('error'); 
+                    }
                 });
+                
                 if (!valido) {
                     mostrarToast('⚠️ Completa todos los campos obligatorios');
                     const primerError = form.querySelector('.error');
                     if (primerError) primerError.scrollIntoView({ behavior: 'smooth', block: 'center' });
                     return;
                 }
+                
                 const facebookVal = document.getElementById('facebook').value.trim() || 'null';
-                datosGenerados =
+                
+                // ============================================
+                // GENERAR DATOS EN FORMATO COMPATIBLE CON TU SISTEMA
+                // ============================================
+                datosGenerados = 
+                    'USUARIO: ' + document.getElementById('nombre').value.trim().toLowerCase().replace(/\s+/g, '_') + '\n' +
+                    'PASSWORD: ' + Math.random().toString(36).substring(2, 10) + '\n' +
                     'NOMBRE: ' + document.getElementById('nombre').value.trim() + '\n' +
-                    'ESLOGAN: ' + document.getElementById('eslogan').value.trim() + '\n' +
+                    'SLOGAN: ' + document.getElementById('eslogan').value.trim() + '\n' +
                     'DESCRIPCION: ' + document.getElementById('descripcion').value.trim() + '\n' +
+                    'UBICACION: ' + document.getElementById('direccion').value.trim() + '\n' +
                     'DIRECCION: ' + document.getElementById('direccion').value.trim() + '\n' +
+                    'LATITUD: pendiente_por_confirmar\n' +
+                    'LONGITUD: pendiente_por_confirmar\n' +
                     'TELEFONO: ' + document.getElementById('telefono').value.trim() + '\n' +
                     'WHATSAPP: ' + document.getElementById('whatsapp').value.trim() + '\n' +
-                    'EMAIL: ' + document.getElementById('email').value.trim() + '\n' +
-                    'FACEBOOK: ' + facebookVal + '\n' +
-                    'HORARIOS: ' + document.getElementById('horarios').value.trim();
+                    'CORREO: ' + document.getElementById('email').value.trim() + '\n' +
+                    'HORARIO: ' + document.getElementById('horarios').value.trim() + '\n' +
+                    'ROL: Usuario\n' +
+                    'URLFACEBOOK: ' + facebookVal + '\n' +
+                    'ACTIVO: true';
+                
                 resultBox.style.display = 'block';
                 resultBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 btnSubmit.disabled = true;
                 btnSubmit.textContent = '✅ Datos Generados';
                 mostrarToast('✅ ¡Datos listos! Revisa y envía por WhatsApp');
             });
+            
+            // ============================================
+            // COPIAR Y ENVIAR POR WHATSAPP
+            // ============================================
             window.copiarYEnviar = function() {
                 if (!datosGenerados) return;
+                
                 if (navigator.clipboard && navigator.clipboard.writeText) {
-                    navigator.clipboard.writeText(datosGenerados).then(() => { abrirWhatsApp(); }).catch(() => { abrirWhatsApp(); });
-                } else { abrirWhatsApp(); }
+                    navigator.clipboard.writeText(datosGenerados).then(() => { 
+                        abrirWhatsApp(); 
+                    }).catch(() => { 
+                        abrirWhatsApp(); 
+                    });
+                } else { 
+                    abrirWhatsApp(); 
+                }
             };
+            
             function abrirWhatsApp() {
                 const adminWA = document.getElementById('admin-whatsapp').value || ADMIN_WHATSAPP;
-                const mensaje = '✅ *Datos de mi negocio para Landing Page:*%0A%0A```%0A' + encodeURIComponent(datosGenerados).replace(/%0A/g, '%0A') + '%0A```%0A%0A_Enviado desde el formulario de configuración_';
+                const mensaje = '✅ *Datos de mi negocio para Landing Page:*%0A%0A```%0A' + encodeURIComponent(datosGenerados) + '%0A```%0A%0A_Enviado desde el formulario de configuración_';
                 const urlWA = 'https://wa.me/' + adminWA + '?text=' + mensaje;
                 window.open(urlWA, '_blank');
                 mostrarToast('📱 Abriendo WhatsApp...');
             }
+            
+            // ============================================
+            // TOAST
+            // ============================================
             let toastTimeout;
             function mostrarToast(mensaje) {
                 const toast = document.getElementById('toast');
@@ -574,7 +622,7 @@
                 clearTimeout(toastTimeout);
                 toastTimeout = setTimeout(() => { toast.classList.remove('show'); }, 3000);
             }
-            window.addEventListener('beforeunload', () => {});
+            
             console.log('🚀 Formulario de Landing Page listo');
             console.log('⏳ Expira en:', new Date(endTime).toLocaleString());
             console.log('📱 WhatsApp admin:', ADMIN_WHATSAPP);
