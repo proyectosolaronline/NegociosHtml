@@ -383,7 +383,7 @@
 
         <div class="reminder">
             <span class="reminder-icon">💡</span>
-            <span>Oye Para ofrecerte el <strong>mejor servicio</strong> y que tu página quede exactamente como la imaginas, te pedimos completar todos los campos. ¡Tu presencia online lo merece!</span>
+            <span>Oye ver 1 Para ofrecerte el <strong>mejor servicio</strong> y que tu página quede exactamente como la imaginas, te pedimos completar todos los campos. ¡Tu presencia online lo merece!</span>
         </div>
 
         <form id="client-form" novalidate>
@@ -503,8 +503,11 @@
             
             document.getElementById('admin-whatsapp').value = ADMIN_WHATSAPP;
             document.getElementById('form-url').value = FORM_URL;
-            // ============================================================
+            /////////////
+
+// ============================================================
 // MAPA - BLOQUE MEJORADO COMPLETO (VERSIÓN FORMULARIO)
+// CON LA MISMA LÓGICA DEL ADMIN - CON POPUP, CONFIRMAR Y REGRESAR
 // ============================================================
 let map = null;
 let marker = null;
@@ -616,19 +619,71 @@ function inicializarMapa() {
 function colocarMarcador(lat, lng) {
   if (marker) map.removeLayer(marker);
   
+  var direccion = document.getElementById('direccion').value || 'Obteniendo dirección...';
+  var popupContent = `
+    <div style="text-align:center;padding:5px;">
+      <strong>📍 Ubicación seleccionada</strong><br>
+      <span style="font-size:12px;color:#666;">${direccion}</span><br>
+      <span style="font-size:11px;color:#999;">${lat.toFixed(6)}, ${lng.toFixed(6)}</span><br>
+      <button onclick="confirmarUbicacion()" style="margin-top:8px;padding:6px 16px;background:#28a745;color:white;border:none;border-radius:6px;cursor:pointer;font-weight:600;">
+        ✅ Confirmar
+      </button>
+      <button onclick="regresarUbicacion()" style="margin-top:8px;margin-left:6px;padding:6px 16px;background:#6c757d;color:white;border:none;border-radius:6px;cursor:pointer;font-weight:600;">
+        ✖ Regresar
+      </button>
+    </div>
+  `;
+  
   marker = L.marker([lat, lng], { draggable: true })
     .addTo(map)
-    .bindPopup('📍 Ubicación seleccionada')
+    .bindPopup(popupContent, { maxWidth: 280 })
     .openPopup();
   
   // Arrastre del marcador
   marker.on('dragend', function() {
     var pos = marker.getLatLng();
     actualizarCamposUbicacion(pos.lat, pos.lng);
+    
+    setTimeout(function() {
+      var nuevaDir = document.getElementById('direccion').value || 'Dirección actualizada';
+      marker.setPopupContent(`
+        <div style="text-align:center;padding:5px;">
+          <strong>📍 Ubicación seleccionada</strong><br>
+          <span style="font-size:12px;color:#666;">${nuevaDir}</span><br>
+          <span style="font-size:11px;color:#999;">${pos.lat.toFixed(6)}, ${pos.lng.toFixed(6)}</span><br>
+          <button onclick="confirmarUbicacion()" style="margin-top:8px;padding:6px 16px;background:#28a745;color:white;border:none;border-radius:6px;cursor:pointer;font-weight:600;">
+            ✅ Confirmar
+          </button>
+          <button onclick="regresarUbicacion()" style="margin-top:8px;margin-left:6px;padding:6px 16px;background:#6c757d;color:white;border:none;border-radius:6px;cursor:pointer;font-weight:600;">
+            ✖ Regresar
+          </button>
+        </div>
+      `);
+      marker.openPopup();
+    }, 500);
   });
   
   actualizarCamposUbicacion(lat, lng);
-  map.setView([lat, lng], 15);
+  
+  setTimeout(function() {
+    var nuevaDir = document.getElementById('direccion').value;
+    if (nuevaDir) {
+      marker.setPopupContent(`
+        <div style="text-align:center;padding:5px;">
+          <strong>📍 Ubicación seleccionada</strong><br>
+          <span style="font-size:12px;color:#666;">${nuevaDir}</span><br>
+          <span style="font-size:11px;color:#999;">${lat.toFixed(6)}, ${lng.toFixed(6)}</span><br>
+          <button onclick="confirmarUbicacion()" style="margin-top:8px;padding:6px 16px;background:#28a745;color:white;border:none;border-radius:6px;cursor:pointer;font-weight:600;">
+            ✅ Confirmar
+          </button>
+          <button onclick="regresarUbicacion()" style="margin-top:8px;margin-left:6px;padding:6px 16px;background:#6c757d;color:white;border:none;border-radius:6px;cursor:pointer;font-weight:600;">
+            ✖ Regresar
+          </button>
+        </div>
+      `);
+      marker.openPopup();
+    }
+  }, 800);
 }
 
 function actualizarCamposUbicacion(lat, lng) {
@@ -712,6 +767,42 @@ function abrirMapaPantallaCompleta() {
   }
 }
 
+// ✅ CONFIRMAR: Cierra popup, guarda en caché, NO mueve el marcador
+function confirmarUbicacion() {
+  // Guardar en caché
+  window.ubicacionConfirmada = {
+    lat: document.getElementById('latitud').value,
+    lng: document.getElementById('longitud').value,
+    direccion: document.getElementById('direccion').value
+  };
+  
+  // Cerrar popup
+  if (marker) {
+    marker.closePopup();
+  }
+  
+  mostrarToast('✅ Ubicación confirmada y guardada');
+  
+  // Cerrar pantalla completa si está abierta
+  if (document.fullscreenElement) {
+    document.exitFullscreen();
+  }
+}
+
+// ✅ REGRESAR: Cierra popup, conserva los datos
+function regresarUbicacion() {
+  if (marker) {
+    marker.closePopup();
+  }
+  mostrarToast('📍 Datos de ubicación conservados');
+  
+  // Cerrar pantalla completa si está abierta
+  if (document.fullscreenElement) {
+    document.exitFullscreen();
+  }
+}
+            
+            ////////////
 function mostrarToast(mensaje) {
   const toast = document.getElementById('toast');
   if (!toast) return;
