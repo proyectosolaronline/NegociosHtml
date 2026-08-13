@@ -635,7 +635,7 @@ function colocarMarcador(lat, lng) {
       <button onclick="confirmarUbicacion()" style="margin-top:8px;padding:6px 16px;background:#667eea;color:white;border:none;border-radius:6px;cursor:pointer;font-weight:600;">
         ✅ Confirmar
       </button>
-      <button onclick="cerrarPopupUbicacion()" style="margin-top:8px;margin-left:6px;padding:6px 16px;background:#dc3545;color:white;border:none;border-radius:6px;cursor:pointer;font-weight:600;">
+      <button onclick="regresarUbicacion()" style="margin-top:8px;margin-left:6px;padding:6px 16px;background:#6c757d;color:white;border:none;border-radius:6px;cursor:pointer;font-weight:600;">
         ✖ Regresar
       </button>
     </div>
@@ -669,7 +669,7 @@ function colocarMarcador(lat, lng) {
           <button onclick="confirmarUbicacion()" style="margin-top:8px;padding:6px 16px;background:#667eea;color:white;border:none;border-radius:6px;cursor:pointer;font-weight:600;">
             ✅ Confirmar
           </button>
-          <button onclick="cerrarPopupUbicacion()" style="margin-top:8px;margin-left:6px;padding:6px 16px;background:#dc3545;color:white;border:none;border-radius:6px;cursor:pointer;font-weight:600;">
+          <button onclick="regresarUbicacion()" style="margin-top:8px;margin-left:6px;padding:6px 16px;background:#6c757d;color:white;border:none;border-radius:6px;cursor:pointer;font-weight:600;">
             ✖ Regresar
           </button>
         </div>
@@ -697,7 +697,7 @@ function colocarMarcador(lat, lng) {
           <button onclick="confirmarUbicacion()" style="margin-top:8px;padding:6px 16px;background:#667eea;color:white;border:none;border-radius:6px;cursor:pointer;font-weight:600;">
             ✅ Confirmar
           </button>
-          <button onclick="cerrarPopupUbicacion()" style="margin-top:8px;margin-left:6px;padding:6px 16px;background:#dc3545;color:white;border:none;border-radius:6px;cursor:pointer;font-weight:600;">
+          <button onclick="regresarUbicacion()" style="margin-top:8px;margin-left:6px;padding:6px 16px;background:#6c757d;color:white;border:none;border-radius:6px;cursor:pointer;font-weight:600;">
             ✖ Regresar
           </button>
         </div>
@@ -707,23 +707,45 @@ function colocarMarcador(lat, lng) {
   }, 800);
 }
 
-// Función para confirmar ubicación (mantiene los datos)
+// Función para confirmar ubicación (guarda datos y cambia texto)
 function confirmarUbicacion() {
-  showToast('✅ Ubicación confirmada', 'success');
-  // Cierra el popup pero mantiene los datos
+  // Los datos ya están en los campos (latitud, longitud, direccion)
+  showToast('✅ Ubicación confirmada y guardada', 'success');
+  
+  // Cambiar el texto del popup a "Ubicación lista"
   if (marker) {
-    marker.closePopup();
+    var lat = document.getElementById('latitud').value;
+    var lng = document.getElementById('longitud').value;
+    var direccion = document.getElementById('direccion').value || 'Ubicación seleccionada';
+    
+    marker.setPopupContent(`
+      <div style="text-align:center;padding:5px;">
+        <strong>✅ Ubicación lista</strong><br>
+        <span style="font-size:12px;color:#666;">${direccion}</span><br>
+        <span style="font-size:11px;color:#999;">${lat}, ${lng}</span><br>
+        <button onclick="regresarUbicacion()" style="margin-top:8px;padding:6px 16px;background:#6c757d;color:white;border:none;border-radius:6px;cursor:pointer;font-weight:600;">
+          ✖ Regresar
+        </button>
+      </div>
+    `);
+    marker.openPopup();
   }
+  
+  // Guardar en caché (variable global)
+  window.ubicacionConfirmada = {
+    lat: document.getElementById('latitud').value,
+    lng: document.getElementById('longitud').value,
+    direccion: document.getElementById('direccion').value
+  };
 }
 
-// Función para cerrar el popup (regresa pero mantiene los datos)
-function cerrarPopupUbicacion() {
+// Función para regresar (conserva los datos)
+function regresarUbicacion() {
   if (marker) {
     marker.closePopup();
   }
-  showToast('📍 Ubicación guardada', 'success');
-  // Los datos de latitud, longitud y dirección ya están en los campos
-  // No se borran, se mantienen
+  showToast('📍 Datos de ubicación conservados', 'success');
+  // Los datos ya están en los campos, no se borran
 }
 
 async function obtenerDireccionInversa(lat, lng) {
@@ -750,11 +772,6 @@ function setUbicacionEnMapa(lat, lng) {
   colocarMarcador(parseFloat(lat), parseFloat(lng));
 }
 // ============================================================
-
-  
-  
-
-  
   // FOTOS
 // ============================================================
 function generarSlotsFotos() {
