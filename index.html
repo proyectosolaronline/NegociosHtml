@@ -518,6 +518,9 @@ function renderizarLista() {
 
 function filtrarNegocios() { renderizarLista(); }
 
+
+  
+  
   // ============================================================
 // MAPA
 // ============================================================
@@ -582,6 +585,27 @@ function inicializarMapa() {
     }
   });
   map.addControl(new gpsControl());
+  
+  // PASO 7: Botón de pantalla completa
+  var fullscreenControl = L.Control.extend({
+    options: { position: 'topright' },
+    onAdd: function(map) {
+      var container = L.DomUtil.create('div', 'leaflet-bar leaflet-control');
+      container.innerHTML = '<button style="width:34px;height:34px;border:none;background:white;cursor:pointer;font-size:18px;border-radius:4px;box-shadow:0 1px 5px rgba(0,0,0,0.65);" title="Pantalla completa">⛶</button>';
+      container.onclick = function() {
+        var mapContainer = document.getElementById('map');
+        if (!document.fullscreenElement) {
+          mapContainer.requestFullscreen().catch(function(err) {
+            showToast('⚠️ No se pudo abrir pantalla completa', 'error');
+          });
+        } else {
+          document.exitFullscreen();
+        }
+      };
+      return container;
+    }
+  });
+  map.addControl(new fullscreenControl());
   
   // PASO 5: Marcador arrastrable
   // Geolocalización automática
@@ -648,7 +672,7 @@ function setUbicacionEnMapa(lat, lng) {
   colocarMarcador(parseFloat(lat), parseFloat(lng));
 }
 // ============================================================
-// FOTOS
+  // FOTOS
 // ============================================================
 function generarSlotsFotos() {
   const grid = document.getElementById('fotosGrid');
