@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configura tu Página Web | Landing Page Profesional</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --primary-light: #dbeafe;
+            --success: #16a34a;
+            --success-light: #dcfce7;
+            --warning: #f59e0b;
+            --warning-light: #fef3c7;
+            --danger: #dc2626;
+            --danger-light: #fef2f2;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text: #1e293b;
+            --text-secondary: #64748b;
+            --border: #e2e8f0;
+            --border-focus: #2563eb;
+            --shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -2px rgba(0,0,0,0.1);
+            --shadow-lg: 0 20px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1);
+            --radius: 16px;
+            --radius-sm: 10px;
+            --transition: 0.2s ease;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #eff6ff 0%, #f0f9ff 50%, #ecfdf5 100%);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle at 30% 50%, rgba(37,99,235,0.03) 0%, transparent 50%),
+                        radial-gradient(circle at 70% 20%, rgba(22,163,74,0.03) 0%, transparent 50%);
+            z-index: 0;
+            animation: bgFloat 20s ease-in-out infinite;
+        }
+        @keyframes bgFloat {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            33% { transform: translate(1%, -1%) rotate(1deg); }
+            66% { transform: translate(-1%, 1%) rotate(-1deg); }
+        }
+
+        .container {
+            position: relative;
+            z-index: 1;
+            background: var(--card-bg);
+            border-radius: 24px;
+            padding: 36px 28px 32px;
+            max-width: 540px;
+            width: 100%;
+            box-shadow: var(--shadow-lg);
+            border: 1px solid var(--border);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 28px;
+        }
+        .header-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 64px;
+            height: 64px;
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            border-radius: 20px;
+            font-size: 32px;
+            margin-bottom: 16px;
+            box-shadow: 0 8px 24px rgba(37,99,235,0.25);
+        }
+        .header h1 {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 800;
+            font-size: 24px;
+            letter-spacing: -0.5px;
+            margin-bottom: 6px;
+        }
+        .header h1 span {
+            background: linear-gradient(135deg, #2563eb, #16a34a);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .header .subtitle {
+            font-size: 14px;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .timer-box {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            background: var(--primary-light);
+            border: 1px solid #bfdbfe;
+            border-radius: 50px;
+            padding: 12px 20px;
+            margin-bottom: 24px;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 700;
+            font-size: 16px;
+            color: var(--primary);
+            transition: all var(--transition);
+        }
+        .timer-box.warning {
+            background: var(--warning-light);
+            border-color: #fde68a;
+            color: #b45309;
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+        .timer-box.expired {
+            background: var(--danger-light);
+            border-color: #fecaca;
+            color: var(--danger);
+            animation: none;
+        }
+        .timer-icon { font-size: 20px; }
+        .timer-text { font-variant-numeric: tabular-nums; }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.03); }
+        }
+
+        .reminder {
+            background: linear-gradient(135deg, #fff7ed, #fff1f2);
+            border: 1px solid #fed7aa;
+            border-radius: var(--radius-sm);
+            padding: 14px 16px;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            font-size: 13px;
+            color: #9a3412;
+            line-height: 1.5;
+        }
+        .reminder-icon { font-size: 20px; flex-shrink: 0; margin-top: 1px; }
+
+        .form-group { margin-bottom: 16px; }
+        .form-group label {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+        }
+        .form-group label .required { color: var(--danger); font-size: 14px; }
+        .form-group label .optional {
+            color: #94a3b8;
+            font-size: 10px;
+            font-weight: 500;
+            text-transform: none;
+            letter-spacing: 0;
+        }
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid var(--border);
+            border-radius: var(--radius-sm);
+            font-family: 'Inter', sans-serif;
+            font-size: 15px;
+            color: var(--text);
+            background: #f8fafc;
+            transition: all var(--transition);
+            resize: vertical;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--border-focus);
+            background: #fff;
+            box-shadow: 0 0 0 4px rgba(37,99,235,0.08);
+        }
+        .form-group input::placeholder,
+        .form-group textarea::placeholder { color: #cbd5e1; }
+        .form-group textarea { min-height: 90px; max-height: 150px; }
+        .form-group input.error,
+        .form-group textarea.error {
+            border-color: var(--danger);
+            background: #fff5f5;
+        }
+        .error-msg {
+            display: none;
+            font-size: 11px;
+            color: var(--danger);
+            margin-top: 4px;
+            font-weight: 500;
+        }
+        .form-group input.error + .error-msg,
+        .form-group textarea.error + .error-msg { display: block; }
+
+        .btn-submit {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            color: #fff;
+            border: none;
+            border-radius: 50px;
+            font-family: 'Outfit', sans-serif;
+            font-size: 17px;
+            font-weight: 700;
+            cursor: pointer;
+            letter-spacing: 0.3px;
+            box-shadow: 0 4px 16px rgba(37,99,235,0.3);
+            transition: all var(--transition);
+            margin-top: 8px;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .btn-submit:hover {
+            background: linear-gradient(135deg, #1d4ed8, #1e40af);
+            box-shadow: 0 6px 20px rgba(37,99,235,0.4);
+            transform: translateY(-1px);
+        }
+        .btn-submit:active {
+            transform: scale(0.98);
+            box-shadow: 0 2px 8px rgba(37,99,235,0.3);
+        }
+        .btn-submit:disabled {
+            background: #cbd5e1;
+            cursor: not-allowed;
+            box-shadow: none;
+            transform: none;
+        }
+        .btn-submit .btn-icon { font-size: 20px; }
+
+        .result-box {
+            display: none;
+            margin-top: 20px;
+            background: var(--success-light);
+            border: 2px solid #86efac;
+            border-radius: var(--radius);
+            padding: 20px;
+            text-align: center;
+            animation: slideUp 0.4s ease;
+        }
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .result-box h3 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 18px;
+            color: var(--success);
+            margin-bottom: 8px;
+        }
+        .result-box p { font-size: 13px; color: #4b5563; margin-bottom: 12px; }
+        .result-box .copy-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 10px 20px;
+            background: var(--success);
+            color: #fff;
+            border: none;
+            border-radius: 50px;
+            font-family: 'Outfit', sans-serif;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all var(--transition);
+        }
+        .result-box .copy-btn:hover { background: #15803d; }
+        .result-box .copy-btn:active { transform: scale(0.96); }
+
+        .footer-note {
+            text-align: center;
+            font-size: 11px;
+            color: #94a3b8;
+            margin-top: 20px;
+        }
+        .footer-note a { color: var(--primary); text-decoration: none; font-weight: 600; }
+
+        .overlay-expired {
+            display: none;
+            position: absolute;
+            inset: 0;
+            background: rgba(255,255,255,0.95);
+            border-radius: 24px;
+            z-index: 10;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+            text-align: center;
+        }
+        .overlay-expired.show { display: flex; }
+        .overlay-expired .expired-icon { font-size: 56px; margin-bottom: 16px; }
+        .overlay-expired h2 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 22px;
+            font-weight: 800;
+            margin-bottom: 8px;
+        }
+        .overlay-expired p { font-size: 14px; color: var(--text-secondary); line-height: 1.6; }
+
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            background: #1e293b;
+            color: #fff;
+            padding: 12px 24px;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 13px;
+            z-index: 9999;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+            opacity: 0;
+            transition: all 0.3s ease;
+            pointer-events: none;
+        }
+        .toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        @media (max-width: 480px) {
+            .container { padding: 24px 18px 22px; border-radius: 20px; }
+            .header h1 { font-size: 20px; }
+            .form-group input, .form-group textarea { font-size: 16px; padding: 12px 14px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container" id="main-container">
+        <div class="overlay-expired" id="overlay-expired">
+            <div class="expired-icon">⏰</div>
+            <h2>Enlace Expirado</h2>
+            <p>El tiempo de 2 horas para completar este formulario ha vencido.<br><br>Solicita un nuevo enlace a quien te lo envió para continuar con tu página web profesional.</p>
+        </div>
+
+        <div class="header">
+            <div class="header-icon">🚀</div>
+            <h1>Configura tu <span>Página Web</span></h1>
+            <p class="subtitle">Completa tus datos y recibe tu landing page profesional</p>
+        </div>
+
+        <div class="timer-box" id="timer-box">
+            <span class="timer-icon">⏳</span>
+            <span class="timer-text" id="timer-text">02:00:00</span>
+        </div>
+
+        <div class="reminder">
+            <span class="reminder-icon">💡</span>
+            <span>Para ofrecerte el <strong>mejor servicio</strong> y que tu página quede exactamente como la imaginas, te pedimos completar todos los campos. ¡Tu presencia online lo merece!</span>
+        </div>
+
+        <form id="client-form" novalidate>
+            <div class="form-group">
+                <label for="nombre">Nombre del Negocio <span class="required">*</span></label>
+                <input type="text" id="nombre" placeholder="Ej: Taquería El Sazón" required>
+                <span class="error-msg">Este campo es obligatorio</span>
+            </div>
+            <div class="form-group">
+                <label for="eslogan">Eslogan <span class="required">*</span></label>
+                <input type="text" id="eslogan" placeholder="Ej: El mejor sabor de la ciudad" required>
+                <span class="error-msg">Este campo es obligatorio</span>
+            </div>
+            <div class="form-group">
+                <label for="descripcion">Descripción <span class="required">*</span></label>
+                <textarea id="descripcion" placeholder="Describe tu negocio, qué ofreces, por qué elegirte..." required></textarea>
+                <span class="error-msg">Este campo es obligatorio</span>
+            </div>
+            <div class="form-group">
+                <label for="direccion">Dirección <span class="required">*</span></label>
+                <input type="text" id="direccion" placeholder="Ej: Av. Principal #123, Col. Centro" required>
+                <span class="error-msg">Este campo es obligatorio</span>
+            </div>
+            <div class="form-group">
+                <label for="telefono">Teléfono <span class="required">*</span></label>
+                <input type="tel" id="telefono" placeholder="Ej: 6461234567" required>
+                <span class="error-msg">Este campo es obligatorio</span>
+            </div>
+            <div class="form-group">
+                <label for="whatsapp">WhatsApp <span class="required">*</span></label>
+                <input type="tel" id="whatsapp" placeholder="Ej: 5216461234567" required>
+                <span class="error-msg">Este campo es obligatorio</span>
+            </div>
+            <div class="form-group">
+                <label for="email">Email <span class="required">*</span></label>
+                <input type="email" id="email" placeholder="Ej: contacto@tunegocio.com" required>
+                <span class="error-msg">Este campo es obligatorio</span>
+            </div>
+            <div class="form-group">
+                <label for="facebook">Facebook (URL) <span class="optional">— opcional</span></label>
+                <input type="url" id="facebook" placeholder="Ej: https://facebook.com/tu-pagina">
+            </div>
+            <div class="form-group">
+                <label for="horarios">Horarios <span class="required">*</span></label>
+                <input type="text" id="horarios" placeholder="Ej: Lun-Sáb 9:00-18:00, Dom 10:00-15:00" required>
+                <span class="error-msg">Este campo es obligatorio</span>
+            </div>
+            <input type="hidden" id="admin-whatsapp" value="">
+            <input type="hidden" id="form-url" value="">
+            <button type="submit" class="btn-submit" id="btn-submit">
+                <span class="btn-icon">✨</span> Generar y Enviar mis Datos
+            </button>
+        </form>
+
+        <!-- RECORDATORIO DE IMÁGENES -->
+        <div style="background:#fff7ed;border:2px solid #f97316;border-radius:16px;padding:20px;margin-top:20px;text-align:center;">
+            <h3 style="font-family:'Outfit',sans-serif;font-size:16px;color:#c2410c;margin-bottom:8px;">📸 ¡Importante! Envía tus imágenes por WhatsApp</h3>
+            <p style="font-size:13px;color:#4b5563;margin-bottom:12px;">Para que tu página quede completa y profesional, envíanos:</p>
+            <ul style="text-align:left;font-size:13px;color:#4b5563;display:inline-block;margin-bottom:16px;">
+                <li>🏷️ <strong>Logo</strong> de tu empresa</li>
+                <li>🖼️ <strong>Banner</strong> (imagen de portada principal)</li>
+                <li>⭐ <strong>Producto estrella #1</strong></li>
+                <li>📷 <strong>Producto #2</strong></li>
+                <li>📷 <strong>Producto #3</strong></li>
+                <li>📷 <strong>Producto #4</strong></li>
+            </ul>
+            <p style="font-size:12px;color:#f97316;font-weight:600;">💡 Envíalas directamente desde tu galería por WhatsApp.</p>
+        </div>
+
+        <div class="result-box" id="result-box">
+            <h3>✅ ¡Datos generados!</h3>
+            <p>Revisa que todo esté correcto. Se abrirá WhatsApp para enviarlos.</p>
+            <button class="copy-btn" onclick="copiarYEnviar()">📋 Copiar y Enviar por WhatsApp</button>
+        </div>
+
+        <p class="footer-note">
+            Tus datos se procesan de forma segura. Powered by <a href="#" onclick="return false;">LandingPro</a>
+        </p>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        (function() {
+            const ADMIN_WHATSAPP = '646269506';
+            const FORM_URL = window.location.href;
+            document.getElementById('admin-whatsapp').value = ADMIN_WHATSAPP;
+            document.getElementById('form-url').value = FORM_URL;
+            const DURACION_MS = 2 * 60 * 60 * 1000;
+            let startTime = localStorage.getItem('form_start_time');
+            const now = Date.now();
+            if (!startTime || (now - parseInt(startTime)) > DURACION_MS) {
+                startTime = now;
+                localStorage.setItem('form_start_time', startTime);
+            } else {
+                startTime = parseInt(startTime);
+            }
+            const endTime = startTime + DURACION_MS;
+            const timerBox = document.getElementById('timer-box');
+            const timerText = document.getElementById('timer-text');
+            const overlayExpired = document.getElementById('overlay-expired');
+            const btnSubmit = document.getElementById('btn-submit');
+            let timerInterval;
+            function actualizarTimer() {
+                const ahora = Date.now();
+                const restante = endTime - ahora;
+                if (restante <= 0) {
+                    clearInterval(timerInterval);
+                    timerText.textContent = '00:00:00';
+                    timerBox.classList.add('expired');
+                    timerBox.querySelector('.timer-icon').textContent = '⛔';
+                    overlayExpired.classList.add('show');
+                    btnSubmit.disabled = true;
+                    deshabilitarCampos(true);
+                    localStorage.removeItem('form_start_time');
+                    return;
+                }
+                const hrs = Math.floor(restante / 3600000);
+                const mins = Math.floor((restante % 3600000) / 60000);
+                const segs = Math.floor((restante % 60000) / 1000);
+                timerText.textContent = String(hrs).padStart(2, '0') + ':' + String(mins).padStart(2, '0') + ':' + String(segs).padStart(2, '0');
+                if (restante < 30 * 60 * 1000 && restante > 0) {
+                    timerBox.classList.add('warning');
+                    timerBox.querySelector('.timer-icon').textContent = '⚠️';
+                }
+            }
+            function deshabilitarCampos(disabled) {
+                const campos = document.querySelectorAll('#client-form input:not([type="hidden"]), #client-form textarea');
+                campos.forEach(c => c.disabled = disabled);
+            }
+            actualizarTimer();
+            timerInterval = setInterval(actualizarTimer, 1000);
+            const form = document.getElementById('client-form');
+            const resultBox = document.getElementById('result-box');
+            let datosGenerados = '';
+            const camposRequeridos = form.querySelectorAll('[required]');
+            camposRequeridos.forEach(campo => {
+                campo.addEventListener('input', () => { if (campo.value.trim()) campo.classList.remove('error'); });
+                campo.addEventListener('blur', () => { if (!campo.value.trim()) campo.classList.add('error'); else campo.classList.remove('error'); });
+            });
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                if (Date.now() > endTime) { mostrarToast('⛔ El enlace ha expirado. Solicita uno nuevo.'); return; }
+                let valido = true;
+                const campos = [
+                    { id: 'nombre' }, { id: 'eslogan' }, { id: 'descripcion' }, { id: 'direccion' },
+                    { id: 'telefono' }, { id: 'whatsapp' }, { id: 'email' }, { id: 'horarios' }
+                ];
+                campos.forEach(c => {
+                    const input = document.getElementById(c.id);
+                    if (!input.value.trim()) { input.classList.add('error'); valido = false; }
+                    else { input.classList.remove('error'); }
+                });
+                if (!valido) {
+                    mostrarToast('⚠️ Completa todos los campos obligatorios');
+                    const primerError = form.querySelector('.error');
+                    if (primerError) primerError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    return;
+                }
+                const facebookVal = document.getElementById('facebook').value.trim() || 'null';
+                datosGenerados =
+                    'NOMBRE: ' + document.getElementById('nombre').value.trim() + '\n' +
+                    'ESLOGAN: ' + document.getElementById('eslogan').value.trim() + '\n' +
+                    'DESCRIPCION: ' + document.getElementById('descripcion').value.trim() + '\n' +
+                    'DIRECCION: ' + document.getElementById('direccion').value.trim() + '\n' +
+                    'TELEFONO: ' + document.getElementById('telefono').value.trim() + '\n' +
+                    'WHATSAPP: ' + document.getElementById('whatsapp').value.trim() + '\n' +
+                    'EMAIL: ' + document.getElementById('email').value.trim() + '\n' +
+                    'FACEBOOK: ' + facebookVal + '\n' +
+                    'HORARIOS: ' + document.getElementById('horarios').value.trim();
+                resultBox.style.display = 'block';
+                resultBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                btnSubmit.disabled = true;
+                btnSubmit.textContent = '✅ Datos Generados';
+                mostrarToast('✅ ¡Datos listos! Revisa y envía por WhatsApp');
+            });
+            window.copiarYEnviar = function() {
+                if (!datosGenerados) return;
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(datosGenerados).then(() => { abrirWhatsApp(); }).catch(() => { abrirWhatsApp(); });
+                } else { abrirWhatsApp(); }
+            };
+            function abrirWhatsApp() {
+                const adminWA = document.getElementById('admin-whatsapp').value || ADMIN_WHATSAPP;
+                const mensaje = '✅ *Datos de mi negocio para Landing Page:*%0A%0A```%0A' + encodeURIComponent(datosGenerados).replace(/%0A/g, '%0A') + '%0A```%0A%0A_Enviado desde el formulario de configuración_';
+                const urlWA = 'https://wa.me/' + adminWA + '?text=' + mensaje;
+                window.open(urlWA, '_blank');
+                mostrarToast('📱 Abriendo WhatsApp...');
+            }
+            let toastTimeout;
+            function mostrarToast(mensaje) {
+                const toast = document.getElementById('toast');
+                toast.textContent = mensaje;
+                toast.classList.add('show');
+                clearTimeout(toastTimeout);
+                toastTimeout = setTimeout(() => { toast.classList.remove('show'); }, 3000);
+            }
+            window.addEventListener('beforeunload', () => {});
+            console.log('🚀 Formulario de Landing Page listo');
+            console.log('⏳ Expira en:', new Date(endTime).toLocaleString());
+            console.log('📱 WhatsApp admin:', ADMIN_WHATSAPP);
+        })();
+    </script>
+</body>
+</html>
