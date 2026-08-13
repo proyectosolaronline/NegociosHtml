@@ -646,6 +646,51 @@ function cargarImagenPreview(input, campoId, previewId) {
 // ============================================================
 // MODALES
 // ============================================================
+// ============================================================
+// PROCESAR DATOS RECIBIDOS DEL FORMULARIO CLIENTE
+// ============================================================
+function procesarDatosCliente() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const datosRecibidos = urlParams.get('datos');
+    
+    if (datosRecibidos) {
+        try {
+            const datos = JSON.parse(decodeURIComponent(datosRecibidos));
+            abrirModalNuevo();
+            
+            // Cargar datos en los campos
+            setTimeout(() => {
+                document.getElementById('nombre').value = datos.nombre || '';
+                document.getElementById('slogan').value = datos.eslogan || '';
+                document.getElementById('descripcion').value = datos.descripcion || '';
+                document.getElementById('direccion').value = datos.direccion || '';
+                document.getElementById('telefono').value = datos.telefono || '';
+                document.getElementById('whatsapp').value = datos.whatsapp || '';
+                document.getElementById('correo').value = datos.email || '';
+                document.getElementById('horario').value = datos.horarios || '';
+                document.getElementById('urlFacebook').value = datos.facebook || '';
+                document.getElementById('usuario').value = datos.nombre ? datos.nombre.toLowerCase().replace(/\s+/g, '_') : '';
+                
+                if (datos.latitud && datos.longitud) {
+                    setUbicacionEnMapa(datos.latitud, datos.longitud);
+                }
+                
+                showToast('✅ Datos del cliente cargados correctamente', 'success');
+                console.log('📋 Datos cargados:', datos);
+            }, 500);
+            
+        } catch(e) {
+            console.error('❌ Error al procesar datos:', e);
+            showToast('❌ Error al cargar datos del cliente', 'error');
+        }
+    }
+}
+
+// Ejecutar al cargar la página
+document.addEventListener('DOMContentLoaded', function() {
+    procesarDatosCliente();
+});
+  
 function abrirModalNuevo() {
   document.getElementById('modalTitle').textContent = '➕ Nuevo Negocio';
   document.getElementById('btnGuardar').textContent = '💾 Guardar Negocio';
