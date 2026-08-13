@@ -517,25 +517,22 @@ function renderizarLista() {
 }
 
 function filtrarNegocios() { renderizarLista(); }
-
-
-  
-  
-  // ============================================================
+// ============================================================
 // MAPA
 // ============================================================
 function inicializarMapa() {
-  // PASO 1: Límites de zoom
+  // PASO 1: Límites de zoom + desactivar zoom nativo
   map = L.map('map', {
     center: [20.5888, -100.3899],
     zoom: 13,
     minZoom: 4,
     maxZoom: 19,
     maxBounds: [[-90, -180], [90, 180]],
-    maxBoundsViscosity: 1.0
+    maxBoundsViscosity: 1.0,
+    zoomControl: false  // ← ELIMINA EL DOBLE ZOOM
   });
   
-  // PASO 2: Botones + y -
+  // PASO 2: Botones + y - (control personalizado)
   L.control.zoom({
     position: 'topright'
   }).addTo(map);
@@ -619,7 +616,7 @@ function inicializarMapa() {
     );
   }
   
-  // Clic para colocar marcador
+  // Clic para colocar marcador con popup mejorado
   map.on('click', function(e) {
     colocarMarcador(e.latlng.lat, e.latlng.lng);
   });
@@ -627,7 +624,30 @@ function inicializarMapa() {
 
 function colocarMarcador(lat, lng) {
   if (marker) map.removeLayer(marker);
-  marker = L.marker([lat, lng], { draggable: true }).addTo(map).bindPopup('📍 Ubicación seleccionada').openPopup();
+  
+  // Crear contenido del popup con datos de ubicación
+  var direccion = document.getElementById('direccion').value || 'Obteniendo dirección...';
+  var popupContent = `
+    <div style="text-align:center;padding:5px;">
+      <strong>📍 Ubicación seleccionada</strong><br>
+      <span style="font-size:12px;color:#666;">${direccion}</span><br>
+      <span style="font-size:11px;color:#999;">${lat.toFixed(6)}, ${lng.toFixed(6)}</span><br>
+      <button onclick="confirmarUbicacion()" style="margin-top:8px;padding:6px 16px;background:#667eea;color:white;border:none;border-radius:6px;cursor:pointer;font-weight:600;">
+        ✅ Confirmar
+      </button>
+      <button onclick="cerrarPopupUbicacion()" style="margin-top:8px;margin-left:6px;padding:6px 16px;background:#dc3545;color:white;border:none;border-radius:6px;cursor:pointer;font-weight:600;">
+        ✖ Regresar
+      </button>
+    </div>
+  `;
+  
+  marker = L.marker([lat, lng], { draggable: true })
+    .addTo(map)
+    .bindPopup(popupContent, { 
+      maxWidth: 280,
+      className: 'custom-popup'
+    })
+    .openPopup();
   
   // Evento para cuando se arrastra el marcador
   marker.on('dragend', function() {
@@ -638,6 +658,24 @@ function colocarMarcador(lat, lng) {
     document.getElementById('mapStatus').textContent = '✅ Ubicación ajustada: ' + pos.lat.toFixed(4) + ', ' + pos.lng.toFixed(4);
     document.getElementById('mapStatus').className = 'map-status confirmed';
     obtenerDireccionInversa(pos.lat, pos.lng);
+    // Actualizar popup con nueva dirección
+    setTimeout(function() {
+      var nuevaDir = document.getElementById('direccion').value || 'Dirección actualizada';
+      marker.setPopupContent(`
+        <div style="text-align:center;padding:5px;">
+          <strong>📍 Ubicación seleccionada</strong><br>
+          <span style="font-size:12px;color:#666;">${nuevaDir}</span><br>
+          <span style="font-size:11px;color:#999;">${pos.lat.toFixed(6)}, ${pos.lng.toFixed(6)}</span><br>
+          <button onclick="confirmarUbicacion()" style="margin-top:8px;padding:6px 16px;background:#667eea;color:white;border:none;border-radius:6px;cursor:pointer;font-weight:600;">
+            ✅ Confirmar
+          </button>
+          <button onclick="cerrarPopupUbicacion()" style="margin-top:8px;margin-left:6px;padding:6px 16px;background:#dc3545;color:white;border:none;border-radius:6px;cursor:pointer;font-weight:600;">
+            ✖ Regresar
+          </button>
+        </div>
+      `);
+      marker.openPopup();
+    }, 500);
   });
   
   document.getElementById('latitud').value = lat.toFixed(6);
@@ -646,6 +684,46 @@ function colocarMarcador(lat, lng) {
   document.getElementById('mapStatus').textContent = '✅ Ubicación confirmada: ' + lat.toFixed(4) + ', ' + lng.toFixed(4);
   document.getElementById('mapStatus').className = 'map-status confirmed';
   obtenerDireccionInversa(lat, lng);
+  
+  // Actualizar popup cuando se obtenga la dirección
+  setTimeout(function() {
+    var nuevaDir = document.getElementById('direccion').value;
+    if (nuevaDir) {
+      marker.setPopupContent(`
+        <div style="text-align:center;padding:5px;">
+          <strong>📍 Ubicación seleccionada</strong><br>
+          <span style="font-size:12px;color:#666;">${nuevaDir}</span><br>
+          <span style="font-size:11px;color:#999;">${lat.toFixed(6)}, ${lng.toFixed(6)}</span><br>
+          <button onclick="confirmarUbicacion()" style="margin-top:8px;padding:6px 16px;background:#667eea;color:white;border:none;border-radius:6px;cursor:pointer;font-weight:600;">
+            ✅ Confirmar
+          </button>
+          <button onclick="cerrarPopupUbicacion()" style="margin-top:8px;margin-left:6px;padding:6px 16px;background:#dc3545;color:white;border:none;border-radius:6px;cursor:pointer;font-weight:600;">
+            ✖ Regresar
+          </button>
+        </div>
+      `);
+      marker.openPopup();
+    }
+  }, 800);
+}
+
+// Función para confirmar ubicación (mantiene los datos)
+function confirmarUbicacion() {
+  showToast('✅ Ubicación confirmada', 'success');
+  // Cierra el popup pero mantiene los datos
+  if (marker) {
+    marker.closePopup();
+  }
+}
+
+// Función para cerrar el popup (regresa pero mantiene los datos)
+function cerrarPopupUbicacion() {
+  if (marker) {
+    marker.closePopup();
+  }
+  showToast('📍 Ubicación guardada', 'success');
+  // Los datos de latitud, longitud y dirección ya están en los campos
+  // No se borran, se mantienen
 }
 
 async function obtenerDireccionInversa(lat, lng) {
@@ -672,6 +750,11 @@ function setUbicacionEnMapa(lat, lng) {
   colocarMarcador(parseFloat(lat), parseFloat(lng));
 }
 // ============================================================
+
+  
+  
+
+  
   // FOTOS
 // ============================================================
 function generarSlotsFotos() {
