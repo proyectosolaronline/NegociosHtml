@@ -522,18 +522,57 @@ function filtrarNegocios() { renderizarLista(); }
 // MAPA
 // ============================================================
 function inicializarMapa() {
-  map = L.map('map').setView([20.5888, -100.3899], 13);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap', maxZoom: 19 }).addTo(map);
+  // PASO 1: Límites de zoom
+  map = L.map('map', {
+    center: [20.5888, -100.3899],
+    zoom: 13,
+    minZoom: 4,
+    maxZoom: 19,
+    maxBounds: [[-90, -180], [90, 180]],
+    maxBoundsViscosity: 1.0
+  });
+  
+  // PASO 2: Botones + y -
+  L.control.zoom({
+    position: 'topright'
+  }).addTo(map);
+  
+  // PASO 3: Capa Calle + Capa Satélite
+  var osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap',
+    maxZoom: 19
+  });
+  
+  var satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+    attribution: '© Esri',
+    maxZoom: 19
+  });
+  
+  osmLayer.addTo(map);
+  L.control.layers({
+    '🌍 Calle': osmLayer,
+    '🛰️ Satélite': satelliteLayer
+  }).addTo(map);
+  
+  // Geolocalización automática
   if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition(
-      (pos) => { map.setView([pos.coords.latitude, pos.coords.longitude], 15); colocarMarcador(pos.coords.latitude, pos.coords.longitude); },
+      (pos) => {
+        map.setView([pos.coords.latitude, pos.coords.longitude], 15);
+        colocarMarcador(pos.coords.latitude, pos.coords.longitude);
+      },
       () => {}
     );
   }
-  map.on('click', function(e) { colocarMarcador(e.latlng.lat, e.latlng.lng); });
+  
+  // Clic para colocar marcador
+  map.on('click', function(e) {
+    colocarMarcador(e.latlng.lat, e.latlng.lng);
+  });
 }
 
-function colocarMarcador(lat, lng) {
+  
+  function colocarMarcador(lat, lng) {
   if (marker) map.removeLayer(marker);
   marker = L.marker([lat, lng]).addTo(map).bindPopup('📍 Ubicación seleccionada').openPopup();
   document.getElementById('latitud').value = lat.toFixed(6);
