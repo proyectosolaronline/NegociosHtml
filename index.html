@@ -701,36 +701,24 @@ function colocarMarcador(lat, lng) {
   }, 800);
 }
 
-// ✅ CONFIRMAR: Solo guarda, NO mueve el marcador
+// ✅ CONFIRMAR: Cierra popup, guarda en caché, NO mueve el marcador
 function confirmarUbicacion() {
-  showToast('✅ Ubicación confirmada y guardada', 'success');
-  
-  if (marker) {
-    var lat = document.getElementById('latitud').value;
-    var lng = document.getElementById('longitud').value;
-    var direccion = document.getElementById('direccion').value || 'Ubicación seleccionada';
-    
-    marker.setPopupContent(`
-      <div style="text-align:center;padding:5px;">
-        <strong>✅ Ubicación lista</strong><br>
-        <span style="font-size:12px;color:#666;">${direccion}</span><br>
-        <span style="font-size:11px;color:#999;">${lat}, ${lng}</span><br>
-        <button onclick="regresarUbicacion()" style="margin-top:8px;padding:6px 16px;background:#6c757d;color:white;border:none;border-radius:6px;cursor:pointer;font-weight:600;">
-          ✖ Regresar
-        </button>
-      </div>
-    `);
-    marker.openPopup();
-  }
-  
+  // Guardar en caché
   window.ubicacionConfirmada = {
     lat: document.getElementById('latitud').value,
     lng: document.getElementById('longitud').value,
     direccion: document.getElementById('direccion').value
   };
+  
+  // Cerrar popup
+  if (marker) {
+    marker.closePopup();
+  }
+  
+  showToast('✅ Ubicación confirmada y guardada', 'success');
 }
 
-// ✅ REGRESAR: Solo cierra el popup, conserva los datos
+// ✅ REGRESAR: Cierra popup, conserva los datos
 function regresarUbicacion() {
   if (marker) {
     marker.closePopup();
