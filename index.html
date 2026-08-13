@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!DOCTYPE html> ver 1
 <html lang="es">
 <head>
   <meta charset="UTF-8">
@@ -529,10 +529,10 @@ function inicializarMapa() {
     maxZoom: 19,
     maxBounds: [[-90, -180], [90, 180]],
     maxBoundsViscosity: 1.0,
-    zoomControl: false  // ← ELIMINA EL DOBLE ZOOM
+    zoomControl: false
   });
   
-  // PASO 2: Botones + y - (control personalizado)
+  // PASO 2: Botones + y -
   L.control.zoom({
     position: 'topright'
   }).addTo(map);
@@ -554,7 +554,7 @@ function inicializarMapa() {
     '🛰️ Satélite': satelliteLayer
   }).addTo(map);
   
-  // PASO 4: Botón GPS mejorado
+  // PASO 4: Botón GPS
   var gpsControl = L.Control.extend({
     options: { position: 'topleft' },
     onAdd: function(map) {
@@ -583,7 +583,7 @@ function inicializarMapa() {
   });
   map.addControl(new gpsControl());
   
-  // PASO 7: Botón de pantalla completa
+  // PASO 7: Pantalla completa
   var fullscreenControl = L.Control.extend({
     options: { position: 'topright' },
     onAdd: function(map) {
@@ -604,7 +604,6 @@ function inicializarMapa() {
   });
   map.addControl(new fullscreenControl());
   
-  // PASO 5: Marcador arrastrable
   // Geolocalización automática
   if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition(
@@ -616,7 +615,7 @@ function inicializarMapa() {
     );
   }
   
-  // Clic para colocar marcador con popup mejorado
+  // Clic en el mapa
   map.on('click', function(e) {
     colocarMarcador(e.latlng.lat, e.latlng.lng);
   });
@@ -625,14 +624,13 @@ function inicializarMapa() {
 function colocarMarcador(lat, lng) {
   if (marker) map.removeLayer(marker);
   
-  // Crear contenido del popup con datos de ubicación
   var direccion = document.getElementById('direccion').value || 'Obteniendo dirección...';
   var popupContent = `
     <div style="text-align:center;padding:5px;">
       <strong>📍 Ubicación seleccionada</strong><br>
       <span style="font-size:12px;color:#666;">${direccion}</span><br>
       <span style="font-size:11px;color:#999;">${lat.toFixed(6)}, ${lng.toFixed(6)}</span><br>
-      <button onclick="confirmarUbicacion()" style="margin-top:8px;padding:6px 16px;background:#667eea;color:white;border:none;border-radius:6px;cursor:pointer;font-weight:600;">
+      <button onclick="confirmarUbicacion()" style="margin-top:8px;padding:6px 16px;background:#28a745;color:white;border:none;border-radius:6px;cursor:pointer;font-weight:600;">
         ✅ Confirmar
       </button>
       <button onclick="regresarUbicacion()" style="margin-top:8px;margin-left:6px;padding:6px 16px;background:#6c757d;color:white;border:none;border-radius:6px;cursor:pointer;font-weight:600;">
@@ -643,13 +641,10 @@ function colocarMarcador(lat, lng) {
   
   marker = L.marker([lat, lng], { draggable: true })
     .addTo(map)
-    .bindPopup(popupContent, { 
-      maxWidth: 280,
-      className: 'custom-popup'
-    })
+    .bindPopup(popupContent, { maxWidth: 280 })
     .openPopup();
   
-  // Evento para cuando se arrastra el marcador
+  // Arrastre del marcador
   marker.on('dragend', function() {
     var pos = marker.getLatLng();
     document.getElementById('latitud').value = pos.lat.toFixed(6);
@@ -658,7 +653,7 @@ function colocarMarcador(lat, lng) {
     document.getElementById('mapStatus').textContent = '✅ Ubicación ajustada: ' + pos.lat.toFixed(4) + ', ' + pos.lng.toFixed(4);
     document.getElementById('mapStatus').className = 'map-status confirmed';
     obtenerDireccionInversa(pos.lat, pos.lng);
-    // Actualizar popup con nueva dirección
+    
     setTimeout(function() {
       var nuevaDir = document.getElementById('direccion').value || 'Dirección actualizada';
       marker.setPopupContent(`
@@ -666,7 +661,7 @@ function colocarMarcador(lat, lng) {
           <strong>📍 Ubicación seleccionada</strong><br>
           <span style="font-size:12px;color:#666;">${nuevaDir}</span><br>
           <span style="font-size:11px;color:#999;">${pos.lat.toFixed(6)}, ${pos.lng.toFixed(6)}</span><br>
-          <button onclick="confirmarUbicacion()" style="margin-top:8px;padding:6px 16px;background:#667eea;color:white;border:none;border-radius:6px;cursor:pointer;font-weight:600;">
+          <button onclick="confirmarUbicacion()" style="margin-top:8px;padding:6px 16px;background:#28a745;color:white;border:none;border-radius:6px;cursor:pointer;font-weight:600;">
             ✅ Confirmar
           </button>
           <button onclick="regresarUbicacion()" style="margin-top:8px;margin-left:6px;padding:6px 16px;background:#6c757d;color:white;border:none;border-radius:6px;cursor:pointer;font-weight:600;">
@@ -685,7 +680,6 @@ function colocarMarcador(lat, lng) {
   document.getElementById('mapStatus').className = 'map-status confirmed';
   obtenerDireccionInversa(lat, lng);
   
-  // Actualizar popup cuando se obtenga la dirección
   setTimeout(function() {
     var nuevaDir = document.getElementById('direccion').value;
     if (nuevaDir) {
@@ -694,7 +688,7 @@ function colocarMarcador(lat, lng) {
           <strong>📍 Ubicación seleccionada</strong><br>
           <span style="font-size:12px;color:#666;">${nuevaDir}</span><br>
           <span style="font-size:11px;color:#999;">${lat.toFixed(6)}, ${lng.toFixed(6)}</span><br>
-          <button onclick="confirmarUbicacion()" style="margin-top:8px;padding:6px 16px;background:#667eea;color:white;border:none;border-radius:6px;cursor:pointer;font-weight:600;">
+          <button onclick="confirmarUbicacion()" style="margin-top:8px;padding:6px 16px;background:#28a745;color:white;border:none;border-radius:6px;cursor:pointer;font-weight:600;">
             ✅ Confirmar
           </button>
           <button onclick="regresarUbicacion()" style="margin-top:8px;margin-left:6px;padding:6px 16px;background:#6c757d;color:white;border:none;border-radius:6px;cursor:pointer;font-weight:600;">
@@ -707,12 +701,10 @@ function colocarMarcador(lat, lng) {
   }, 800);
 }
 
-// Función para confirmar ubicación (guarda datos y cambia texto)
+// ✅ CONFIRMAR: Solo guarda, NO mueve el marcador
 function confirmarUbicacion() {
-  // Los datos ya están en los campos (latitud, longitud, direccion)
   showToast('✅ Ubicación confirmada y guardada', 'success');
   
-  // Cambiar el texto del popup a "Ubicación lista"
   if (marker) {
     var lat = document.getElementById('latitud').value;
     var lng = document.getElementById('longitud').value;
@@ -731,7 +723,6 @@ function confirmarUbicacion() {
     marker.openPopup();
   }
   
-  // Guardar en caché (variable global)
   window.ubicacionConfirmada = {
     lat: document.getElementById('latitud').value,
     lng: document.getElementById('longitud').value,
@@ -739,13 +730,12 @@ function confirmarUbicacion() {
   };
 }
 
-// Función para regresar (conserva los datos)
+// ✅ REGRESAR: Solo cierra el popup, conserva los datos
 function regresarUbicacion() {
   if (marker) {
     marker.closePopup();
   }
   showToast('📍 Datos de ubicación conservados', 'success');
-  // Los datos ya están en los campos, no se borran
 }
 
 async function obtenerDireccionInversa(lat, lng) {
