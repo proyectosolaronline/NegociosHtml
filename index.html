@@ -518,7 +518,7 @@ function renderizarLista() {
 
 function filtrarNegocios() { renderizarLista(); }
 
-// ============================================================
+  // ============================================================
 // MAPA
 // ============================================================
 function inicializarMapa() {
@@ -554,6 +554,36 @@ function inicializarMapa() {
     '🛰️ Satélite': satelliteLayer
   }).addTo(map);
   
+  // PASO 4: Botón GPS mejorado
+  var gpsControl = L.Control.extend({
+    options: { position: 'topleft' },
+    onAdd: function(map) {
+      var container = L.DomUtil.create('div', 'leaflet-bar leaflet-control');
+      container.innerHTML = '<button style="width:34px;height:34px;border:none;background:white;cursor:pointer;font-size:18px;border-radius:4px;box-shadow:0 1px 5px rgba(0,0,0,0.65);" title="Obtener mi ubicación">📍</button>';
+      container.onclick = function() {
+        if (navigator.geolocation) {
+          navigator.geolocation.getCurrentPosition(
+            function(pos) {
+              var lat = pos.coords.latitude;
+              var lng = pos.coords.longitude;
+              map.setView([lat, lng], 16);
+              colocarMarcador(lat, lng);
+              showToast('✅ Ubicación actual obtenida', 'success');
+            },
+            function() {
+              showToast('⚠️ No se pudo obtener tu ubicación', 'error');
+            }
+          );
+        } else {
+          showToast('⚠️ Tu navegador no soporta GPS', 'error');
+        }
+      };
+      return container;
+    }
+  });
+  map.addControl(new gpsControl());
+  
+  // PASO 5: Marcador arrastrable
   // Geolocalización automática
   if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition(
@@ -571,10 +601,21 @@ function inicializarMapa() {
   });
 }
 
-  
-  function colocarMarcador(lat, lng) {
+function colocarMarcador(lat, lng) {
   if (marker) map.removeLayer(marker);
-  marker = L.marker([lat, lng]).addTo(map).bindPopup('📍 Ubicación seleccionada').openPopup();
+  marker = L.marker([lat, lng], { draggable: true }).addTo(map).bindPopup('📍 Ubicación seleccionada').openPopup();
+  
+  // Evento para cuando se arrastra el marcador
+  marker.on('dragend', function() {
+    var pos = marker.getLatLng();
+    document.getElementById('latitud').value = pos.lat.toFixed(6);
+    document.getElementById('longitud').value = pos.lng.toFixed(6);
+    ubicacionSeleccionada = true;
+    document.getElementById('mapStatus').textContent = '✅ Ubicación ajustada: ' + pos.lat.toFixed(4) + ', ' + pos.lng.toFixed(4);
+    document.getElementById('mapStatus').className = 'map-status confirmed';
+    obtenerDireccionInversa(pos.lat, pos.lng);
+  });
+  
   document.getElementById('latitud').value = lat.toFixed(6);
   document.getElementById('longitud').value = lng.toFixed(6);
   ubicacionSeleccionada = true;
@@ -587,8 +628,18 @@ async function obtenerDireccionInversa(lat, lng) {
   try {
     const r = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`);
     const d = await r.json();
-    if (d.display_name) document.getElementById('direccion').value = d.display_name;
-  } catch(e) {}
+    if (d.display_name) {
+      document.getElementById('direccion').value = d.display_name;
+      document.getElementById('mapStatus').textContent = '✅ Dirección obtenida: ' + d.display_name.substring(0, 60) + '...';
+    } else {
+      document.getElementById('mapStatus').textContent = '⚠️ No se pudo obtener la dirección automática';
+      document.getElementById('mapStatus').className = 'map-status pending';
+    }
+  } catch(e) {
+    console.warn('Error en geocodificación inversa:', e);
+    document.getElementById('mapStatus').textContent = '⚠️ Error al obtener dirección (usa el campo manual)';
+    document.getElementById('mapStatus').className = 'map-status error';
+  }
 }
 
 function setUbicacionEnMapa(lat, lng) {
@@ -596,7 +647,6 @@ function setUbicacionEnMapa(lat, lng) {
   map.setView([parseFloat(lat), parseFloat(lng)], 16);
   colocarMarcador(parseFloat(lat), parseFloat(lng));
 }
-
 // ============================================================
 // FOTOS
 // ============================================================
