@@ -980,6 +980,13 @@ function mostrarToast(mensaje) {
     </script>
 
 
+<!-- BANNER FLOTANTE EMERGENTE -->
+<div id="avisito" style="display:none; position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:#facc15; color:#1e293b; padding:10px 25px; border-radius:50px; font-weight:bold; font-size:16px; box-shadow:0 4px 10px rgba(0,0,0,0.2); z-index:9999;">
+  📢 
+  <!-- AQUÍ ESCRIBES TU MENSAJE EMERGENTE -->
+  Mensaje importante tester
+</div>
+
 <script>
 setTimeout(() => {
   const aviso = document.getElementById('avisito');
