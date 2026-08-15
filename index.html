@@ -820,46 +820,77 @@ function generarSlotsFotos() {
     grid.appendChild(card);
   }
 }
+////////////////
 
-function abrirSelectorFoto(index) {
-  const input = document.createElement('input');
-  input.type = 'file';
-  input.accept = 'image/*';
-  input.onchange = function(e) {
-    const file = e.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = function(ev) {
-      const img = new Image();
-      img.onload = function() {
-        const MAX_DIM = 900;
-        let w = img.width, h = img.height;
-        if (w > h && w > MAX_DIM) { h = Math.round(h * MAX_DIM / w); w = MAX_DIM; }
-        else if (h > MAX_DIM) { w = Math.round(w * MAX_DIM / h); h = MAX_DIM; }
-        const canvas = document.createElement('canvas');
-        canvas.width = w; canvas.height = h;
-        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-        let calidad = 0.7;
-        let dataUrl = canvas.toDataURL('image/jpeg', calidad);
-        while (dataUrl.length > 45000 && calidad > 0.2) { calidad -= 0.1; dataUrl = canvas.toDataURL('image/jpeg', calidad); }
-        if (dataUrl.length > 45000) { showToast('❌ La foto es muy grande', 'error'); return; }
-        fotosSeleccionadas[index] = { url: dataUrl, descripcion: fotosSeleccionadas[index]?.descripcion || '' };
-        generarSlotsFotos();
-      };
-      img.onerror = function() { showToast('❌ Error al procesar imagen', 'error'); };
-      img.src = ev.target.result;
-    };
-    reader.readAsDataURL(file);
-  };
-  input.click();
+function mostrarMenuFoto(callback) {
+  const overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:5000;display:flex;align-items:flex-end;justify-content:center;';
+  overlay.innerHTML = `
+    <div style="background:white;border-radius:16px 16px 0 0;padding:20px;width:100%;max-width:400px;">
+      <button type="button" id="menuFotoCamara" style="width:100%;padding:14px;margin-bottom:10px;background:#667eea;color:white;border:none;border-radius:10px;font-weight:600;font-size:15px;">📷 Tomar foto</button>
+      <button type="button" id="menuFotoGaleria" style="width:100%;padding:14px;margin-bottom:10px;background:#28a745;color:white;border:none;border-radius:10px;font-weight:600;font-size:15px;">🖼️ Elegir de galería</button>
+      <button type="button" id="menuFotoCancelar" style="width:100%;padding:14px;background:#f0f0f0;color:#333;border:none;border-radius:10px;font-weight:600;font-size:15px;">Cancelar</button>
+    </div>`;
+  document.body.appendChild(overlay);
+  overlay.querySelector('#menuFotoCamara').onclick = function() { document.body.removeChild(overlay); callback(true); };
+  overlay.querySelector('#menuFotoGaleria').onclick = function() { document.body.removeChild(overlay); callback(false); };
+  overlay.querySelector('#menuFotoCancelar').onclick = function() { document.body.removeChild(overlay); };
+  overlay.onclick = function(e) { if (e.target === overlay) document.body.removeChild(overlay); };
 }
-
+  
+///////////////
+function abrirSelectorFoto(index) {
+  mostrarMenuFoto(function(desdeCamara) {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    if (desdeCamara) input.capture = 'environment';
+    input.onchange = function(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(ev) {
+        const img = new Image();
+        img.onload = function() {
+          const MAX_DIM = 900;
+          let w = img.width, h = img.height;
+          if (w > h && w > MAX_DIM) { h = Math.round(h * MAX_DIM / w); w = MAX_DIM; }
+          else if (h > MAX_DIM) { w = Math.round(w * MAX_DIM / h); h = MAX_DIM; }
+          const canvas = document.createElement('canvas');
+          canvas.width = w; canvas.height = h;
+          canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+          let calidad = 0.7;
+          let dataUrl = canvas.toDataURL('image/jpeg', calidad);
+          while (dataUrl.length > 45000 && calidad > 0.2) { calidad -= 0.1; dataUrl = canvas.toDataURL('image/jpeg', calidad); }
+          if (dataUrl.length > 45000) { showToast('❌ La foto es muy grande', 'error'); return; }
+          fotosSeleccionadas[index] = { url: dataUrl, descripcion: fotosSeleccionadas[index]?.descripcion || '' };
+          generarSlotsFotos();
+        };
+        img.onerror = function() { showToast('❌ Error al procesar imagen', 'error'); };
+        img.src = ev.target.result;
+      };
+      reader.readAsDataURL(file);
+    };
+    input.click();
+  });
+}
 function removerFoto(index) { fotosSeleccionadas[index] = null; generarSlotsFotos(); }
 function actualizarDescFoto(index, valor) { if (fotosSeleccionadas[index]) fotosSeleccionadas[index].descripcion = valor; }
 
 // ============================================================
 // CARGAR IMAGEN (LOGO/BANNER)
 // ============================================================
+function seleccionarImagenLogoBanner(campoId, previewId) {
+  mostrarMenuFoto(function(desdeCamara) {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    if (desdeCamara) input.capture = 'environment';
+    input.onchange = function() { cargarImagenPreview(input, campoId, previewId); };
+    input.click();
+  });
+}
+  
 function cargarImagenPreview(input, campoId, previewId) {
   const file = input.files[0];
   if (!file) return;
