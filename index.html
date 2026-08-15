@@ -337,18 +337,20 @@
       <div class="form-section">
         <h3>🎨 Logo y Banner</h3>
         <div class="form-row">
-          <div class="form-group">
-            <label>🏷️ Logo (cuadrado pequeño)</label>
-            <input type="file" id="logoInput" accept="image/*" capture="environment" onchange="cargarImagenPreview(this, 'logo', 'logoPreview')">
-            <input type="hidden" id="logo" value="">
-            <img id="logoPreview" style="max-width:120px; max-height:120px; margin-top:10px; display:none; border-radius:10px; border:2px solid #e0e0e0;">
-          </div>
-          <div class="form-group">
-            <label>🖼️ Banner (horizontal grande)</label>
-<input type="file" id="bannerInput" accept="image/*" onchange="cargarImagenPreview(this, 'banner', 'bannerPreview')">            <input type="hidden" id="banner" value="">
-            <img id="bannerPreview" style="max-width:250px; max-height:100px; margin-top:10px; display:none; border-radius:10px; border:2px solid #e0e0e0;">
-          </div>
-        </div>
+   <div class="form-group">
+  <label>🏷️ Logo (cuadrado pequeño)</label>
+  <button type="button" class="btn btn-primary" style="width:100%;justify-content:center;" onclick="seleccionarImagenLogoBanner('logo','logoPreview')">📷 Elegir logo</button>
+  <input type="hidden" id="logoInput" value="">
+  <input type="hidden" id="logo" value="">
+  <img id="logoPreview" style="max-width:120px; max-height:120px; margin-top:10px; display:none; border-radius:10px; border:2px solid #e0e0e0;">
+</div>
+<div class="form-group">
+  <label>🖼️ Banner (horizontal grande)</label>
+  <button type="button" class="btn btn-primary" style="width:100%;justify-content:center;" onclick="seleccionarImagenLogoBanner('banner','bannerPreview')">📷 Elegir banner</button>
+  <input type="hidden" id="bannerInput" value="">
+  <input type="hidden" id="banner" value="">
+  <img id="bannerPreview" style="max-width:250px; max-height:100px; margin-top:10px; display:none; border-radius:10px; border:2px solid #e0e0e0;">
+</div>        </div>
       </div>
       
       <div style="display:flex;gap:12px;justify-content:flex-end;margin-top:20px;padding-top:20px;border-top:2px solid #f0f0f0;">
