@@ -318,6 +318,8 @@
         <div class="form-group"><label>Nombre *</label><input type="text" id="nombre" required></div>
         <div class="form-group"><label>Slogan</label><input type="text" id="slogan"></div>
         <div class="form-group"><label>Descripción</label><textarea id="descripcion"></textarea></div>
+        <div class="form-group"><label>🎯 Misión</label><textarea id="mision" placeholder="Ej: Brindar el mejor servicio con calidad y calidez..."></textarea></div>
+<div class="form-group"><label>💬 Mensaje emergente (pie de página)</label><input type="text" id="mensajeEmergente" placeholder="Ej: ¡Gracias por visitarnos!"></div>
       </div>
       
       <div class="form-section">
@@ -1181,6 +1183,8 @@ function abrirModalNuevo() {
   document.getElementById('bannerInput').value = '';
   document.getElementById('modalOverlay').classList.add('active');
   setTimeout(() => { if (map) map.invalidateSize(); }, 300);
+  document.getElementById('mision').value = '';
+  document.getElementById('mensajeEmergente').value = '';
 }
 
 function abrirModalEditar(id) {
@@ -1232,6 +1236,8 @@ function abrirModalEditar(id) {
   generarSlotsFotos();
   document.getElementById('modalOverlay').classList.add('active');
   setTimeout(() => { if (map) map.invalidateSize(); }, 300);
+    document.getElementById('mision').value = negocio.mision || '';
+  document.getElementById('mensajeEmergente').value = negocio.mensajeEmergente || '';
 }
 
 function cerrarModal() { document.getElementById('modalOverlay').classList.remove('active'); }
@@ -1373,6 +1379,8 @@ async function guardarNegocio(event) {
     fotos: fotosSeleccionadas.filter(f => f && f.url),
     logo: document.getElementById('logo').value,
     banner: document.getElementById('banner').value
+    mision: document.getElementById('mision').value.trim(),
+    mensajeEmergente: document.getElementById('mensajeEmergente').value.trim(),
   };
   
   if (!datos.usuario || !datos.password || !datos.nombre) {
@@ -1566,6 +1574,22 @@ ${whatsappDigits?`<a href="https://wa.me/${whatsappDigits}" class="wa-flotante" 
   if (waShareBtn) waShareBtn.href = 'https://wa.me/?text=' + encodeURIComponent('${(String(n.nombre||'')).replace(/'/g, "\\'")}: ' + currentUrl);
 })();
 <\/script>
+
+
+<!-- BANNER EMERGENTE CADA 10 SEGUNDOS -->
+<div id="bannerEmergente" style="display:none; position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:#facc15; color:#1e293b; padding:10px 25px; border-radius:50px; font-weight:bold; font-size:16px; box-shadow:0 4px 10px rgba(0,0,0,0.2); z-index:9999;">
+  ${n.mensajeEmergente || '📢 ¡Gracias por visitarnos!'}
+</div>
+
+<script>
+// Banner emergente cada 10 segundos
+setInterval(function() {
+  const banner = document.getElementById('bannerEmergente');
+  if (banner) {
+    banner.style.display = banner.style.display === 'none' ? 'block' : 'none';
+  }
+}, 10000);
+</script>
 </body></html>`;
 }
 
