@@ -903,12 +903,12 @@ function compartirEdicionCliente(negocio) {
       <h3 style="margin-bottom:14px;color:#333;font-size:16px;">🔗 Compartir edición con ${negocio.nombre||'cliente'}</h3>
       <label style="font-size:13px;font-weight:600;color:#555;display:block;margin-bottom:6px;">¿Por cuánto tiempo tendrá acceso?</label>
       <div style="display:flex;gap:8px;margin-bottom:16px;">
-        <input type="number" id="cantidadTiempo" value="24" min="1" style="flex:1;padding:10px;border:2px solid #e0e0e0;border-radius:8px;font-size:14px;">
-        <select id="unidadTiempo" style="padding:10px;border:2px solid #e0e0e0;border-radius:8px;font-size:14px;">
-          <option value="horas">Horas</option>
-          <option value="dias">Días</option>
-        </select>
-      </div>
+        <input type="number" id="cantidadTiempo" value="30" min="1" style="flex:1;padding:10px;border:2px solid #e0e0e0;border-radius:8px;font-size:14px;">
+<select id="unidadTiempo" style="padding:10px;border:2px solid #e0e0e0;border-radius:8px;font-size:14px;">
+  <option value="minutos" selected>Minutos</option>
+  <option value="horas">Horas</option>
+  <option value="dias">Días</option>
+</select>      </div>
       <button type="button" id="btnGenerarLinkCliente" style="width:100%;padding:12px;background:#667eea;color:white;border:none;border-radius:10px;font-weight:600;font-size:14px;margin-bottom:8px;">Generar enlace</button>
       <button type="button" id="btnCancelarLinkCliente" style="width:100%;padding:12px;background:#f0f0f0;color:#333;border:none;border-radius:10px;font-weight:600;font-size:14px;">Cancelar</button>
     </div>`;
@@ -918,8 +918,10 @@ function compartirEdicionCliente(negocio) {
   overlay.querySelector('#btnGenerarLinkCliente').onclick = () => {
     const cantidad = parseFloat(document.getElementById('cantidadTiempo').value) || 24;
     const unidad = document.getElementById('unidadTiempo').value;
-    const ms = unidad === 'dias' ? cantidad * 24 * 3600000 : cantidad * 3600000;
-    const exp = Date.now() + ms;
+let ms;
+if (unidad === 'minutos') ms = cantidad * 60000;
+else if (unidad === 'horas') ms = cantidad * 3600000;
+else if (unidad === 'dias') ms = cantidad * 24 * 3600000;    const exp = Date.now() + ms;
     const link = `${window.location.origin}${window.location.pathname}?editarCliente=${encodeURIComponent(negocio.id)}&exp=${exp}`;
     document.body.removeChild(overlay);
     mostrarLinkGenerado(link, negocio.nombre, cantidad, unidad);
@@ -1001,20 +1003,7 @@ function abrirModalEdicionCliente(negocio, exp) {
   const capsula = document.querySelector('#modalOverlay .modal > div');
   if (capsula && capsula.querySelector('#capsulaInput')) capsula.style.display = 'none';
 
-  const filaUsuario = document.getElementById('usuario').closest('.form-row');
-  if (filaUsuario) filaUsuario.style.display = 'none';
-  const campoRol = document.getElementById('rol').closest('.form-group');
-  if (campoRol) campoRol.style.display = 'none';
-  const campoActivo = document.getElementById('activo').closest('.form-group');
-  if (campoActivo) campoActivo.style.display = 'none';
-  const filaDueno = document.getElementById('duenoMensaje').closest('.form-section');
-  if (filaDueno) filaDueno.style.display = 'none';
-
-  const btnX = document.querySelector('#modalOverlay .modal-close');
-  if (btnX) btnX.style.display = 'none';
-  const btnCancelar = document.querySelector('#modalOverlay button[onclick="cerrarModal()"]');
-  if (btnCancelar) btnCancelar.style.display = 'none';
-
+ 
   const banner = document.createElement('div');
   banner.id = 'clienteEdicionBanner';
   banner.style.cssText = 'background:#fff3cd;color:#856404;padding:12px 16px;border-radius:10px;margin-bottom:18px;font-size:13px;font-weight:600;text-align:center;';
@@ -1025,7 +1014,6 @@ function abrirModalEdicionCliente(negocio, exp) {
   actualizarBannerTiempoCliente();
   window.intervalClienteEdicion = setInterval(actualizarBannerTiempoCliente, 30000);
 }
-
 function actualizarBannerTiempoCliente() {
   const banner = document.getElementById('clienteEdicionBanner');
   if (!banner) return;
@@ -1039,9 +1027,9 @@ function actualizarBannerTiempoCliente() {
     clearInterval(window.intervalClienteEdicion);
     return;
   }
-  const horas = Math.floor(restante / 3600000);
-  const minutos = Math.floor((restante % 3600000) / 60000);
-  banner.textContent = `⏳ Tiempo restante para editar: ${horas > 0 ? horas + 'h ' : ''}${minutos}min`;
+  const minutos = Math.floor(restante / 60000);
+  const segundos = Math.floor((restante % 60000) / 1000);
+  banner.textContent = `⏳ Tiempo restante para editar: ${minutos}min ${segundos}seg`;
 }
 
 function mostrarPantallaExpirada(mensaje) {
