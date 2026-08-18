@@ -1569,8 +1569,8 @@ footer{background:#1a1a2e;text-align:center;padding:22px 20px;font-size:14px}
     window.open('https://wa.me/?text=' + texto, '_blank');
   };
 
-  var mensajeEmergenteTexto = ${JSON.stringify(n.mensajeEmergente || n.slogan || '')};
-  if (mensajeEmergenteTexto) {
+var mensajeEmergenteTexto = '${(n.mensajeEmergente || n.slogan || '').replace(/'/g, "\\'")}';
+if (mensajeEmergenteTexto) {
     var lPopup = document.createElement('div');
     lPopup.className = 'l-popup-mensaje';
     lPopup.innerHTML = '<span>✨ ' + mensajeEmergenteTexto + '</span><button type="button" class="l-popup-cerrar" aria-label="Cerrar">×</button>';
