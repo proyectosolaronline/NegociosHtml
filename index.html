@@ -1398,7 +1398,8 @@ async function eliminarNegocio(id) {
 // ============================================================
 // LANDING PAGE HTML
 // ============================================================
-function construirLandingHTML(n) {
+
+  function construirLandingHTML(n) {
   const whatsappDigits = String(n.whatsapp || '').replace(/\D/g, '');
   const telDigits = String(n.telefono || '').replace(/\D/g, '');
   const duenoWhatsappDigits = String(n.duenoTelefono || '').replace(/\D/g, '');
@@ -1530,7 +1531,7 @@ footer{background:#1a1a2e;text-align:center;padding:22px 20px;font-size:14px}
   <section class="l-share-section">
     <div class="l-qr-wrap">
       <img class="l-qr-img" id="lQrImg" alt="Código QR de esta página" onclick="compartirQRWhatsApp()">
-      <p class="l-qr-caption"><span onclick="compartirQRWhatsApp()">📱 Escanea para compartir haz clic</span></p>
+      <p class="l-qr-caption"><span onclick="compartirQRWhatsApp()">📱 Escanea para compartir • haz clic</span></p>
     </div>
     <a href="#" class="l-btn-share-wa" id="lShareWaBtn" target="_blank" rel="noopener">💬 Compartir por WhatsApp</a>
   </section>
@@ -1568,7 +1569,6 @@ ${whatsappDigits?`<a href="https://wa.me/${whatsappDigits}" class="wa-flotante" 
   if (waShareBtn) waShareBtn.href = 'https://wa.me/?text=' + encodeURIComponent('${(String(n.nombre||'')).replace(/'/g, "\\'")}: ' + currentUrl);
 
   window.compartirQRWhatsApp = function() {
-    var url = encodeURIComponent(currentUrl);
     var texto = encodeURIComponent('${(String(n.nombre||'')).replace(/'/g, "\\'")}: ' + currentUrl);
     window.open('https://wa.me/?text=' + texto, '_blank');
   };
@@ -1595,8 +1595,8 @@ ${whatsappDigits?`<a href="https://wa.me/${whatsappDigits}" class="wa-flotante" 
 <\/script>
 </body></html>`;
 }
-
-// ============================================================
+  
+  // ============================================================
 // PREVIEW
 // ============================================================
 function previsualizarLanding(id) {
