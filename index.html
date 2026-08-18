@@ -399,13 +399,17 @@
       <h2>🌐 Vista Previa - <span id="previewTitle">Landing Page</span></h2>
       <div style="display:flex;gap:8px;">
         <button class="btn btn-outline btn-sm" onclick="descargarHTML()">⬇️ Descargar</button>
-        <button class="btn btn-sm btn-primary" onclick="publicarEnGitHub()" id="btnPublicarGitHub">🚀 Publicar en GitHub</button>
+        <button class="btn btn-outline btn-sm" onclick="compartirArchivo()">📤 Compartir</button>
+        <button class="btn btn-outline btn-sm" onclick="abrirEnNuevaVentana()">🔗 Abrir</button>
         <button class="modal-close" onclick="cerrarPreview()" style="color:white;">&times;</button>
       </div>
     </div>
     <div class="preview-toolbar">
       <input type="url" id="previewUrlInput" placeholder="URL de la landing page publicada...">
-      <img id="qrPreview" alt="QR Code" style="cursor:pointer; border:4px solid #25D366; border-radius:8px;">
+      <button class="btn btn-sm btn-info" onclick="generarQR()">🔗 QR</button>
+      <button class="btn btn-sm btn-success" onclick="compartirLink()" id="btnCompartirLink" style="display:none;">📤 Compartir link</button>
+      <button class="btn btn-sm btn-primary" onclick="publicarEnGitHub()" id="btnPublicarGitHub">🚀 Publicar en GitHub</button>
+      <img id="qrPreview" alt="QR Code">
     </div>
     <iframe id="previewFrame" class="preview-frame" sandbox="allow-scripts"></iframe>
   </div>
