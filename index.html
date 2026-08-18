@@ -1624,6 +1624,32 @@ if (mensajeEmergenteTexto) {
 </body></html>`;
 }
 
+
+
+// ============================================================
+// GENERAR SITEMAP.XML PARA CADA LANDING
+// ============================================================
+function generarSitemapLanding(n) {
+  const slug = (n.nombre || 'negocio')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '');
+  
+  const url = `https://proyectosolaronline.github.io/${slug}/`;
+  const fecha = new Date().toISOString().split('T')[0];
+  
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>${url}</loc>
+    <lastmod>${fecha}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+  </url>
+</urlset>`;
+}  
   
   // ============================================================
 // PREVIEW
@@ -1658,24 +1684,47 @@ function descargarHTML() {
   setTimeout(() => URL.revokeObjectURL(url), 3000);
   showToast('✅ HTML descargado', 'success');
 }
-
 async function publicarEnGitHub() {
-  if (!currentPreviewHTML || !currentPreviewNombre) { showToast('❌ No hay vista previa generada', 'error'); return; }
+  if (!currentPreviewHTML || !currentPreviewNombre) { 
+    showToast('❌ No hay vista previa generada', 'error'); 
+    return; 
+  }
+  
   const btn = document.getElementById('btnPublicarGitHub');
   btn.disabled = true;
   const textoOriginal = btn.textContent;
   btn.textContent = '⏳ Publicando...';
   showLoading();
-  try {
-    const result = await postViaIframe('publicarGitHub', currentPreviewId, {
-      nombreArchivo: currentPreviewNombre,
-      html: currentPreviewHTML
-    }, GITHUB_PUBLISH_URL);
+  
+  // Obtener el negocio para generar el sitemap
+  const negocio = negocios.find(n => n.id === currentPreviewId);
+  if (!negocio) {
     hideLoading();
     btn.disabled = false;
     btn.textContent = textoOriginal;
+    showToast('❌ No se encontró el negocio', 'error');
+    return;
+  }
+  
+  // Generar sitemap
+  const sitemapXML = generarSitemapLanding(negocio);
+  const nombreSitemap = 'sitemap.xml';
+  
+  try {
+    // Publicar landing + sitemap
+    const result = await postViaIframe('publicarGitHub', currentPreviewId, {
+      nombreArchivo: currentPreviewNombre,
+      html: currentPreviewHTML,
+      sitemap: sitemapXML,
+      nombreSitemap: nombreSitemap
+    }, GITHUB_PUBLISH_URL);
+    
+    hideLoading();
+    btn.disabled = false;
+    btn.textContent = textoOriginal;
+    
     if (result.success) {
-      showToast('✅ Landing publicada en GitHub' + (result.url ? ': ' + result.url : ''), 'success');
+      showToast('✅ Landing y sitemap publicados en GitHub' + (result.url ? ': ' + result.url : ''), 'success');
     } else {
       showToast('❌ Error al publicar: ' + (result.error || 'Desconocido'), 'error');
     }
@@ -1686,8 +1735,7 @@ async function publicarEnGitHub() {
     showToast('❌ Error de conexión al publicar', 'error');
   }
 }
-
-function showToast(mensaje, tipo = 'success') {
+  function showToast(mensaje, tipo = 'success') {
   document.querySelectorAll('.toast').forEach(t => t.remove());
   const toast = document.createElement('div');
   toast.className = `toast toast-${tipo}`;
