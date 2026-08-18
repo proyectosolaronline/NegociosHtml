@@ -998,8 +998,7 @@ function abrirModalEdicionCliente(negocio, exp) {
   abrirModalEditar(negocio.id);
 
   document.getElementById('modalTitle').textContent = '✏️ Editar información de tu negocio';
-  document.getElementById('btnGuardar').textContent = '💾 Guardar cambios';
-
+document.getElementById('btnGuardar').textContent = '💾 Guardar';
   const capsula = document.querySelector('#modalOverlay .modal > div');
   if (capsula && capsula.querySelector('#capsulaInput')) capsula.style.display = 'none';
 
@@ -1808,4 +1807,5 @@ console.log('✅ Sistema completo y depurado');
 </div>
 
 </body>
+</html>
 </html>
