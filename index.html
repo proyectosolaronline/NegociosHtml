@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⚙️ Control Sistema - Selector de Diseños</title>
+    <style>
+        /* ===== RESET & GLOBAL ===== */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 900px;
+            width: 100%;
+            background: #ffffff;
+            border-radius: 24px;
+            padding: 40px 32px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        h1 {
+            font-size: 32px;
+            color: #1a1a2e;
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+        }
+        .subtitle {
+            color: #666;
+            font-size: 16px;
+            margin-bottom: 32px;
+        }
+        
+        /* ===== GRID DE BOTONES ===== */
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        .card {
+            display: block;
+            text-decoration: none;
+            padding: 30px 16px;
+            border-radius: 16px;
+            border: 2px solid #e0e0e0;
+            background: #fafafa;
+            color: #333;
+            transition: all 0.3s ease;
+        }
+        .card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+        }
+        .card .icon { font-size: 48px; display: block; margin-bottom: 8px; }
+        .card .nombre { font-size: 20px; font-weight: 700; display: block; }
+        .card .identificador { font-size: 13px; color: #888; margin-top: 6px; display: block; }
+
+        /* ===== ESTILOS INDIVIDUALES ===== */
+        .card-mercadolibre { border-color: #ffe600; background: #fffdf0; }
+        .card-mercadolibre:hover { border-color: #2d3277; background: #fff9e6; }
+        .card-mercadolibre .nombre { color: #2d3277; }
+
+        .card-morado { border-color: #6a1b9a; background: #faf5ff; }
+        .card-morado:hover { border-color: #4a148c; background: #f3e8ff; }
+        .card-morado .nombre { color: #6a1b9a; }
+
+        .card-gris { border-color: #1e293b; background: #f8fafc; }
+        .card-gris:hover { border-color: #0f172a; background: #f1f5f9; }
+        .card-gris .nombre { color: #1e293b; }
+
+        .card-sencillo { border-color: #28a745; background: #f0fdf4; }
+        .card-sencillo:hover { border-color: #1e7e34; background: #dcfce7; }
+        .card-sencillo .nombre { color: #28a745; }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 600px) {
+            .grid { grid-template-columns: 1fr; }
+            .container { padding: 24px 16px; }
+            h1 { font-size: 24px; }
+            .card { padding: 24px 12px; }
+            .card .icon { font-size: 40px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <!-- Título -->
+        <h1>⚙️ Control Sistema</h1>
+        <p class="subtitle">Selecciona el diseño con el que quieres trabajar</p>
+
+        <!-- Botones -->
+        <div class="grid">
+
+            <!-- 1. Mercado Libre -->
+            <a href="index-mercadolibre.html" class="card card-mercadolibre">
+                <span class="icon">🛒</span>
+                <span class="nombre">Diseño Mercado Libre</span>
+                <span class="identificador">index-mercadolibre.html</span>
+            </a>
+
+            <!-- 2. Morado (Médico) -->
+            <a href="index-morado.html" class="card card-morado">
+                <span class="icon">🩺</span>
+                <span class="nombre">Diseño Morado (Médico)</span>
+                <span class="identificador">index-morado.html</span>
+            </a>
+
+            <!-- 3. Gris (Moderno) -->
+            <a href="index-gris.html" class="card card-gris">
+                <span class="icon">🌐</span>
+                <span class="nombre">Diseño Gris (Moderno)</span>
+                <span class="identificador">index-gris.html</span>
+            </a>
+
+            <!-- 4. Sencillo -->
+            <a href="index-sencillo.html" class="card card-sencillo">
+                <span class="icon">📄</span>
+                <span class="nombre">Diseño Sencillo</span>
+                <span class="identificador">index-sencillo.html</span>
+            </a>
+
+        </div>
+    </div>
+
+</body>
+</html>
