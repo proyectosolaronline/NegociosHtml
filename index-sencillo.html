@@ -418,9 +418,27 @@
           </div>
         </div>
       </div>
-
+      <!-- ============================================================
+           🎬 BLOQUE DE VIDEO - FORMULARIO
+           ============================================================ -->
+      <div class="form-section">
+        <h3>🎬 Video del Negocio</h3>
+        <div class="form-group">
+          <label>🔗 URL del Video (YouTube, Shorts, o URL directa)</label>
+          <input type="text" id="videoUrl" placeholder="https://youtube.com/shorts/... o https://youtube.com/watch?v=... o URL directa .mp4" oninput="previsualizarVideo(this.value)">
+          <small style="color:#888;display:block;margin-top:4px;">
+            Acepta: YouTube (watch, shorts, youtu.be), o URL directa de video (.mp4, .webm)
+          </small>
+        </div>
+        <div class="form-group" id="videoPreviewContainer" style="display:none;margin-top:10px;">
+          <label>👁️ Vista previa:</label>
+          <div id="videoPreview" style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;border-radius:10px;background:#000;"></div>
+        </div>
+      </div>
       <div class="form-section">
         <h3>🎨 Diseño de la Landing</h3>
+
+        
         <div class="form-row">
           <div class="form-group">
             <label>Color primario</label>
@@ -2137,6 +2155,35 @@ function limpiarCapsulaInput() {
     document.getElementById('capsulaStatus').innerHTML = '';
 }
 
+// ============================================================
+// 🎬 FUNCIONES DE VIDEO - FORMULARIO
+// ============================================================
+
+// Previsualizar video desde la URL
+function previsualizarVideo(url) {
+  const container = document.getElementById('videoPreview');
+  const previewContainer = document.getElementById('videoPreviewContainer');
+  
+  if (!url || !url.trim()) {
+    previewContainer.style.display = 'none';
+    container.innerHTML = '';
+    return;
+  }
+  
+  const youtubeId = extraerYouTubeIdFront(url);
+  
+  if (youtubeId) {
+    // Es YouTube - mostrar iframe
+    container.innerHTML = `<iframe src="https://www.youtube.com/embed/${youtubeId}" allow="autoplay; encrypted-media; fullscreen" allowfullscreen style="position:absolute;top:0;left:0;width:100%;height:100%;border:none;border-radius:10px;"></iframe>`;
+    previewContainer.style.display = 'block';
+  } else {
+    // Es video directo - mostrar reproductor nativo
+    container.innerHTML = `<video controls style="position:absolute;top:0;left:0;width:100%;height:100%;border-radius:10px;"><source src="${url}" type="video/mp4"></video>`;
+    previewContainer.style.display = 'block';
+  }
+}
+
+  
 console.log('✅ Sistema completo y depurado');
 </script>
 
