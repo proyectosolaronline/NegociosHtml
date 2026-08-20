@@ -1407,16 +1407,7 @@ function abrirModalEditar(id) {
       previsualizarVideo(videoUrl);
       switchVideoTab('url');
     }
-  } else {
-    switchVideoTab('url');
   }
-  if (videoUrl) {
-    previsualizarVideo(videoUrl);
-  } else {
-    document.getElementById('videoPreviewContainer').style.display = 'none';
-    document.getElementById('videoPreview').innerHTML = '';
-  }
-
   
   
   if (negocio.latitud && negocio.longitud) { setUbicacionEnMapa(negocio.latitud, negocio.longitud); ubicacionSeleccionada = true; }
@@ -1565,14 +1556,11 @@ async function guardarNegocio(event) {
     rol: document.getElementById('rol').value,
     urlFacebook: document.getElementById('urlFacebook').value.trim(),
     activo: document.getElementById('activo').value === 'true',
-    fotos: fotosSeleccionadas.filter(f => f && f.url),
-    logo: document.getElementById('logo').value,
+    fotos: fotosSeleccionadas.filter(f => f && f.url),    logo: document.getElementById('logo').value,
     banner: document.getElementById('banner').value,
     video: videoSeleccionado?.base64 ? 
       'data:video/mp4;base64,' + videoSeleccionado.base64 : 
       document.getElementById('videoUrl').value.trim(),
-
-        video: document.getElementById('videoUrl').value.trim(), // 🎬 NUEVO
     duenoMensaje: document.getElementById('duenoMensaje').value.trim(),
     duenoTelefono: document.getElementById('duenoTelefono').value.trim(),
     duenoCorreo: document.getElementById('duenoCorreo').value.trim(),
