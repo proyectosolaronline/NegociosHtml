@@ -1471,13 +1471,20 @@ function cerrarMapaPopup() { document.getElementById('mapPopupOverlay').classLis
 // ============================================================
 // GUARDAR
 // ============================================================
+// ============================================================
+// GUARDAR - VERSIÓN FINAL CON FETCH POST
+// ============================================================
 async function guardarNegocio(event) {
   event.preventDefault();
   if (window.modoClienteExp && Date.now() > window.modoClienteExp) {
     showToast('⏰ El tiempo para editar ya expiró', 'error');
     return;
   }
-  if (!ubicacionSeleccionada) { showToast('⚠️ Debes seleccionar una ubicación en el mapa', 'error'); return; }
+  if (!ubicacionSeleccionada) { 
+    showToast('⚠️ Debes seleccionar una ubicación en el mapa', 'error'); 
+    return; 
+  }
+  
   const editId = document.getElementById('editId').value;
   const btnGuardar = document.getElementById('btnGuardar');
   btnGuardar.disabled = true;
@@ -1524,13 +1531,28 @@ async function guardarNegocio(event) {
   showLoading();
   try {
     const action = editId ? 'editarNegocio' : 'agregarNegocio';
-    const result = await callAPI(action, {
-      id: editId,
-      datos: datos
+    
+    // Crear FormData para enviar correctamente
+    const formData = new URLSearchParams();
+    formData.append('action', action);
+    formData.append('id', editId);
+    formData.append('datos', JSON.stringify(datos));
+    
+    // Usar fetch POST directamente
+    const response = await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      body: formData,
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      }
     });
+    
+    const result = await response.json();
+    
     hideLoading();
     btnGuardar.disabled = false;
     btnGuardar.textContent = '💾 Guardar Negocio';
+    
     if (result.success) {
       showToast(editId ? '✅ Negocio actualizado' : '✅ Negocio creado - ID: ' + result.id, 'success');
       cerrarModal();
@@ -1542,11 +1564,11 @@ async function guardarNegocio(event) {
     hideLoading();
     btnGuardar.disabled = false;
     btnGuardar.textContent = '💾 Guardar Negocio';
-    showToast('❌ Error de conexión', 'error');
+    console.error('Error al guardar:', e);
+    showToast('❌ Error de conexión al guardar', 'error');
   }
 }
-
-// ============================================================
+  // ============================================================
 // ELIMINAR
 // ============================================================
 async function eliminarNegocio(id) {
