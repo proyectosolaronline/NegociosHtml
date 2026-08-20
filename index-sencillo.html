@@ -1580,8 +1580,30 @@ async function eliminarNegocio(id) {
   } catch(e) { hideLoading(); showToast('❌ Error de conexión', 'error'); }
 }
 
+  // ============================================================
+// EXTRAER ID DE YOUTUBE (FRONTEND)
 // ============================================================
-// LANDING PAGE HTML (CON SEPARADOR & Y BANNER REDUCIDO)
+function extraerYouTubeIdFront(url) {
+  if (!url || typeof url !== 'string') return null;
+  
+  const patterns = [
+    /youtube\.com\/watch\?v=([\w-]{11})/,
+    /youtu\.be\/([\w-]{11})/,
+    /youtube\.com\/shorts\/([\w-]{11})/,
+    /youtube\.com\/embed\/([\w-]{11})/,
+    /youtube\.com\/v\/([\w-]{11})/,
+    /youtube\.com\/live\/([\w-]{11})/
+  ];
+  
+  for (const pattern of patterns) {
+    const match = url.match(pattern);
+    if (match) return match[1];
+  }
+  
+  return null;
+}
+// ============================================================
+// LANDING PAGE HTML (CON SEPARADOR &, BANNER REDUCIDO Y VIDEO)
 // ============================================================
 
 function construirLandingHTML(n) {
@@ -1602,8 +1624,7 @@ function construirLandingHTML(n) {
   const descCorta = descParts[0].trim() || '';
   const descLarga = descParts[1] ? descParts[1].trim() : descCorta;
 
-  // 🔹 SEPARADOR & EN GALERÍA: título (antes de &) siempre visible + descripción
-  // truncada con botón "Ver más" que revela solo lo que falta de la descripción.
+  // 🔹 SEPARADOR & EN GALERÍA
   const LIMITE_DESC_FOTO = 90;
   const galeriaHTML = fotos.length ? `
     <section class="l-gallery">${fotos.map((f, i) => {
@@ -1632,6 +1653,29 @@ function construirLandingHTML(n) {
         </div>
       `;
     }).join('')}</section>` : '';
+
+  // 🎬 VIDEO DEL NEGOCIO
+  const videoData = n.video || {};
+  const videoUrl = typeof videoData === 'string' ? videoData : (videoData.url || '');
+  const youtubeId = videoData.youtubeId || extraerYouTubeIdFront(videoUrl);
+  
+  const videoHTML = videoUrl ? `
+    <section class="l-section l-video"><h2>🎬 Nuestro Video</h2>
+      <div class="l-video-card">
+        ${youtubeId ? `
+          <div class="l-video-iframe-wrapper">
+            <iframe src="https://www.youtube.com/embed/${youtubeId}?rel=0" allow="autoplay; encrypted-media; fullscreen" allowfullscreen loading="lazy"></iframe>
+          </div>
+        ` : `
+          <div class="l-video-iframe-wrapper">
+            <video controls preload="metadata">
+              <source src="${videoUrl}" type="video/mp4">
+              Tu navegador no soporta video HTML5.
+            </video>
+          </div>
+        `}
+      </div>
+    </section>` : '';
 
   const mapaHTML = tieneMapa ? `
     <section class="l-section l-mapa"><h2>📍 Encuéntranos</h2>
@@ -1714,6 +1758,9 @@ body{font-family:${fuenteLanding};color:#333;background:#f0f2f5;line-height:1.6;
 .l-map-card iframe{width:100%;height:260px;border:0}
 .l-direccion{margin-top:10px;font-size:13px;color:#666}
 .l-mision-texto{font-size:14px;color:#555;line-height:1.7}
+.l-video-card{border-radius:14px;overflow:hidden;box-shadow:0 4px 15px rgba(0,0,0,0.08);border:2px solid ${colorAcento}}
+.l-video-iframe-wrapper{position:relative;padding-bottom:56.25%;height:0;overflow:hidden}
+.l-video-iframe-wrapper iframe,.l-video-iframe-wrapper video{position:absolute;top:0;left:0;width:100%;height:100%;border:none}
 .l-popup-mensaje{position:fixed;left:50%;bottom:-120px;transform:translateX(-50%);background:linear-gradient(135deg,${colorPrimario},${colorSecundario});color:#fff;padding:14px 40px 14px 20px;border-radius:14px 14px 0 0;font-size:13px;font-weight:600;text-align:center;max-width:92%;box-shadow:0 -6px 20px rgba(0,0,0,0.25);z-index:4000;transition:bottom 0.5s ease}
 .l-popup-mensaje.mostrar{bottom:0}
 .l-popup-cerrar{position:absolute;top:6px;right:10px;background:none;border:none;color:#fff;font-size:16px;cursor:pointer;line-height:1;padding:0}
@@ -1752,6 +1799,7 @@ footer{background:#1a1a2e;text-align:center;padding:22px 20px;font-size:14px}
   <div class="l-contact-grid">
     ${contactoItems.map(([icon,label,valor]) => `<div class="l-contact-item"><div class="cl">${icon} ${label}</div><div class="cv">${valor}</div></div>`).join('')}
   </div>
+  ${videoHTML}
   ${mapaHTML}
   <div class="l-btn-group">${contactoBotones}</div>
   <section class="l-share-section">
@@ -1774,7 +1822,6 @@ footer{background:#1a1a2e;text-align:center;padding:22px 20px;font-size:14px}
     var f = lFotos[i];
     if(!f) return;
     document.getElementById('lLightboxImg').src = f.url;
-    // SEPARADOR &: mostrar descripción larga (después del &)
     var descCompleta = f.descripcion || '';
     var partes = descCompleta.split('&');
     var descLarga = partes[1] ? partes[1].trim() : (partes[0].trim() || '');
@@ -1832,7 +1879,7 @@ if (mensajeEmergenteTexto) {
 
 
 
-// ============================================================
+  
 // GENERAR SITEMAP.XML PARA CADA LANDING
 // ============================================================
 function generarSitemapLanding(n) {
