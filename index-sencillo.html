@@ -1310,10 +1310,6 @@ function abrirModalNuevo() {
   document.getElementById('videoFileInfo').textContent = '';
   document.getElementById('btnQuitarVideo').style.display = 'none';
   switchVideoTab('url');
-  // 🎬 Resetear campo de video
-  document.getElementById('videoUrl').value = '';
-  document.getElementById('videoPreviewContainer').style.display = 'none';
-  document.getElementById('videoPreview').innerHTML = '';
   
   document.getElementById('colorPrimario').value = '#667eea';
   document.getElementById('colorSecundario').value = '#764ba2';
@@ -1380,8 +1376,7 @@ function abrirModalEditar(id) {
     document.getElementById('bannerPreview').style.display = 'block';
   } else {
     document.getElementById('bannerPreview').style.display = 'none';
-  }
-  // 🎬 Cargar video existente
+  }  // 🎬 Cargar video existente
   videoSeleccionado = null;
   const videoUrl = negocio.video?.url || negocio.video || '';
   document.getElementById('videoUrl').value = videoUrl;
@@ -1415,9 +1410,6 @@ function abrirModalEditar(id) {
   } else {
     switchVideoTab('url');
   }
-  // 🎬 Cargar video existente
-  const videoUrl = negocio.video?.url || negocio.video || '';
-  document.getElementById('videoUrl').value = videoUrl;
   if (videoUrl) {
     previsualizarVideo(videoUrl);
   } else {
@@ -1576,11 +1568,9 @@ async function guardarNegocio(event) {
     fotos: fotosSeleccionadas.filter(f => f && f.url),
     logo: document.getElementById('logo').value,
     banner: document.getElementById('banner').value,
-        logo: document.getElementById('logo').value,
-    banner: document.getElementById('banner').value,
     video: videoSeleccionado?.base64 ? 
       'data:video/mp4;base64,' + videoSeleccionado.base64 : 
-      document.getElementById('videoUrl').value.trim(), // 🎬 Video (Base64 o URL)
+      document.getElementById('videoUrl').value.trim(),
 
         video: document.getElementById('videoUrl').value.trim(), // 🎬 NUEVO
     duenoMensaje: document.getElementById('duenoMensaje').value.trim(),
