@@ -418,97 +418,66 @@
           </div>
         </div>
       </div>
-      <!-- ============================================================
-           🎬 BLOQUE DE VIDEO - FORMULARIO
+            <!-- ============================================================
+           🎬 BLOQUE DE VIDEO - FORMULARIO (Galería + URL)
            ============================================================ -->
       <div class="form-section">
         <h3>🎬 Video del Negocio</h3>
-        <div class="form-group">
-          <label>🔗 URL del Video (YouTube, Shorts, o URL directa)</label>
-          <input type="text" id="videoUrl" placeholder="https://youtube.com/shorts/... o https://youtube.com/watch?v=... o URL directa .mp4" oninput="previsualizarVideo(this.value)">
-          <small style="color:#888;display:block;margin-top:4px;">
-            Acepta: YouTube (watch, shorts, youtu.be), o URL directa de video (.mp4, .webm)
-          </small>
+        
+        <!-- Tabs para elegir método -->
+        <div style="display:flex;gap:8px;margin-bottom:15px;">
+          <button type="button" id="tabVideoUrl" class="btn btn-primary btn-sm" onclick="switchVideoTab('url')" style="flex:1;justify-content:center;">
+            🔗 Pegar URL
+          </button>
+          <button type="button" id="tabVideoGalería" class="btn btn-outline btn-sm" onclick="switchVideoTab('galeria')" style="flex:1;justify-content:center;border-color:#667eea;color:#667eea;">
+            📁 Subir video
+          </button>
         </div>
+        
+        <!-- Panel URL -->
+        <div id="panelVideoUrl">
+          <div class="form-group">
+            <label>🔗 URL del Video (YouTube, Shorts, o URL directa)</label>
+            <input type="text" id="videoUrl" placeholder="https://youtube.com/shorts/... o https://youtube.com/watch?v=... o URL directa .mp4" oninput="previsualizarVideo(this.value)">
+            <small style="color:#888;display:block;margin-top:4px;">
+              Acepta: YouTube (watch, shorts, youtu.be), o URL directa de video (.mp4, .webm)
+            </small>
+          </div>
+        </div>
+        
+        <!-- Panel Galería -->
+        <div id="panelVideoGaleria" style="display:none;">
+          <div class="form-group">
+            <label>📁 Seleccionar video desde galería</label>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+              <button type="button" class="btn btn-primary" onclick="seleccionarVideoGaleria()" style="flex:1;justify-content:center;">
+                🎬 Elegir video
+              </button>
+              <button type="button" class="btn btn-danger" onclick="quitarVideoGaleria()" id="btnQuitarVideo" style="display:none;">
+                ✖ Quitar
+              </button>
+            </div>
+            <small style="color:#888;display:block;margin-top:4px;">
+              Máximo recomendado: 50 MB. Formatos: MP4, WebM, MOV
+            </small>
+          </div>
+          <div class="form-group" id="videoFilePreviewContainer" style="display:none;margin-top:10px;">
+            <label>👁️ Vista previa:</label>
+            <div style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;border-radius:10px;background:#000;">
+              <video id="videoFilePreview" controls style="position:absolute;top:0;left:0;width:100%;height:100%;border:none;border-radius:10px;"></video>
+            </div>
+            <div style="margin-top:8px;font-size:12px;color:#888;" id="videoFileInfo"></div>
+          </div>
+          <input type="hidden" id="videoBase64" value="">
+          <input type="hidden" id="videoFileName" value="">
+        </div>
+        
+        <!-- Preview compartido (para URL) -->
         <div class="form-group" id="videoPreviewContainer" style="display:none;margin-top:10px;">
           <label>👁️ Vista previa:</label>
           <div id="videoPreview" style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;border-radius:10px;background:#000;"></div>
         </div>
       </div>
-      <div class="form-section">
-        <h3>🎨 Diseño de la Landing</h3>
-
-        
-        <div class="form-row">
-          <div class="form-group">
-            <label>Color primario</label>
-            <div class="color-input-wrap">
-              <input type="color" id="colorPrimario" value="#667eea" oninput="document.getElementById('colorPrimarioTxt').textContent=this.value">
-              <span id="colorPrimarioTxt">#667eea</span>
-            </div>
-          </div>
-          <div class="form-group">
-            <label>Color secundario</label>
-            <div class="color-input-wrap">
-              <input type="color" id="colorSecundario" value="#764ba2" oninput="document.getElementById('colorSecundarioTxt').textContent=this.value">
-              <span id="colorSecundarioTxt">#764ba2</span>
-            </div>
-          </div>
-        </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label>Color de acento (botón "Ver más" y detalles)</label>
-            <div class="color-input-wrap">
-              <input type="color" id="colorAcento" value="#fbbf24" oninput="document.getElementById('colorAcentoTxt').textContent=this.value">
-              <span id="colorAcentoTxt">#fbbf24</span>
-            </div>
-          </div>
-          <div class="form-group">
-            <label>Tipografía</label>
-            <select id="fuenteLanding">
-              <option value="'Segoe UI',system-ui,sans-serif">Moderna (por defecto)</option>
-              <option value="'Poppins',sans-serif">Redondeada (Poppins)</option>
-              <option value="'Georgia',serif">Elegante (serif)</option>
-              <option value="'Trebuchet MS',sans-serif">Amigable</option>
-            </select>
-          </div>
-        </div>
-        <div style="margin-top:6px;">
-          <label style="font-weight:600;font-size:13px;color:#555;display:block;margin-bottom:8px;">Paletas sugeridas (clic para aplicar)</label>
-          <div style="display:flex;gap:10px;flex-wrap:wrap;">
-            <button type="button" class="paleta-btn" onclick="aplicarPaletaLanding('#7c3aed','#4c1d95','#fbbf24')">
-              <span class="paleta-dots"><span class="paleta-dot" style="background:#7c3aed;"></span><span class="paleta-dot" style="background:#4c1d95;"></span><span class="paleta-dot" style="background:#fbbf24;"></span></span>
-              Morado Marketplace
-            </button>
-            <button type="button" class="paleta-btn" onclick="aplicarPaletaLanding('#4b5563','#1f2937','#10b981')">
-              <span class="paleta-dots"><span class="paleta-dot" style="background:#4b5563;"></span><span class="paleta-dot" style="background:#1f2937;"></span><span class="paleta-dot" style="background:#10b981;"></span></span>
-              Gris Moderno
-            </button>
-            <button type="button" class="paleta-btn" onclick="aplicarPaletaLanding('#ec4899','#db2777','#f59e0b')">
-              <span class="paleta-dots"><span class="paleta-dot" style="background:#ec4899;"></span><span class="paleta-dot" style="background:#db2777;"></span><span class="paleta-dot" style="background:#f59e0b;"></span></span>
-              Coral Vibrante
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <div class="form-section">
-        <h3>👤 Datos del Dueño</h3>
-        <div class="form-group"><label>Mensaje del dueño</label><input type="text" id="duenoMensaje" placeholder="Mensaje que verá el cliente al compartir edición"></div>
-        <div class="form-row">
-          <div class="form-group"><label>Teléfono del dueño</label><input type="text" id="duenoTelefono"></div>
-          <div class="form-group"><label>Correo del dueño</label><input type="email" id="duenoCorreo"></div>
-        </div>
-      </div>
-      
-      <div id="formBotones" style="display:flex;gap:12px;justify-content:flex-end;margin-top:20px;padding-top:20px;border-top:2px solid #f0f0f0;">
-        <button type="button" class="btn btn-warning" onclick="cerrarModal()">Cancelar</button>
-        <button type="submit" class="btn btn-primary" id="btnGuardar">💾 Guardar Negocio</button>
-      </div>
-    </form>
-  </div>
-</div>
-
 <!-- Modal de Preview -->
 <div class="modal-overlay" id="previewOverlay">
   <div class="modal preview-modal">
@@ -1330,7 +1299,17 @@ function abrirModalNuevo() {
   document.getElementById('bannerPreview').style.display = 'none';
   document.getElementById('logoInput').value = '';
   document.getElementById('bannerInput').value = '';
-
+  // 🎬 Resetear video
+  videoSeleccionado = null;
+  document.getElementById('videoUrl').value = '';
+  document.getElementById('videoBase64').value = '';
+  document.getElementById('videoFileName').value = '';
+  document.getElementById('videoPreviewContainer').style.display = 'none';
+  document.getElementById('videoPreview').innerHTML = '';
+  document.getElementById('videoFilePreviewContainer').style.display = 'none';
+  document.getElementById('videoFileInfo').textContent = '';
+  document.getElementById('btnQuitarVideo').style.display = 'none';
+  switchVideoTab('url');
   // 🎬 Resetear campo de video
   document.getElementById('videoUrl').value = '';
   document.getElementById('videoPreviewContainer').style.display = 'none';
@@ -1402,7 +1381,40 @@ function abrirModalEditar(id) {
   } else {
     document.getElementById('bannerPreview').style.display = 'none';
   }
-
+  // 🎬 Cargar video existente
+  videoSeleccionado = null;
+  const videoUrl = negocio.video?.url || negocio.video || '';
+  document.getElementById('videoUrl').value = videoUrl;
+  document.getElementById('videoBase64').value = '';
+  document.getElementById('videoFileName').value = '';
+  document.getElementById('videoFilePreviewContainer').style.display = 'none';
+  document.getElementById('videoFileInfo').textContent = '';
+  document.getElementById('btnQuitarVideo').style.display = 'none';
+  
+  if (videoUrl) {
+    if (videoUrl.startsWith('data:video/') || videoUrl.startsWith('data:application/')) {
+      // Es un video guardado como Base64
+      videoSeleccionado = {
+        base64: videoUrl.split(',')[1] || videoUrl,
+        fileName: 'video_guardado.mp4',
+        mimeType: 'video/mp4'
+      };
+      const videoPreview = document.getElementById('videoFilePreview');
+      videoPreview.src = videoUrl;
+      document.getElementById('videoFilePreviewContainer').style.display = 'block';
+      document.getElementById('videoFileInfo').textContent = 'Video guardado previamente';
+      document.getElementById('btnQuitarVideo').style.display = 'block';
+      document.getElementById('videoBase64').value = videoUrl.split(',')[1] || videoUrl;
+      document.getElementById('videoFileName').value = 'video_guardado.mp4';
+      switchVideoTab('galeria');
+    } else {
+      // Es una URL (YouTube o directa)
+      previsualizarVideo(videoUrl);
+      switchVideoTab('url');
+    }
+  } else {
+    switchVideoTab('url');
+  }
   // 🎬 Cargar video existente
   const videoUrl = negocio.video?.url || negocio.video || '';
   document.getElementById('videoUrl').value = videoUrl;
@@ -1564,6 +1576,11 @@ async function guardarNegocio(event) {
     fotos: fotosSeleccionadas.filter(f => f && f.url),
     logo: document.getElementById('logo').value,
     banner: document.getElementById('banner').value,
+        logo: document.getElementById('logo').value,
+    banner: document.getElementById('banner').value,
+    video: videoSeleccionado?.base64 ? 
+      'data:video/mp4;base64,' + videoSeleccionado.base64 : 
+      document.getElementById('videoUrl').value.trim(), // 🎬 Video (Base64 o URL)
 
         video: document.getElementById('videoUrl').value.trim(), // 🎬 NUEVO
     duenoMensaje: document.getElementById('duenoMensaje').value.trim(),
@@ -2174,12 +2191,105 @@ function limpiarCapsulaInput() {
     document.getElementById('capsulaInput').value = '';
     document.getElementById('capsulaStatus').innerHTML = '';
 }
-
 // ============================================================
-// 🎬 FUNCIONES DE VIDEO - FORMULARIO
+// 🎬 FUNCIONES DE VIDEO - FORMULARIO (Galería + URL)
 // ============================================================
 
-// Previsualizar video desde la URL
+// Variable global para el video seleccionado
+let videoSeleccionado = null; // { base64, fileName, mimeType }
+
+// Cambiar entre tabs de URL y Galería
+function switchVideoTab(tab) {
+  const panelUrl = document.getElementById('panelVideoUrl');
+  const panelGaleria = document.getElementById('panelVideoGaleria');
+  const tabUrl = document.getElementById('tabVideoUrl');
+  const tabGaleria = document.getElementById('tabVideoGalería');
+  
+  if (tab === 'url') {
+    panelUrl.style.display = 'block';
+    panelGaleria.style.display = 'none';
+    tabUrl.className = 'btn btn-primary btn-sm';
+    tabGaleria.className = 'btn btn-outline btn-sm';
+  } else {
+    panelUrl.style.display = 'none';
+    panelGaleria.style.display = 'block';
+    tabUrl.className = 'btn btn-outline btn-sm';
+    tabGaleria.className = 'btn btn-primary btn-sm';
+  }
+}
+
+// Seleccionar video desde galería
+function seleccionarVideoGaleria() {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'video/*';
+  input.onchange = function(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    // Validar tamaño (50 MB máximo)
+    const MAX_SIZE = 50 * 1024 * 1024; // 50 MB
+    if (file.size > MAX_SIZE) {
+      showToast('❌ El video es muy grande (máximo 50 MB)', 'error');
+      return;
+    }
+    
+    // Validar formato
+    const formatosAceptados = ['video/mp4', 'video/webm', 'video/quicktime', 'video/ogg'];
+    if (!formatosAceptados.includes(file.type)) {
+      showToast('❌ Formato no soportado. Usa MP4, WebM, MOV u OGG', 'error');
+      return;
+    }
+    
+    // Leer archivo como Base64
+    const reader = new FileReader();
+    reader.onload = function(ev) {
+      const base64 = ev.target.result.split(',')[1];
+      
+      videoSeleccionado = {
+        base64: base64,
+        fileName: file.name,
+        mimeType: file.type || 'video/mp4',
+        size: file.size
+      };
+      
+      // Mostrar preview
+      const videoPreview = document.getElementById('videoFilePreview');
+      videoPreview.src = URL.createObjectURL(file);
+      
+      document.getElementById('videoFilePreviewContainer').style.display = 'block';
+      document.getElementById('videoFileInfo').textContent = 
+        file.name + ' · ' + formatBytes(file.size);
+      
+      document.getElementById('btnQuitarVideo').style.display = 'block';
+      document.getElementById('videoBase64').value = base64;
+      document.getElementById('videoFileName').value = file.name;
+      
+      showToast('✅ Video seleccionado: ' + file.name, 'success');
+    };
+    reader.readAsDataURL(file);
+  };
+  input.click();
+}
+
+// Quitar video seleccionado
+function quitarVideoGaleria() {
+  videoSeleccionado = null;
+  
+  const videoPreview = document.getElementById('videoFilePreview');
+  URL.revokeObjectURL(videoPreview.src);
+  videoPreview.src = '';
+  
+  document.getElementById('videoFilePreviewContainer').style.display = 'none';
+  document.getElementById('videoFileInfo').textContent = '';
+  document.getElementById('btnQuitarVideo').style.display = 'none';
+  document.getElementById('videoBase64').value = '';
+  document.getElementById('videoFileName').value = '';
+  
+  showToast('🗑️ Video eliminado', 'success');
+}
+
+// Previsualizar video desde URL
 function previsualizarVideo(url) {
   const container = document.getElementById('videoPreview');
   const previewContainer = document.getElementById('videoPreviewContainer');
@@ -2193,17 +2303,19 @@ function previsualizarVideo(url) {
   const youtubeId = extraerYouTubeIdFront(url);
   
   if (youtubeId) {
-    // Es YouTube - mostrar iframe
     container.innerHTML = `<iframe src="https://www.youtube.com/embed/${youtubeId}" allow="autoplay; encrypted-media; fullscreen" allowfullscreen style="position:absolute;top:0;left:0;width:100%;height:100%;border:none;border-radius:10px;"></iframe>`;
     previewContainer.style.display = 'block';
   } else {
-    // Es video directo - mostrar reproductor nativo
     container.innerHTML = `<video controls style="position:absolute;top:0;left:0;width:100%;height:100%;border-radius:10px;"><source src="${url}" type="video/mp4"></video>`;
     previewContainer.style.display = 'block';
   }
 }
 
-  
+// Formatear bytes
+function formatBytes(bytes) {
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+  return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+}  
 console.log('✅ Sistema completo y depurado');
 </script>
 
