@@ -1330,6 +1330,12 @@ function abrirModalNuevo() {
   document.getElementById('bannerPreview').style.display = 'none';
   document.getElementById('logoInput').value = '';
   document.getElementById('bannerInput').value = '';
+
+  // 🎬 Resetear campo de video
+  document.getElementById('videoUrl').value = '';
+  document.getElementById('videoPreviewContainer').style.display = 'none';
+  document.getElementById('videoPreview').innerHTML = '';
+  
   document.getElementById('colorPrimario').value = '#667eea';
   document.getElementById('colorSecundario').value = '#764ba2';
   document.getElementById('colorAcento').value = '#fbbf24';
@@ -1396,6 +1402,18 @@ function abrirModalEditar(id) {
   } else {
     document.getElementById('bannerPreview').style.display = 'none';
   }
+
+  // 🎬 Cargar video existente
+  const videoUrl = negocio.video?.url || negocio.video || '';
+  document.getElementById('videoUrl').value = videoUrl;
+  if (videoUrl) {
+    previsualizarVideo(videoUrl);
+  } else {
+    document.getElementById('videoPreviewContainer').style.display = 'none';
+    document.getElementById('videoPreview').innerHTML = '';
+  }
+
+  
   
   if (negocio.latitud && negocio.longitud) { setUbicacionEnMapa(negocio.latitud, negocio.longitud); ubicacionSeleccionada = true; }
   else { ubicacionSeleccionada = false; document.getElementById('mapStatus').textContent = '⚠️ Haz clic en el mapa'; document.getElementById('mapStatus').className = 'map-status pending'; }
@@ -1546,6 +1564,8 @@ async function guardarNegocio(event) {
     fotos: fotosSeleccionadas.filter(f => f && f.url),
     logo: document.getElementById('logo').value,
     banner: document.getElementById('banner').value,
+
+        video: document.getElementById('videoUrl').value.trim(), // 🎬 NUEVO
     duenoMensaje: document.getElementById('duenoMensaje').value.trim(),
     duenoTelefono: document.getElementById('duenoTelefono').value.trim(),
     duenoCorreo: document.getElementById('duenoCorreo').value.trim(),
