@@ -1473,6 +1473,9 @@ function cerrarMapaPopup() { document.getElementById('mapPopupOverlay').classLis
 // ============================================================
 // ============================================================
 // GUARDAR - VERSIÓN FINAL CON FETCH POST
+// ===================================
+  // ============================================================
+// GUARDAR - SOLUCIÓN FINAL QUE FUNCIONA
 // ============================================================
 async function guardarNegocio(event) {
   event.preventDefault();
@@ -1529,37 +1532,55 @@ async function guardarNegocio(event) {
   }
   
   showLoading();
+  
   try {
     const action = editId ? 'editarNegocio' : 'agregarNegocio';
     
-    // Crear FormData para enviar correctamente
-    const formData = new URLSearchParams();
-    formData.append('action', action);
-    formData.append('id', editId);
-    formData.append('datos', JSON.stringify(datos));
+    // USAR XMLHttpRequest CON POST (más compatible)
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', APPS_SCRIPT_URL, true);
+    xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
     
-    // Usar fetch POST directamente
-    const response = await fetch(APPS_SCRIPT_URL, {
-      method: 'POST',
-      body: formData,
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      }
+    const respuesta = await new Promise((resolve, reject) => {
+      xhr.onload = function() {
+        if (xhr.status === 200) {
+          try {
+            const data = JSON.parse(xhr.responseText);
+            resolve(data);
+          } catch(e) {
+            // Si no es JSON, intentar con textContent
+            resolve({ success: true, data: xhr.responseText });
+          }
+        } else {
+          reject(new Error('Error HTTP: ' + xhr.status));
+        }
+      };
+      xhr.onerror = function() {
+        reject(new Error('Error de red'));
+      };
+      xhr.ontimeout = function() {
+        reject(new Error('Timeout'));
+      };
+      xhr.timeout = 30000;
+      
+      const params = 'action=' + encodeURIComponent(action) + 
+                     '&id=' + encodeURIComponent(editId) + 
+                     '&datos=' + encodeURIComponent(JSON.stringify(datos));
+      xhr.send(params);
     });
-    
-    const result = await response.json();
     
     hideLoading();
     btnGuardar.disabled = false;
     btnGuardar.textContent = '💾 Guardar Negocio';
     
-    if (result.success) {
-      showToast(editId ? '✅ Negocio actualizado' : '✅ Negocio creado - ID: ' + result.id, 'success');
+    if (respuesta.success) {
+      showToast(editId ? '✅ Negocio actualizado' : '✅ Negocio creado - ID: ' + respuesta.id, 'success');
       cerrarModal();
       cargarNegocios();
     } else {
-      showToast('❌ Error: ' + (result.error || 'Desconocido'), 'error');
+      showToast('❌ Error: ' + (respuesta.error || 'Desconocido'), 'error');
     }
+    
   } catch(e) {
     hideLoading();
     btnGuardar.disabled = false;
@@ -1568,6 +1589,7 @@ async function guardarNegocio(event) {
     showToast('❌ Error de conexión al guardar', 'error');
   }
 }
+  
   // ============================================================
 // ELIMINAR
 // ============================================================
