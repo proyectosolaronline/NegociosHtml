@@ -238,18 +238,82 @@ var camFacingMode = 'environment';
 // ═══════════════════════════════════════════════════════════════
 // API
 // ═══════════════════════════════════════════════════════════════
-async function apiPost(data) {
+async function subirVideo() {
+  if (!STATE.fileBlob) return;
+  if (!STATE.storeId) {
+    showMsg('msg-drive', 'Error: Falta ID de tienda', 'err');
+    return;
+  }
+  
+  var btn = document.getElementById('btn-upload');
+  btn.disabled = true;
+  btn.textContent = 'Leyendo…';
+  hideMsg('msg-drive');
+  
   try {
-    var r = await fetch(BACKEND_URL, {
+    var b64 = await fileToBase64(STATE.fileBlob);
+    var uploadId = 'up_' + Date.now();
+    var chunks = [];
+    var chunkB64Size = Math.ceil(CHUNK_BYTES * 4 / 3);
+    
+    for (var i = 0; i < b64.length; i += chunkB64Size) {
+      chunks.push(b64.slice(i, i + chunkB64Size));
+    }
+    
+    var total = chunks.length;
+    
+    for (var j = 0; j < total; j++) {
+      showProgress(Math.round((j / total) * 80), 'Enviando parte ' + (j + 1) + ' de ' + total + '…');
+      
+      // 🆕 USAR fetch DIRECTAMENTE con headers correctos
+      var resChunk = await fetch(BACKEND_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({
+          action: 'video.chunk',
+          storeId: STATE.storeId,
+          uploadId: uploadId,
+          chunkIndex: j,
+          chunkData: chunks[j]
+        })
+      }).then(function(r) { return r.json(); });
+      
+      if (!resChunk.ok) throw new Error('Error en parte ' + j + ': ' + resChunk.error);
+    }
+    
+    showProgress(85, 'Ensamblando…');
+    
+    // 🆕 USAR fetch DIRECTAMENTE para el done
+    var resDone = await fetch(BACKEND_URL, {
       method: 'POST',
-      redirect: 'follow',
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify(data)
-    });
-    var txt = await r.text();
-    return JSON.parse(txt);
+      body: JSON.stringify({
+        action: 'video.chunk.done',
+        storeId: STATE.storeId,
+        uploadId: uploadId,
+        totalChunks: total,
+        mimeType: STATE.fileMime,
+        fileName: STATE.fileName
+      })
+    }).then(function(r) { return r.json(); });
+    
+    if (!resDone.ok) throw new Error(resDone.error || 'Error al ensamblar');
+    
+    showProgress(100, '¡Listo!');
+    setTimeout(hideProgress, 800);
+    showMsg('msg-drive', '✅ Video subido correctamente', 'ok');
+    toast('✅ Video guardado', 'ok');
+    
+    btn.textContent = 'Subir video';
+    document.getElementById('no-video-msg').classList.remove('show');
+    showPlayer(resDone.videoUrl, 'drive');
+    clearFile();
+    
   } catch(e) {
-    return { ok: false, error: e.message };
+    showMsg('msg-drive', '❌ Error: ' + e.message, 'err');
+    btn.disabled = false;
+    btn.textContent = 'Subir video';
+    hideProgress();
   }
 }
 
