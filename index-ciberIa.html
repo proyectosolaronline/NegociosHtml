@@ -1374,16 +1374,26 @@ function cerrarModal() { document.getElementById('modalOverlay').classList.remov
 // ============================================================
 let detailMapInstance = null;
 let detailMapMarker = null;
-
+// ============================================================
+// CORRECCIÓN PARA EL ERROR 153 (Video Popup)
+// ============================================================
 function abrirVideoPopup(videoUrl) {
   let embed = videoUrl;
-  if (embed.includes('/d/')) {
+  
+  // 1. CORRECCIÓN PARA GOOGLE DRIVE:
+  // Si es un enlace de Drive, debemos convertirlo a "/preview" para que el iframe funcione
+  if (embed.includes('/d/') && !embed.includes('/preview')) {
     const fid = embed.match(/\/d\/([a-zA-Z0-9_-]+)/);
     if (fid) embed = 'https://drive.google.com/file/d/' + fid[1] + '/preview';
-  } else if (esVideoYoutube_(embed)) {
+  } 
+  // 2. CORRECCIÓN PARA YOUTUBE:
+  else if (esVideoYoutube_(embed)) {
     const yid = extraerYoutubeId_(embed);
+    // Usamos "embed" para que funcione sin errores de reproducción
     if (yid) embed = 'https://www.youtube.com/embed/' + yid + '?autoplay=1&rel=0';
   }
+
+  // Crear el pop-up con el iframe ya corregido
   const overlay = document.createElement('div');
   overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:6000;display:flex;align-items:center;justify-content:center;padding:20px;';
   overlay.innerHTML = `
@@ -1397,7 +1407,6 @@ function abrirVideoPopup(videoUrl) {
   overlay.querySelector('#btnCerrarVideoPopup').onclick = () => document.body.removeChild(overlay);
   overlay.onclick = (e) => { if (e.target === overlay) document.body.removeChild(overlay); };
 }
-
 function abrirDetalle(id) {
   const negocio = negocios.find(n => n.id === id);
   if (!negocio) return;
