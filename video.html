@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Video Player — LandingKit</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#080b10;--s1:#0d1117;--s2:#161b22;--s3:#21262d;
+  --border:#30363d;
+  --accent:#00d98b;--accent2:#00b374;--accent-dim:rgba(0,217,139,.1);--accent-glow:rgba(0,217,139,.25);
+  --warn:#f0a500;--danger:#f85149;--info:#58a6ff;
+  --text:#e6edf3;--muted:#8b949e;--muted2:#484f58;
+  --ff:'Plus Jakarta Sans',sans-serif;--mono:'IBM Plex Mono',monospace;--r:10px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{height:100%}
+body{font-family:var(--ff);background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;line-height:1.5}
+button{font-family:var(--ff);cursor:pointer;border:none}
+input,select{font-family:var(--ff)}
+body::before{
+  content:'';position:fixed;inset:0;
+  background-image:linear-gradient(rgba(0,217,139,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(0,217,139,.025) 1px,transparent 1px);
+  background-size:40px 40px;pointer-events:none;z-index:0;
+}
+#app{min-height:100vh;position:relative;z-index:1}
+.topbar{position:sticky;top:0;z-index:50;height:52px;background:rgba(8,11,16,.88);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;gap:12px}
+.tb-logo{font-family:var(--mono);font-size:12px;font-weight:600;color:var(--accent);letter-spacing:.1em;display:flex;align-items:center;gap:7px}
+.tb-logo::before{content:'';width:7px;height:7px;border-radius:50%;background:var(--accent);box-shadow:0 0 6px var(--accent-glow)}
+.tb-badge{background:var(--accent-dim);border:1px solid var(--accent);color:var(--accent);font-size:10px;font-weight:700;padding:2px 9px;border-radius:99px;letter-spacing:.05em}
+.tb-right{margin-left:auto;display:flex;gap:8px}
+.tb-btn{padding:6px 14px;border-radius:8px;font-size:12px;font-weight:600;border:1px solid var(--border);background:var(--s2);color:var(--muted);transition:all .15s;display:inline-flex;align-items:center;gap:6px}
+.tb-btn:hover{border-color:var(--accent);color:var(--text)}
+.main{padding:24px 20px;max-width:480px;margin:0 auto}
+.status-bar{display:none;padding:10px 16px;border-radius:var(--r);font-size:13px;font-weight:500;margin-bottom:16px;border:1px solid;align-items:center;gap:8px}
+.status-bar.on{display:flex}
+.status-bar.ok{background:rgba(0,217,139,.1);border-color:rgba(0,217,139,.3);color:var(--accent)}
+.status-bar.err{background:rgba(248,81,73,.1);border-color:rgba(248,81,73,.3);color:var(--danger)}
+.status-bar.load{background:rgba(240,165,0,.08);border-color:rgba(240,165,0,.3);color:var(--warn)}
+.store-badge{display:flex;align-items:center;gap:12px;background:var(--s1);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px;margin-bottom:20px}
+.store-dot{width:8px;height:8px;background:var(--accent);border-radius:50%;flex-shrink:0;box-shadow:0 0 8px var(--accent-glow)}
+.store-name{font-size:14px;font-weight:700;color:var(--text)}
+.store-plan{font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:2px}
+.player-wrap{display:none;margin-bottom:20px}
+.player-wrap.show{display:block}
+.player-label{font-family:var(--mono);font-size:11px;color:var(--accent);letter-spacing:.1em;text-transform:uppercase;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.player-label::before{content:'';width:6px;height:6px;background:var(--accent);border-radius:50%;box-shadow:0 0 6px var(--accent-glow)}
+.source-badge{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:10px;padding:3px 8px;border-radius:4px;margin-bottom:8px}
+.source-badge.drive{background:rgba(0,217,139,.1);color:var(--accent);border:1px solid rgba(0,217,139,.3)}
+.source-badge.youtube{background:rgba(248,81,73,.1);color:var(--danger);border:1px solid rgba(248,81,73,.3)}
+.iframe-player{position:relative;padding-bottom:56.25%;height:0;overflow:hidden;border-radius:10px;background:#000}
+.iframe-player iframe{position:absolute;top:0;left:0;width:100%;height:100%;border:none;border-radius:10px}
+.no-video-msg{display:none;text-align:center;padding:30px 10px;background:var(--s1);border:1px solid var(--border);border-radius:10px;margin-bottom:20px}
+.no-video-msg.show{display:block}
+.no-video-msg span{font-size:40px;display:block;margin-bottom:10px}
+.no-video-msg p{font-family:var(--mono);font-size:13px;color:var(--muted)}
+.tabs{display:flex;gap:0;margin-bottom:20px;border:1px solid var(--border);border-radius:8px;overflow:hidden}
+.tab{flex:1;padding:10px;font-family:var(--mono);font-size:12px;text-align:center;cursor:pointer;background:var(--s2);color:var(--muted);border:none;transition:background .2s,color .2s}
+.tab.active{background:var(--accent);color:#000;font-weight:700}
+.panel{display:none}
+.panel.active{display:block}
+.video-zone{border:2px dashed var(--border);border-radius:10px;padding:24px 16px 16px;text-align:center;transition:border-color .2s,background .2s;margin-bottom:16px}
+.video-zone:hover,.video-zone.dragover{border-color:var(--accent);background:var(--accent-dim)}
+.video-zone-icon{font-size:28px;margin-bottom:8px;display:block}
+.video-zone p{margin-bottom:0;font-size:13px;color:var(--muted)}
+.file-btns{display:flex;gap:8px;margin-top:14px}
+.file-btn-label{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:11px 8px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;font-family:var(--mono);transition:all .15s}
+.file-btn-label.cam{background:var(--accent-dim);border:1px solid var(--accent2);color:var(--accent)}
+.file-btn-label.cam:hover{background:rgba(0,217,139,.2)}
+.file-btn-label.arch{background:var(--s1);border:1px solid var(--border);color:var(--muted)}
+.file-btn-label.arch:hover{border-color:var(--muted);color:var(--text)}
+.video-preview{display:none;border-radius:10px;overflow:hidden;margin-bottom:12px;background:#000}
+.video-preview.show{display:block}
+.video-preview video{width:100%;max-height:200px;object-fit:cover;display:block}
+.preview-info{display:flex;align-items:center;justify-content:space-between;background:var(--s1);padding:8px 12px}
+.preview-name{font-family:var(--mono);font-size:11px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:260px}
+.preview-remove{font-family:var(--mono);font-size:11px;color:var(--muted);cursor:pointer;border:none;background:none}
+.preview-remove:hover{color:var(--danger)}
+.btn{width:100%;padding:14px;background:var(--accent);color:#000;border:none;border-radius:8px;font-family:var(--ff);font-size:15px;font-weight:700;cursor:pointer;margin-top:8px;transition:all .2s}
+.btn:hover{background:var(--accent2)}
+.btn:disabled{background:var(--border);color:var(--muted);cursor:not-allowed}
+.btn-yt{background:#ff0000;color:#fff}
+.btn-yt:hover{background:#cc0000}
+.btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--border);font-size:13px;font-weight:400;margin-top:8px}
+.btn-ghost:hover{border-color:var(--danger);color:var(--danger)}
+.field{margin-bottom:16px}
+.field label{display:block;font-size:11px;font-family:var(--mono);color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px}
+.field input{width:100%;background:var(--s1);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:var(--mono);font-size:14px;padding:12px 14px;outline:none}
+.field input:focus{border-color:var(--accent)}
+.msg{font-family:var(--mono);font-size:12px;padding:10px 14px;border-radius:8px;margin-top:12px;display:none}
+.msg.show{display:block}
+.msg.ok{background:rgba(0,217,139,.1);color:var(--accent);border:1px solid rgba(0,217,139,.3)}
+.msg.err{background:rgba(248,81,73,.1);color:var(--danger);border:1px solid rgba(248,81,73,.3)}
+.progress-wrap{background:var(--s1);border:1px solid var(--border);border-radius:6px;overflow:hidden;height:6px;margin-bottom:10px;display:none}
+.progress-wrap.show{display:block}
+.progress-bar{height:100%;background:var(--accent);width:0%;transition:width .3s}
+.progress-label{font-family:var(--mono);font-size:11px;color:var(--muted);text-align:center;margin-bottom:6px;display:none}
+.progress-label.show{display:block}
+.camera-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:100;flex-direction:column;align-items:center;justify-content:center;padding:24px}
+.camera-modal.show{display:flex}
+.camera-modal video{width:100%;max-width:480px;border-radius:12px;background:#000;aspect-ratio:9/16;object-fit:cover}
+.camera-controls{display:flex;gap:16px;margin-top:20px;align-items:center}
+.cam-btn-rec{width:70px;height:70px;border-radius:50%;background:var(--danger);border:4px solid rgba(255,255,255,.3);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:22px}
+.cam-btn-rec.recording{background:#ff3030;animation:pulse 1.2s infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(248,81,73,.5)}50%{box-shadow:0 0 0 12px rgba(248,81,73,0)}}
+.cam-btn-cancel,.cam-btn-flip{background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:8px;padding:10px 18px;font-family:var(--mono);font-size:12px;cursor:pointer}
+.cam-btn-flip{padding:10px 14px;font-size:18px}
+.cam-rec-time{font-family:var(--mono);font-size:13px;color:var(--danger);min-width:48px;text-align:center}
+#toast{position:fixed;bottom:24px;right:24px;z-index:9999;background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:12px 18px;font-size:13px;font-weight:500;display:none;box-shadow:0 8px 24px rgba(0,0,0,.4);max-width:320px}
+#toast.ok{border-color:rgba(0,217,139,.4);color:var(--accent)}
+#toast.err{border-color:rgba(248,81,73,.4);color:var(--danger)}
+@media(max-width:640px){.main{padding:16px 12px}}
+</style>
+</head>
+<body>
+
+<div id="app">
+  <div class="topbar">
+    <div class="tb-logo">LandingKit</div>
+    <div class="tb-badge">Video Player</div>
+    <div class="tb-right">
+      <button class="tb-btn" onclick="cargarVideo()">🔄 Actualizar</button>
+    </div>
+  </div>
+  
+  <div class="main">
+    <div class="store-badge">
+      <div class="store-dot"></div>
+      <div>
+        <div class="store-name" id="store-name">—</div>
+        <div class="store-plan" id="store-plan">—</div>
+      </div>
+    </div>
+
+    <div class="status-bar" id="status-bar"></div>
+
+    <div class="player-wrap" id="player-wrap">
+      <div class="player-label">Video activo</div>
+      <div id="source-badge"></div>
+      <div class="iframe-player" id="iframe-player"></div>
+    </div>
+
+    <div class="no-video-msg" id="no-video-msg">
+      <span>🎬</span>
+      <p>No hay video configurado para esta tienda.</p>
+    </div>
+
+    <div class="tabs">
+      <button class="tab active" id="tab-drive" onclick="switchTab('drive')">📁 Subir video</button>
+      <button class="tab" id="tab-yt" onclick="switchTab('yt')">▶ YouTube</button>
+    </div>
+
+    <div class="panel active" id="panel-drive">
+      <div class="video-preview" id="video-preview">
+        <video id="preview-video" muted playsinline></video>
+        <div class="preview-info">
+          <span class="preview-name" id="preview-name"></span>
+          <button class="preview-remove" onclick="clearFile()">✕ Quitar</button>
+        </div>
+      </div>
+      
+      <div class="video-zone" id="drop-zone">
+        <span class="video-zone-icon">🎬</span>
+        <p>Arrastra tu video aquí<br><small style="font-size:11px">máx 50 MB</small></p>
+        <div class="file-btns">
+          <label class="file-btn-label cam" onclick="openCamera()">📷 Grabar</label>
+          <label class="file-btn-label arch">🗂️ Elegir archivo
+            <input type="file" id="file-input" accept="video/*" onchange="onFileSelected(this)" style="display:none">
+          </label>
+        </div>
+      </div>
+      
+      <div class="progress-label" id="progress-label"></div>
+      <div class="progress-wrap" id="progress-wrap"><div class="progress-bar" id="progress-bar"></div></div>
+      
+      <button class="btn" id="btn-upload" onclick="subirVideo()" disabled>Subir video</button>
+      <div class="msg" id="msg-drive"></div>
+    </div>
+
+    <div class="panel" id="panel-yt">
+      <div class="field">
+        <label>URL de YouTube</label>
+        <input type="url" id="inp-youtube" placeholder="https://youtube.com/watch?v=..." autocomplete="off">
+      </div>
+      <button class="btn btn-yt" onclick="guardarYoutube()">💾 Guardar YouTube</button>
+      <div class="msg" id="msg-yt"></div>
+    </div>
+
+    <button class="btn btn-ghost" onclick="eliminarVideo()" style="margin-top:16px">🗑 Eliminar video</button>
+  </div>
+</div>
+
+<div class="camera-modal" id="camera-modal">
+  <video id="cam-preview" autoplay playsinline muted></video>
+  <div class="camera-controls">
+    <button class="cam-btn-cancel" onclick="closeCamera()">Cancelar</button>
+    <button class="cam-btn-rec" id="cam-rec-btn" onclick="toggleRecording()">⏺</button>
+    <span class="cam-rec-time" id="cam-rec-time">0:00</span>
+    <button class="cam-btn-flip" onclick="flipCamera()">🔄</button>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<!-- Iframe y form ocultos para POST sin CORS (mismo patrón que Admin.html) -->
+<iframe name="hiddenSaveFrame" style="display:none;"></iframe>
+<form id="hiddenSaveForm" method="POST" target="hiddenSaveFrame" style="display:none;">
+  <input type="hidden" name="action" id="hf_action">
+  <input type="hidden" name="datos" id="hf_datos">
+</form>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+// CONFIGURACIÓN
+// ═══════════════════════════════════════════════════════════════
+var BACKEND_URL = 'https://script.google.com/macros/s/AKfycbzC0XThmPutT8VjPMyYiRrvVIREMr3LfHeRIYsFFJ8wT_H-3vmKcaAuqbz337BahBmPeg/exec';
+
+var _p = new URLSearchParams(location.search);
+var STORE_ID = _p.get('id') || _p.get('store') || '';
+var STORE_NAME = _p.get('name') || 'Tienda';
+var STORE_PLAN = _p.get('plan') || '';
+
+var CHUNK_BYTES = 3 * 1024 * 1024;
+
+var STATE = {
+  storeId: STORE_ID,
+  storeName: STORE_NAME,
+  plan: STORE_PLAN,
+  fileBlob: null,
+  fileName: '',
+  fileMime: ''
+};
+
+var camStream = null;
+var mediaRecorder = null;
+var recordedChunks = [];
+var recTimerInterval = null;
+var recSeconds = 0;
+var camFacingMode = 'environment';
+
+// ═══════════════════════════════════════════════════════════════
+// API - JSONP (lectura) + IFRAME FORM (escritura) — sin fetch()
+// Mismo patrón usado en Admin.html: evita bloqueos CORS de Apps Script.
+// ═══════════════════════════════════════════════════════════════
+function callAPI(action, params) {
+  params = params || {};
+  return new Promise(function(resolve, reject) {
+    var callbackName = 'cb_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+    window[callbackName] = function(result) {
+      delete window[callbackName];
+      document.body.removeChild(script);
+      resolve(result);
+    };
+    var url = BACKEND_URL + '?action=' + encodeURIComponent(action) + '&callback=' + callbackName;
+    for (var key in params) {
+      url += '&' + encodeURIComponent(key) + '=' + encodeURIComponent(params[key]);
+    }
+    var script = document.createElement('script');
+    script.src = url;
+    script.onerror = function() {
+      delete window[callbackName];
+      document.body.removeChild(script);
+      reject(new Error('Error de conexión'));
+    };
+    document.body.appendChild(script);
+  });
+}
+
+function postViaIframe(action, datos) {
+  return new Promise(function(resolve, reject) {
+    var resuelto = false;
+    function onMessage(e) {
+      if (resuelto) return;
+      if (e.data && typeof e.data === 'object' && ('ok' in e.data || 'success' in e.data)) {
+        resuelto = true;
+        window.removeEventListener('message', onMessage);
+        resolve(e.data);
+      }
+    }
+    window.addEventListener('message', onMessage);
+    document.getElementById('hf_action').value = action;
+    document.getElementById('hf_datos').value = JSON.stringify(datos);
+    var form = document.getElementById('hiddenSaveForm');
+    form.action = BACKEND_URL;
+    form.submit();
+    setTimeout(function() {
+      if (!resuelto) {
+        resuelto = true;
+        window.removeEventListener('message', onMessage);
+        reject(new Error('Timeout'));
+      }
+    }, 30000);
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════
+// UI HELPERS
+// ═══════════════════════════════════════════════════════════════
+function setStatus(msg, type) {
+  var el = document.getElementById('status-bar');
+  if (!msg) { el.classList.remove('on'); return; }
+  el.className = 'status-bar on ' + type;
+  el.textContent = msg;
+}
+
+function showMsg(id, text, type) {
+  var el = document.getElementById(id);
+  el.textContent = text;
+  el.className = 'msg show ' + (type || 'ok');
+}
+
+function hideMsg(id) {
+  document.getElementById(id).className = 'msg';
+}
+
+function switchTab(tab) {
+  document.getElementById('panel-drive').classList.toggle('active', tab === 'drive');
+  document.getElementById('panel-yt').classList.toggle('active', tab === 'yt');
+  document.getElementById('tab-drive').classList.toggle('active', tab === 'drive');
+  document.getElementById('tab-yt').classList.toggle('active', tab === 'yt');
+}
+
+function showProgress(pct, label) {
+  document.getElementById('progress-wrap').classList.add('show');
+  document.getElementById('progress-bar').style.width = pct + '%';
+  if (label) {
+    var l = document.getElementById('progress-label');
+    l.textContent = label;
+    l.classList.add('show');
+  }
+}
+
+function hideProgress() {
+  document.getElementById('progress-wrap').classList.remove('show');
+  document.getElementById('progress-label').classList.remove('show');
+  document.getElementById('progress-bar').style.width = '0%';
+}
+
+var _tt;
+function toast(msg, type) {
+  var el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = type || 'ok';
+  el.style.display = 'block';
+  clearTimeout(_tt);
+  _tt = setTimeout(function() { el.style.display = 'none'; }, 4000);
+}
+
+function formatBytes(bytes) {
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+  return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+}
+
+function fileToBase64(file) {
+  return new Promise(function(resolve, reject) {
+    var reader = new FileReader();
+    reader.onload = function() { resolve(reader.result.split(',')[1]); };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════
+// CARGAR VIDEO EXISTENTE
+// ═══════════════════════════════════════════════════════════════
+async function cargarVideo() {
+  if (!STATE.storeId) {
+    document.getElementById('no-video-msg').classList.add('show');
+    return;
+  }
+  
+  setStatus('Cargando video…', 'load');
+  
+  try {
+    var r = await callAPI('video.get', { storeId: STATE.storeId });
+    if (r.ok && r.hasVideo && r.videoUrl) {
+      showPlayer(r.videoUrl, r.source);
+      document.getElementById('no-video-msg').classList.remove('show');
+    } else {
+      document.getElementById('no-video-msg').classList.add('show');
+    }
+  } catch(e) {
+    document.getElementById('no-video-msg').classList.add('show');
+    toast('❌ No se pudo conectar con el servidor', 'err');
+  }
+  
+  setStatus('', '');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// PLAYER
+// ═══════════════════════════════════════════════════════════════
+function showPlayer(url, source) {
+  var wrap = document.getElementById('player-wrap');
+  var container = document.getElementById('iframe-player');
+  var badge = document.getElementById('source-badge');
+  var embedUrl = url;
+  
+  if (source === 'drive') {
+    var fid = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
+    if (fid) embedUrl = 'https://drive.google.com/file/d/' + fid[1] + '/preview';
+    badge.innerHTML = '<span class="source-badge drive">📁 Google Drive</span>';
+  } else if (source === 'youtube') {
+    if (url.indexOf('/embed/') === -1) {
+      var ytId = extraerYtId(url);
+      if (ytId) embedUrl = 'https://www.youtube.com/embed/' + ytId;
+    }
+    badge.innerHTML = '<span class="source-badge youtube">▶ YouTube</span>';
+  }
+  
+  container.innerHTML = '<iframe src="' + embedUrl + '" allow="autoplay" allowfullscreen></iframe>';
+  wrap.classList.add('show');
+}
+
+function extraerYtId(url) {
+  var patterns = [
+    /youtube\.com\/watch\?v=([\w-]{11})/,
+    /youtu\.be\/([\w-]{11})/,
+    /youtube\.com\/shorts\/([\w-]{11})/,
+    /youtube\.com\/embed\/([\w-]{11})/
+  ];
+  for (var i = 0; i < patterns.length; i++) {
+    var m = url.match(patterns[i]);
+    if (m) return m[1];
+  }
+  return null;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// SELECCIÓN DE ARCHIVO
+// ═══════════════════════════════════════════════════════════════
+function onFileSelected(input) {
+  var file = input.files && input.files[0];
+  if (!file) return;
+  setFileBlob(file, file.name, file.type || 'video/mp4');
+}
+
+function setFileBlob(blob, name, mime) {
+  STATE.fileBlob = blob;
+  STATE.fileName = name;
+  STATE.fileMime = mime;
+  
+  var url = URL.createObjectURL(blob);
+  document.getElementById('preview-video').src = url;
+  document.getElementById('preview-name').textContent = name + ' · ' + formatBytes(blob.size);
+  document.getElementById('video-preview').classList.add('show');
+  document.getElementById('drop-zone').style.display = 'none';
+  document.getElementById('btn-upload').disabled = false;
+  hideMsg('msg-drive');
+}
+
+function clearFile() {
+  STATE.fileBlob = null;
+  STATE.fileName = '';
+  STATE.fileMime = '';
+  
+  var vid = document.getElementById('preview-video');
+  URL.revokeObjectURL(vid.src);
+  vid.src = '';
+  document.getElementById('video-preview').classList.remove('show');
+  document.getElementById('drop-zone').style.display = 'block';
+  document.getElementById('file-input').value = '';
+  document.getElementById('btn-upload').disabled = true;
+}
+
+var dz = document.getElementById('drop-zone');
+dz.addEventListener('dragover', function(e) { e.preventDefault(); dz.classList.add('dragover'); });
+dz.addEventListener('dragleave', function() { dz.classList.remove('dragover'); });
+dz.addEventListener('drop', function(e) {
+  e.preventDefault();
+  dz.classList.remove('dragover');
+  var file = e.dataTransfer.files[0];
+  if (file && file.type.startsWith('video/')) setFileBlob(file, file.name, file.type);
+});
+
+// ═══════════════════════════════════════════════════════════════
+// SUBIR VIDEO - vía iframe oculto (sin fetch, sin CORS)
+// ═══════════════════════════════════════════════════════════════
+async function subirVideo() {
+  if (!STATE.fileBlob) return;
+  if (!STATE.storeId) {
+    showMsg('msg-drive', 'Error: Falta ID de tienda', 'err');
+    return;
+  }
+  
+  var btn = document.getElementById('btn-upload');
+  btn.disabled = true;
+  btn.textContent = 'Leyendo…';
+  hideMsg('msg-drive');
+  
+  try {
+    var b64 = await fileToBase64(STATE.fileBlob);
+    var uploadId = 'up_' + Date.now();
+    var chunks = [];
+    var chunkB64Size = Math.ceil(CHUNK_BYTES * 4 / 3);
+    
+    for (var i = 0; i < b64.length; i += chunkB64Size) {
+      chunks.push(b64.slice(i, i + chunkB64Size));
+    }
+    
+    var total = chunks.length;
+    
+    for (var j = 0; j < total; j++) {
+      showProgress(Math.round((j / total) * 80), 'Enviando parte ' + (j + 1) + ' de ' + total + '…');
+      
+      var resChunk = await postViaIframe('video.chunk', {
+        storeId: STATE.storeId,
+        uploadId: uploadId,
+        chunkIndex: j,
+        chunkData: chunks[j]
+      });
+      
+      if (!(resChunk.ok || resChunk.success)) throw new Error('Error en parte ' + j + ': ' + (resChunk.error || 'desconocido'));
+    }
+    
+    showProgress(85, 'Ensamblando…');
+    
+    var resDone = await postViaIframe('video.chunk.done', {
+      storeId: STATE.storeId,
+      uploadId: uploadId,
+      totalChunks: total,
+      mimeType: STATE.fileMime,
+      fileName: STATE.fileName
+    });
+    
+    if (!(resDone.ok || resDone.success)) throw new Error(resDone.error || 'Error al ensamblar');
+    
+    showProgress(100, '¡Listo!');
+    setTimeout(hideProgress, 800);
+    showMsg('msg-drive', '✅ Video subido correctamente', 'ok');
+    toast('✅ Video guardado', 'ok');
+    
+    btn.textContent = 'Subir video';
+    btn.disabled = true;
+    document.getElementById('no-video-msg').classList.remove('show');
+    showPlayer(resDone.videoUrl, 'drive');
+    clearFile();
+    
+  } catch(e) {
+    showMsg('msg-drive', '❌ Error: ' + e.message, 'err');
+    btn.disabled = false;
+    btn.textContent = 'Subir video';
+    hideProgress();
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// YOUTUBE
+// ═══════════════════════════════════════════════════════════════
+async function guardarYoutube() {
+  var url = document.getElementById('inp-youtube').value.trim();
+  
+  if (!url) {
+    showMsg('msg-yt', '❌ Ingresa la URL de YouTube', 'err');
+    return;
+  }
+  
+  if (!STATE.storeId) {
+    showMsg('msg-yt', '❌ Error: Falta ID de tienda', 'err');
+    return;
+  }
+  
+  hideMsg('msg-yt');
+  setStatus('Guardando YouTube…', 'load');
+  
+  try {
+    var r = await postViaIframe('video.youtube', {
+      storeId: STATE.storeId,
+      youtubeUrl: url
+    });
+    
+    if (r.ok || r.success) {
+      showMsg('msg-yt', '✅ YouTube guardado correctamente', 'ok');
+      toast('✅ YouTube guardado', 'ok');
+      document.getElementById('no-video-msg').classList.remove('show');
+      showPlayer(r.embedUrl, 'youtube');
+      document.getElementById('inp-youtube').value = '';
+    } else {
+      showMsg('msg-yt', '❌ ' + (r.error || 'Error al guardar'), 'err');
+    }
+  } catch(e) {
+    showMsg('msg-yt', '❌ Error de conexión', 'err');
+  }
+  
+  setStatus('', '');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ELIMINAR
+// ═══════════════════════════════════════════════════════════════
+async function eliminarVideo() {
+  if (!confirm('¿Eliminar el video?')) return;
+  
+  if (!STATE.storeId) {
+    toast('❌ Falta ID de tienda', 'err');
+    return;
+  }
+  
+  try {
+    var r = await postViaIframe('video.delete', {
+      storeId: STATE.storeId
+    });
+    
+    if (r.ok || r.success) {
+      document.getElementById('player-wrap').classList.remove('show');
+      document.getElementById('iframe-player').innerHTML = '';
+      document.getElementById('no-video-msg').classList.add('show');
+      toast('✅ Video eliminado', 'ok');
+    } else {
+      toast('❌ ' + (r.error || 'Error'), 'err');
+    }
+  } catch(e) {
+    toast('❌ Error de conexión', 'err');
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// CÁMARA
+// ═══════════════════════════════════════════════════════════════
+async function openCamera() {
+  try {
+    camStream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: camFacingMode, width: { ideal: 1280 }, height: { ideal: 720 } },
+      audio: true
+    });
+    document.getElementById('cam-preview').srcObject = camStream;
+    document.getElementById('camera-modal').classList.add('show');
+    document.getElementById('cam-rec-btn').textContent = '⏺';
+    document.getElementById('cam-rec-btn').classList.remove('recording');
+    document.getElementById('cam-rec-time').textContent = '0:00';
+  } catch(e) {
+    toast('❌ No se pudo acceder a la cámara', 'err');
+  }
+}
+
+function closeCamera() {
+  stopRecordingClean();
+  if (camStream) {
+    camStream.getTracks().forEach(function(t) { t.stop(); });
+    camStream = null;
+  }
+  document.getElementById('camera-modal').classList.remove('show');
+}
+
+async function flipCamera() {
+  camFacingMode = camFacingMode === 'environment' ? 'user' : 'environment';
+  if (camStream) camStream.getTracks().forEach(function(t) { t.stop(); });
+  camStream = await navigator.mediaDevices.getUserMedia({
+    video: { facingMode: camFacingMode, width: { ideal: 1280 }, height: { ideal: 720 } },
+    audio: true
+  });
+  document.getElementById('cam-preview').srcObject = camStream;
+}
+
+function toggleRecording() {
+  if (!mediaRecorder || mediaRecorder.state === 'inactive') startRecording();
+  else stopRecording();
+}
+
+function startRecording() {
+  recordedChunks = [];
+  var mimeType = ['video/mp4', 'video/webm;codecs=vp9,opus', 'video/webm'].find(function(t) {
+    return MediaRecorder.isTypeSupported(t);
+  }) || '';
+  
+  mediaRecorder = new MediaRecorder(camStream, mimeType ? { mimeType: mimeType } : {});
+  mediaRecorder.ondataavailable = function(e) { if (e.data.size > 0) recordedChunks.push(e.data); };
+  mediaRecorder.onstop = onRecordingDone;
+  mediaRecorder.start(500);
+  
+  recSeconds = 0;
+  document.getElementById('cam-rec-btn').textContent = '⏹';
+  document.getElementById('cam-rec-btn').classList.add('recording');
+  
+  recTimerInterval = setInterval(function() {
+    recSeconds++;
+    document.getElementById('cam-rec-time').textContent = Math.floor(recSeconds / 60) + ':' + String(recSeconds % 60).padStart(2, '0');
+  }, 1000);
+}
+
+function stopRecording() {
+  if (mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop();
+  clearInterval(recTimerInterval);
+  document.getElementById('cam-rec-btn').textContent = '⏺';
+  document.getElementById('cam-rec-btn').classList.remove('recording');
+}
+
+function stopRecordingClean() {
+  if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+    mediaRecorder.ondataavailable = null;
+    mediaRecorder.onstop = null;
+    mediaRecorder.stop();
+  }
+  clearInterval(recTimerInterval);
+}
+
+function onRecordingDone() {
+  closeCamera();
+  var mime = mediaRecorder.mimeType || 'video/mp4';
+  var ext = mime.includes('mp4') ? '.mp4' : '.webm';
+  var blob = new Blob(recordedChunks, { type: mime });
+  var name = 'grabacion_' + new Date().toISOString().slice(0, 19).replace(/[T:]/g, '-') + ext;
+  setFileBlob(blob, name, mime);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', function() {
+  document.getElementById('store-name').textContent = STATE.storeName;
+  document.getElementById('store-plan').textContent = 'Plan: ' + STATE.plan;
+  cargarVideo();
+});
+</script>
+</body>
+</html>
