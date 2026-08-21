@@ -1634,17 +1634,32 @@ function construirLandingHTML(n) {
         </div>`;
     }).join('')}</section>` : '';
   let videoEmbedUrl = '';
-  if (n.video) {
-    if (n.video.includes('/d/')) {
-      const fid = n.video.match(/\/d\/([a-zA-Z0-9_-]+)/);
-      videoEmbedUrl = fid ? ('https://drive.google.com/file/d/' + fid[1] + '/preview') : n.video;
-    } else if (n.video.includes('youtube') || n.video.includes('youtu.be')) {
-      const m = n.video.match(/(?:v=|youtu\.be\/|shorts\/|embed\/)([\w-]{11})/);
-      videoEmbedUrl = m ? ('https://www.youtube.com/embed/' + m[1]) : n.video;
-    } else {
-      videoEmbedUrl = n.video;
+if (n.video && n.video.trim() !== '') {
+    let link = n.video.trim();
+
+    // 1. CORRECCIÓN PARA GOOGLE DRIVE
+    if (link.includes('/d/')) {
+        const fid = link.match(/\/d\/([a-zA-Z0-9_-]+)/);
+        if (fid) {
+            videoEmbedUrl = 'https://drive.google.com/file/d/' + fid[1] + '/preview';
+        }
+    } 
+    // 2. CORRECCIÓN MEJORADA PARA YOUTUBE (maneja ?si= y otros parámetros)
+    else if (link.includes('youtube.com') || link.includes('youtu.be')) {
+        // Busca el ID de 11 caracteres, ignorando cualquier parámetro después
+        const match = link.match(/(?:v=|youtu\.be\/|\/shorts\/|\/embed\/)([a-zA-Z0-9_-]{11})/);
+        if (match && match[1]) {
+            videoEmbedUrl = 'https://www.youtube.com/embed/' + match[1] + '?rel=0';
+        } else {
+            // Si no encuentra el ID, usa el link original y ya (por si acaso)
+            videoEmbedUrl = link;
+        }
+    } 
+    // 3. OTROS TIPOS DE VIDEO (ej. enlaces directos)
+    else {
+        videoEmbedUrl = link;
     }
-  }
+}
   const videoHTML = videoEmbedUrl ? `
     <section class="l-section l-video"><h2>🎬 Video</h2>
       <div class="l-video-card"><iframe loading="lazy" src="${videoEmbedUrl}" allow="autoplay; fullscreen" allowfullscreen></iframe></div>
