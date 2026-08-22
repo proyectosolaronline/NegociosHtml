@@ -681,7 +681,7 @@ let currentPreviewId = '';
 // INICIALIZACIÓN
 // ============================================================
 document.addEventListener('DOMContentLoaded', function() {
-  console.log('🚀 App I.A. iniciada');
+  console.log('🚀 App iniciada');
   inicializarMapa();
   generarSlotsFotos();
   const esModoCliente = verificarModoClienteEdicion();
@@ -1857,7 +1857,7 @@ if (urlExterna) {
   const fotosJS = JSON.stringify(fotos.map(f => ({ url: f.url, descripcion: f.descripcion || '' })));
   const footerHTML = `
     <footer>
-      <p style="color:#00FF88;font-weight:700;font-size:13px;margin-bottom:4px;">⚡ FrontPage Express I.A.</p>
+      <p style="color:#00FF88;font-weight:700;font-size:13px;margin-bottom:4px;">⚡ FrontPage Express tu tienda online</p>
       <p style="color:#888;font-size:12px;margin-bottom:10px;">¿Quieres una página como esta? ✉️ prototipowebapp@gmail.com</p>
       ${(n.duenoMensaje || n.duenoTelefono || n.duenoCorreo) ? `
         ${n.duenoMensaje?`<p class="l-footer-msg">${n.duenoMensaje}</p>`:''}
