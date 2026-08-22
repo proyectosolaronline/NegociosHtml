@@ -428,6 +428,15 @@
         </div>
         <div class="form-row">
           <div class="form-group"><label>Facebook URL</label><input type="text" id="urlFacebook"></div>
+
+          <!-- ====== NEGOCIO EXTERNO ====== -->
+<div class="form-group">
+  <label>URL externa (Nombre & URL)</label>
+  <input type="text" id="urlExterna" 
+         placeholder="Proveedor mariscos & https://ejemplo.com"
+         style="width: 100%; padding: 10px; border: 2px solid #2A2A4A; border-radius: 8px; font-size: 14px; background: #1A1A2E; color: #E0E0E0;">
+  <small style="color:#888; display:block; margin-top:4px;">Escribe: Nombre del negocio & URL</small>
+</div>
           <div class="form-group"><label>Rol</label><select id="rol"><option value="Admin">Admin</option><option value="Usuario">Usuario</option><option value="Supervisor">Supervisor</option></select></div>
         </div>
         <div class="form-group"><label>Estado</label><select id="activo"><option value="true">✅ Activo</option><option value="false">❌ Inactivo</option></select></div>
@@ -1384,6 +1393,7 @@ function abrirModalEditar(id) {
   document.getElementById('horario').value = negocio.horario || '';
   document.getElementById('rol').value = negocio.rol || 'Admin';
   document.getElementById('urlFacebook').value = negocio.urlFacebook || '';
+  document.getElementById('urlExterna').value = negocio.urlExterna || '';
   document.getElementById('activo').value = negocio.activo ? 'true' : 'false';
   document.getElementById('duenoMensaje').value = negocio.duenoMensaje || '';
   document.getElementById('duenoTelefono').value = negocio.duenoTelefono || '';
@@ -1572,6 +1582,7 @@ async function guardarNegocio(event) {
     horario: document.getElementById('horario').value.trim(),
     rol: document.getElementById('rol').value,
     urlFacebook: document.getElementById('urlFacebook').value.trim(),
+    urlExterna: document.getElementById('urlExterna').value.trim(),
     activo: document.getElementById('activo').value === 'true',
     fotos: fotosSeleccionadas.filter(f => f && f.url),
     logo: document.getElementById('logo').value,
@@ -1728,6 +1739,30 @@ function construirLandingHTML(n, plantillaOverride) {
           </div>
         </div>`;
     }).join('')}</section>` : '';
+// Bloque para URL externa
+const urlExterna = n.urlExterna || '';
+let urlExternaHTML = '';
+if (urlExterna) {
+  const partes = urlExterna.split('&');
+  if (partes.length >= 2) {
+    const nombreExt = partes[0].trim();
+    const urlExt = partes[1].trim();
+    if (urlExt.startsWith('http://') || urlExt.startsWith('https://')) {
+      urlExternaHTML = `
+        <section class="l-section l-negocio-externo">
+          <div style="background: #0D1117; border-radius: 12px; padding: 16px; text-align: center; border: 2px solid #00D4FF;">
+            <a href="${urlExt}" target="_blank" 
+               style="display: inline-block; padding: 14px 30px; background: #00D4FF; color: #0A0E17; 
+                      border-radius: 12px; font-weight: 700; font-size: 15px; text-decoration: none;
+                      box-shadow: 0 0 20px rgba(0, 212, 255, 0.4);">
+              🌐 ${nombreExt} – Haz clic aquí
+            </a>
+          </div>
+        </section>`;
+    }
+  }
+}
+  
   let videoEmbedUrl = '';
   if (n.video && n.video.trim() !== '') {
     let link = n.video.trim();
@@ -1844,6 +1879,7 @@ ${getPlantillaOverridesCSS(plantilla, colorPrimario, colorSecundario, colorAcent
   ${n.slogan?`<p class="l-slogan">✨ ${n.slogan}</p>`:''}
   ${n.mision?`<section class="l-section"><h2>🎯 Nuestra Misión</h2><p style="color:#AAA;">${n.mision}</p></section>`:''}
   ${videoHTML}
+  ${urlExternaHTML}
   ${galeriaHTML}
   <div class="l-contact-grid">
     ${contactoItems.map(([icon,label,valor]) => `<div class="l-contact-item"><div class="cl">${icon} ${label}</div><div class="cv">${valor}</div></div>`).join('')}
@@ -2088,6 +2124,7 @@ function cargarDatosEnFormulario(datos) {
     document.getElementById('horario').value = datos.horario || '';
     document.getElementById('rol').value = datos.rol || 'Usuario';
     document.getElementById('urlFacebook').value = datos.urlFacebook || '';
+  document.getElementById('urlExterna').value = '';
     document.getElementById('activo').value = 'true';
     if (datos.latitud && datos.longitud) {
         setUbicacionEnMapa(datos.latitud, datos.longitud);
@@ -2102,171 +2139,6 @@ function limpiarCapsulaInput() {
 
 console.log('✅ Sistema I.A. Futurista activo');
 </script>
-
-
-//////////
-<!-- ====== CASILLA NEGOCIO EXTERNO ====== -->
-<div style="margin-top: 20px; padding: 20px; background: #1A1A2E; border-radius: 12px; border: 2px solid #00D4FF;">
-  
-  <h3 style="color: #00D4FF; font-size: 16px; margin-bottom: 15px;">🌐 Negocio externo</h3>
-  
-  <!-- Campo para pegar nombre & URL -->
-  <input type="text" id="inputNegocioExterno" 
-         placeholder="Nombre del negocio & https://ejemplo.com"
-         style="width: 100%; padding: 12px; background: #0D1117; border: 2px solid #2A2A4A; border-radius: 8px; color: #E0E0E0; font-size: 14px; margin-bottom: 10px;">
-  
-  <!-- Botón para agregar -->
-  <button type="button" onclick="agregarNegocioExterno()" 
-          style="padding: 10px 20px; background: #00D4FF; color: #0A0E17; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 14px; box-shadow: 0 0 15px rgba(0, 212, 255, 0.4);">
-    ➕ Agregar enlace
-  </button>
-  
-  <!-- Lista de enlaces agregados -->
-  <div id="listaNegocioExterno" style="margin-top: 15px;"></div>
-  
-  <!-- Botón para generar landing con el enlace -->
-  <button type="button" onclick="generarLandingConExterno()" 
-          style="margin-top: 15px; width: 100%; padding: 12px; background: #7B2FF7; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 14px; box-shadow: 0 0 15px rgba(123, 47, 247, 0.4);">
-    🌐 Generar landing con enlace externo
-  </button>
-</div>
-
-<!-- ====== ESTILOS Y FUNCIÓN ====== -->
-<style>
-  .negocio-externo-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 10px;
-    margin-bottom: 8px;
-    background: #0D1117;
-    border: 1px solid #2A2A4A;
-    border-radius: 8px;
-  }
-  .negocio-externo-item a {
-    color: #00D4FF;
-    text-decoration: none;
-    font-weight: 600;
-    font-size: 13px;
-  }
-  .negocio-externo-item a:hover {
-    text-decoration: underline;
-  }
-  .negocio-externo-item button {
-    background: #FF0040;
-    color: white;
-    border: none;
-    padding: 5px 10px;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 12px;
-    font-weight: 600;
-  }
-</style>
-
-<script>
-  // Variable global para guardar el enlace externo
-  let negocioExternoData = null;
-
-  function agregarNegocioExterno() {
-    const valor = document.getElementById('inputNegocioExterno').value.trim();
-    
-    if (valor === '') {
-      alert('⚠️ Por favor escribe: Nombre del negocio & URL');
-      return;
-    }
-    
-    // Separar por el carácter &
-    const partes = valor.split('&');
-    
-    if (partes.length < 2) {
-      alert('⚠️ Formato incorrecto. Usa: Nombre del negocio & https://ejemplo.com');
-      return;
-    }
-    
-    const nombre = partes[0].trim();
-    const url = partes[1].trim();
-    
-    // Validar URL
-    if (!url.startsWith('http://') && !url.startsWith('https://')) {
-      alert('⚠️ La URL debe comenzar con http:// o https://');
-      return;
-    }
-    
-    // Guardar en variable global
-    negocioExternoData = { nombre: nombre, url: url };
-    
-    // Crear elemento en la lista
-    const lista = document.getElementById('listaNegocioExterno');
-    lista.innerHTML = '';
-    const nuevoItem = document.createElement('div');
-    nuevoItem.className = 'negocio-externo-item';
-    nuevoItem.innerHTML = `
-      <span>
-        <strong style="color:#E0E0E0;">${nombre}</strong> 
-        <span style="color:#888;">→</span> 
-        <a href="${url}" target="_blank">${url}</a>
-      </span>
-      <button onclick="eliminarNegocioExterno()">✖ Eliminar</button>
-    `;
-    
-    lista.appendChild(nuevoItem);
-    
-    // Limpiar el campo
-    document.getElementById('inputNegocioExterno').value = '';
-    
-    // Mensaje de éxito
-    alert('✅ Enlace agregado correctamente');
-  }
-
-  function eliminarNegocioExterno() {
-    negocioExternoData = null;
-    document.getElementById('listaNegocioExterno').innerHTML = '';
-  }
-
-  function generarLandingConExterno() {
-    if (!negocioExternoData) {
-      alert('⚠️ Primero agrega un enlace externo');
-      return;
-    }
-    
-    // Generar el bloque HTML para la landing
-    const bloqueHTML = `
-      <section class="l-section l-negocio-externo" style="padding: 0 24px 24px;">
-        <div style="background: #0D1117; border-radius: 12px; padding: 16px; text-align: center; border: 2px solid #00D4FF;">
-          <a href="${negocioExternoData.url}" target="_blank" 
-             style="display: inline-block; padding: 14px 30px; background: #00D4FF; color: #0A0E17; 
-                    border-radius: 12px; font-weight: 700; font-size: 15px; text-decoration: none;
-                    box-shadow: 0 0 20px rgba(0, 212, 255, 0.4);">
-            🌐 ${negocioExternoData.nombre} – Haz clic aquí
-          </a>
-        </div>
-      </section>
-    `;
-    
-    // Mostrar el bloque generado para copiar
-    const overlay = document.createElement('div');
-    overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.9);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;';
-    overlay.innerHTML = `
-      <div style="background:#1A1A2E;border-radius:16px;padding:24px;width:100%;max-width:600px;border:2px solid #00D4FF;">
-        <h3 style="color:#00D4FF;margin-bottom:15px;">🌐 Bloque generado para la landing</h3>
-        <textarea readonly style="width:100%;padding:12px;background:#0D1117;border:2px solid #2A2A4A;border-radius:8px;font-family:monospace;font-size:12px;min-height:120px;color:#E0E0E0;margin-bottom:15px;">${bloqueHTML}</textarea>
-        <div style="display:flex;gap:10px;">
-          <button onclick="navigator.clipboard.writeText(\`${bloqueHTML}\`); alert('✅ Copiado');" 
-                  style="flex:1;padding:12px;background:#00FF88;color:#0A0E17;border:none;border-radius:8px;font-weight:600;cursor:pointer;">📋 Copiar bloque</button>
-          <button onclick="this.closest('.modal-overlay').remove()" 
-                  style="flex:1;padding:12px;background:#2A2A4A;color:#E0E0E0;border:none;border-radius:8px;font-weight:600;cursor:pointer;">Cerrar</button>
-        </div>
-      </div>
-    `;
-    document.body.appendChild(overlay);
-  }
-</script>
-//////////
-
-
-
-
 
 
   
