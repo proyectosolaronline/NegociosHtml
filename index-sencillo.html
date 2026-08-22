@@ -1044,32 +1044,89 @@ function seleccionarPlantillaLanding(id, aplicarPreset = true) {
 // ============================================================
 // GOOGLE MAPS LINK
 // ============================================================
-function extraerCoordsGoogleMaps(url) {
+async function extraerCoordsGoogleMaps(url) {
   if (!url) return null;
-  try { url = decodeURIComponent(url); } catch(e) {}
-  let m = url.match(/@(-?\d{1,3}\.\d+),(-?\d{1,3}\.\d+)/);
+
+  // Limpiar texto (quitar espacios y "geo:" si viene de WhatsApp)
+  let cleanUrl = url.trim();
+  if (cleanUrl.toLowerCase().startsWith('geo:')) {
+    cleanUrl = cleanUrl.substring(4);
+  }
+
+  // Formato simple "lat, lng" (ej: 19.4326, -99.1332)
+  let m = cleanUrl.match(/^(-?\d{1,3}\.\d+)\s*,\s*(-?\d{1,3}\.\d+)$/);
   if (m) return { lat: parseFloat(m[1]), lng: parseFloat(m[2]) };
+
+  // Enlaces cortos (maps.app.goo.gl o goo.gl/maps)
+  if (/^https:\/\/maps\.app\.goo\.gl\//.test(cleanUrl) || /^https:\/\/goo\.gl\/maps\//.test(cleanUrl)) {
+    try {
+      const response = await fetch(cleanUrl, { method: 'HEAD' });
+      const finalUrl = response.url || cleanUrl;
+      return extraerCoordsDeUrlLarga(finalUrl);
+    } catch (e) {
+      return extraerCoordsDeUrlLarga(cleanUrl);
+    }
+  }
+
+  // Cualquier otro formato (URL larga o texto)
+  return extraerCoordsDeUrlLarga(cleanUrl);
+}
+
+// ============================================================
+// FUNCIÓN AUXILIAR: Extraer de URLs largas (múltiples formatos)
+// ============================================================
+function extraerCoordsDeUrlLarga(url) {
+  let m;
+
+  // A. Buscar el pin exacto en el formato !3d{lat}!4d{lng} (MÁS PRECISO)
   m = url.match(/!3d(-?\d{1,3}\.\d+)!4d(-?\d{1,3}\.\d+)/);
   if (m) return { lat: parseFloat(m[1]), lng: parseFloat(m[2]) };
+
+  // B. Buscar en el formato ?q=lat,lng o ?ll=lat,lng
   m = url.match(/[?&]q=(-?\d{1,3}\.\d+),(-?\d{1,3}\.\d+)/);
   if (m) return { lat: parseFloat(m[1]), lng: parseFloat(m[2]) };
   m = url.match(/[?&]ll=(-?\d{1,3}\.\d+),(-?\d{1,3}\.\d+)/);
   if (m) return { lat: parseFloat(m[1]), lng: parseFloat(m[2]) };
-  m = url.match(/^\s*(-?\d{1,3}\.\d+)\s*,\s*(-?\d{1,3}\.\d+)\s*$/);
+
+  // C. Buscar en el formato @lat,lng (centro del mapa)
+  m = url.match(/@(-?\d{1,3}\.\d+),(-?\d{1,3}\.\d+)/);
   if (m) return { lat: parseFloat(m[1]), lng: parseFloat(m[2]) };
+
+  // D. Buscar si hay coordenadas dentro de un texto más largo
+  m = url.match(/(-?\d{1,3}\.\d+),\s*(-?\d{1,3}\.\d+)/);
+  if (m) return { lat: parseFloat(m[1]), lng: parseFloat(m[2]) };
+
   return null;
 }
-
-function usarLinkGoogleMaps() {
+  
+async function usarLinkGoogleMaps() {
   const input = document.getElementById('linkGoogleMaps');
   const url = (input.value || '').trim();
-  if (!url) { showToast('⚠️ Pega un link primero', 'error'); return; }
-  const coords = extraerCoordsGoogleMaps(url);
-  if (!coords) { showToast('❌ No se encontraron coordenadas', 'error'); return; }
-  setUbicacionEnMapa(coords.lat, coords.lng);
-  showToast('✅ Ubicación tomada del link', 'success');
-}
+  
+  if (!url) {
+    showToast('⚠️ Pega un link primero', 'error');
+    return;
+  }
 
+  showToast('⏳ Buscando coordenadas...', 'success');
+
+  try {
+    const coords = await extraerCoordsGoogleMaps(url);
+    
+    if (!coords) {
+      showToast('❌ No se encontraron coordenadas en el texto', 'error');
+      return;
+    }
+    
+    setUbicacionEnMapa(coords.lat, coords.lng);
+    showToast('✅ Ubicación tomada correctamente', 'success');
+    
+    // Limpiar el campo después de usarlo
+    input.value = '';
+  } catch (e) {
+    showToast('❌ Error al procesar el enlace', 'error');
+  }
+}
 // ============================================================
 // FOTOS
 // ============================================================
