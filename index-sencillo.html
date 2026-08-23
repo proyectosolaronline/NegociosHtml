@@ -1450,7 +1450,7 @@ function abrirModalEditar(id) {
   document.getElementById('horario').value = negocio.horario || '';
   document.getElementById('rol').value = negocio.rol || 'Admin';
   document.getElementById('urlFacebook').value = negocio.urlFacebook || '';
-  document.getElementById('urlExterna').value = negocio.urlExterna || '';
+ document.getElementById('urlExterna').value = negocio.Urlexterna || ''; 
   document.getElementById('activo').value = negocio.activo ? 'true' : 'false';
   document.getElementById('duenoMensaje').value = negocio.duenoMensaje || '';
   document.getElementById('duenoTelefono').value = negocio.duenoTelefono || '';
@@ -1611,81 +1611,45 @@ function postViaIframe(action, id, datos, targetUrl) {
 }
 
 async function guardarNegocio(event) {
-  event.preventDefault();
-  if (window.modoClienteExp && Date.now() > window.modoClienteExp) {
-    showToast('⏰ El tiempo expiró', 'error');
-    return;
-  }
-  if (!ubicacionSeleccionada) { showToast('⚠️ Selecciona ubicación', 'error'); return; }
-  const editId = document.getElementById('editId').value;
-  const btnGuardar = document.getElementById('btnGuardar');
-  btnGuardar.disabled = true;
-  btnGuardar.textContent = '⏳ Guardando...';
-  const datos = {
-    usuario: document.getElementById('usuario').value.trim(),
-    password: document.getElementById('password').value.trim(),
-    nombre: document.getElementById('nombre').value.trim(),
-    slogan: document.getElementById('slogan').value.trim(),
-    descripcion: document.getElementById('descripcion').value.trim(),
-    mision: document.getElementById('mision').value.trim(),
-    mensajeEmergente: document.getElementById('mensajeEmergente').value.trim(),
-    ubicacion: document.getElementById('ubicacion').value.trim(),
-    direccion: document.getElementById('direccion').value.trim(),
-    latitud: document.getElementById('latitud').value,
-    longitud: document.getElementById('longitud').value,
-    telefono: document.getElementById('telefono').value.trim(),
-    whatsapp: document.getElementById('whatsapp').value.trim(),
-    correo: document.getElementById('correo').value.trim(),
-    horario: document.getElementById('horario').value.trim(),
-    rol: document.getElementById('rol').value,
-    urlFacebook: document.getElementById('urlFacebook').value.trim(),
-    urlExterna: document.getElementById('urlExterna').value.trim(),
-    activo: document.getElementById('activo').value === 'true',
-    fotos: fotosSeleccionadas.filter(f => f && f.url),
-    logo: document.getElementById('logo').value,
-    banner: document.getElementById('banner').value,
-    video: document.getElementById('video').value,
-    duenoMensaje: document.getElementById('duenoMensaje').value.trim(),
-    duenoTelefono: document.getElementById('duenoTelefono').value.trim(),
-    duenoCorreo: document.getElementById('duenoCorreo').value.trim(),
-    colorPrimario: document.getElementById('colorPrimario').value,
-    colorSecundario: document.getElementById('colorSecundario').value,
-    colorAcento: document.getElementById('colorAcento').value,
-    fuenteLanding: document.getElementById('fuenteLanding').value,
-    plantillaLanding: document.getElementById('plantillaLanding').value
-  };
-  if (!datos.usuario || !datos.password || !datos.nombre) {
-    showToast('❌ Campos obligatorios faltantes', 'error');
-    btnGuardar.disabled = false;
-    btnGuardar.textContent = '💾 Guardar Negocio';
-    return;
-  }
-  showLoading();
-  try {
-    const action = editId ? 'editarNegocio' : 'agregarNegocio';
-    const result = await postViaIframe(action, editId, datos);
-    hideLoading();
-    btnGuardar.disabled = false;
-    btnGuardar.textContent = '💾 Guardar Negocio';
-    if (result.success) {
-      showToast(editId ? '✅ Negocio actualizado' : '✅ Negocio creado', 'success');
-      if (!editId && result.id) {
-        document.getElementById('editId').value = result.id;
-      }
-      cerrarModal();
-      cargarNegocios();
-    } else {
-      showToast('❌ Error: ' + result.error, 'error');
-    }
-  } catch(e) {
-    hideLoading();
-    btnGuardar.disabled = false;
-    btnGuardar.textContent = '💾 Guardar Negocio';
-    showToast('❌ Error de conexión', 'error');
-  }
-}
-
-// ============================================================
+    event.preventDefault();
+    // ... código existente ...
+    
+    const datos = {
+        usuario: document.getElementById('usuario').value.trim(),
+        password: document.getElementById('password').value.trim(),
+        nombre: document.getElementById('nombre').value.trim(),
+        slogan: document.getElementById('slogan').value.trim(),
+        descripcion: document.getElementById('descripcion').value.trim(),
+        mision: document.getElementById('mision').value.trim(),
+        mensajeEmergente: document.getElementById('mensajeEmergente').value.trim(),
+        ubicacion: document.getElementById('ubicacion').value.trim(),
+        direccion: document.getElementById('direccion').value.trim(),
+        latitud: document.getElementById('latitud').value,
+        longitud: document.getElementById('longitud').value,
+        telefono: document.getElementById('telefono').value.trim(),
+        whatsapp: document.getElementById('whatsapp').value.trim(),
+        correo: document.getElementById('correo').value.trim(),
+        horario: document.getElementById('horario').value.trim(),
+        rol: document.getElementById('rol').value,
+        urlFacebook: document.getElementById('urlFacebook').value.trim(),
+        Urlexterna: document.getElementById('urlExterna').value.trim(), // <-- CAMBIADO: Urlexterna
+        activo: document.getElementById('activo').value === 'true',
+        fotos: fotosSeleccionadas.filter(f => f && f.url),
+        logo: document.getElementById('logo').value,
+        banner: document.getElementById('banner').value,
+        video: document.getElementById('video').value,
+        duenoMensaje: document.getElementById('duenoMensaje').value.trim(),
+        duenoTelefono: document.getElementById('duenoTelefono').value.trim(),
+        duenoCorreo: document.getElementById('duenoCorreo').value.trim(),
+        colorPrimario: document.getElementById('colorPrimario').value,
+        colorSecundario: document.getElementById('colorSecundario').value,
+        colorAcento: document.getElementById('colorAcento').value,
+        fuenteLanding: document.getElementById('fuenteLanding').value,
+        plantillaLanding: document.getElementById('plantillaLanding').value
+    };
+    
+    // ... resto del código ...
+}// ============================================================
 // ELIMINAR
 // ============================================================
 async function eliminarNegocio(id) {
@@ -2135,34 +2099,63 @@ function procesarCapsulaPegada() {
         showToast('❌ Error', 'error');
     }
 }
-
 function parsearTextoPlano(texto) {
     const datos = {};
     const mapeo = {
-        'usuario': ['usuario', 'user'], 'password': ['password', 'contraseña'],
-        'nombre': ['nombre', 'negocio'], 'slogan': ['slogan', 'eslogan'],
-        'descripcion': ['descripcion'], 'mision': ['mision', 'misión'],
+        'usuario': ['usuario', 'user'], 
+        'password': ['password', 'contraseña'],
+        'nombre': ['nombre', 'negocio'], 
+        'slogan': ['slogan', 'eslogan'],
+        'descripcion': ['descripcion'], 
+        'mision': ['mision', 'misión'],
         'mensajeEmergente': ['mensajeemergente', 'mensaje emergente'],
-        'ubicacion': ['ubicacion', 'referencia'], 'direccion': ['direccion', 'calle'],
-        'latitud': ['latitud'], 'longitud': ['longitud'],
-        'telefono': ['telefono', 'teléfono'], 'whatsapp': ['whatsapp'],
-        'correo': ['correo', 'email'], 'horario': ['horario'],
-        'rol': ['rol'], 'urlFacebook': ['urlfacebook', 'facebook'], 'activo': ['activo']
+        'ubicacion': ['ubicacion', 'referencia'], 
+        'direccion': ['direccion', 'calle'],
+        'latitud': ['latitud'], 
+        'longitud': ['longitud'],
+        'telefono': ['telefono', 'teléfono'], 
+        'whatsapp': ['whatsapp'],
+        'correo': ['correo', 'email'], 
+        'horario': ['horario'],
+        'rol': ['rol'], 
+        'urlFacebook': ['urlfacebook', 'facebook'],
+        // CAMBIADO: El campo se llama Urlexterna (con a al final)
+        'Urlexterna': ['urlexterna', 'url externa', 'enlace', 'link', 'sitio web', 'web', 'urlexterno', 'url externo'],
+        'activo': ['activo']
     };
+    
     const lineas = texto.split('\n');
     for (const linea of lineas) {
-        const match = linea.trim().match(/^([^:=\n]+)[:=]\s*(.+)/);
+        const trimmed = linea.trim();
+        const match = trimmed.match(/^([^:=\n]+)[:=]\s*(.+)/);
         if (match) {
             const clave = match[1].trim().toLowerCase();
             const valor = match[2].trim();
+            let asignado = false;
             for (const [campo, alias] of Object.entries(mapeo)) {
-                if (alias.some(a => a.toLowerCase() === clave)) { datos[campo] = valor; break; }
+                if (alias.some(a => a.toLowerCase() === clave)) { 
+                    datos[campo] = valor; 
+                    asignado = true;
+                    break; 
+                }
+            }
+            // Si no se asignó a ningún campo pero contiene URL, guardar como Urlexterna
+            if (!asignado && trimmed.match(/https?:\/\/[^\s]+/)) {
+                if (!datos.Urlexterna) {
+                    datos.Urlexterna = trimmed;
+                }
+            }
+        } else {
+            // Si la línea contiene una URL, guardarla como Urlexterna (si no se ha asignado ya)
+            if (trimmed.match(/https?:\/\/[^\s]+/)) {
+                if (!datos.Urlexterna) {
+                    datos.Urlexterna = trimmed;
+                }
             }
         }
     }
     return datos;
 }
-
 function cargarDatosEnFormulario(datos) {
     document.getElementById('usuario').value = datos.usuario || (datos.nombre ? datos.nombre.toLowerCase().replace(/\s+/g, '_') : '');
     document.getElementById('password').value = datos.password || Math.random().toString(36).substring(2, 10);
@@ -2181,15 +2174,14 @@ function cargarDatosEnFormulario(datos) {
     document.getElementById('horario').value = datos.horario || '';
     document.getElementById('rol').value = datos.rol || 'Usuario';
     document.getElementById('urlFacebook').value = datos.urlFacebook || '';
-  document.getElementById('urlExterna').value = '';
+    document.getElementById('urlExterna').value = datos.Urlexterna || ''; // <-- Aquí se llena desde Urlexterna
     document.getElementById('activo').value = 'true';
+    
     if (datos.latitud && datos.longitud) {
         setUbicacionEnMapa(datos.latitud, datos.longitud);
     }
     ubicacionSeleccionada = true;
-}
-
-function limpiarCapsulaInput() {
+}function limpiarCapsulaInput() {
     document.getElementById('capsulaInput').value = '';
     document.getElementById('capsulaStatus').innerHTML = '';
 }
