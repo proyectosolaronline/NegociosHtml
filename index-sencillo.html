@@ -1611,45 +1611,73 @@ function postViaIframe(action, id, datos, targetUrl) {
 }
 
 async function guardarNegocio(event) {
-    event.preventDefault();
-    // ... código existente ...
-    
-    const datos = {
-        usuario: document.getElementById('usuario').value.trim(),
-        password: document.getElementById('password').value.trim(),
-        nombre: document.getElementById('nombre').value.trim(),
-        slogan: document.getElementById('slogan').value.trim(),
-        descripcion: document.getElementById('descripcion').value.trim(),
-        mision: document.getElementById('mision').value.trim(),
-        mensajeEmergente: document.getElementById('mensajeEmergente').value.trim(),
-        ubicacion: document.getElementById('ubicacion').value.trim(),
-        direccion: document.getElementById('direccion').value.trim(),
-        latitud: document.getElementById('latitud').value,
-        longitud: document.getElementById('longitud').value,
-        telefono: document.getElementById('telefono').value.trim(),
-        whatsapp: document.getElementById('whatsapp').value.trim(),
-        correo: document.getElementById('correo').value.trim(),
-        horario: document.getElementById('horario').value.trim(),
-        rol: document.getElementById('rol').value,
-        urlFacebook: document.getElementById('urlFacebook').value.trim(),
-        Urlexterna: document.getElementById('urlExterna').value.trim(), // <-- CAMBIADO: Urlexterna
-        activo: document.getElementById('activo').value === 'true',
-        fotos: fotosSeleccionadas.filter(f => f && f.url),
-        logo: document.getElementById('logo').value,
-        banner: document.getElementById('banner').value,
-        video: document.getElementById('video').value,
-        duenoMensaje: document.getElementById('duenoMensaje').value.trim(),
-        duenoTelefono: document.getElementById('duenoTelefono').value.trim(),
-        duenoCorreo: document.getElementById('duenoCorreo').value.trim(),
-        colorPrimario: document.getElementById('colorPrimario').value,
-        colorSecundario: document.getElementById('colorSecundario').value,
-        colorAcento: document.getElementById('colorAcento').value,
-        fuenteLanding: document.getElementById('fuenteLanding').value,
-        plantillaLanding: document.getElementById('plantillaLanding').value
-    };
-    
-    // ... resto del código ...
-}// ============================================================
+  event.preventDefault();
+
+  if (!ubicacionSeleccionada) {
+    showToast('⚠️ Debes seleccionar una ubicación en el mapa', 'error');
+    return;
+  }
+
+  const datos = {
+    usuario: document.getElementById('usuario').value.trim(),
+    password: document.getElementById('password').value.trim(),
+    nombre: document.getElementById('nombre').value.trim(),
+    slogan: document.getElementById('slogan').value.trim(),
+    descripcion: document.getElementById('descripcion').value.trim(),
+    mision: document.getElementById('mision').value.trim(),
+    mensajeEmergente: document.getElementById('mensajeEmergente').value.trim(),
+    ubicacion: document.getElementById('ubicacion').value.trim(),
+    direccion: document.getElementById('direccion').value.trim(),
+    latitud: document.getElementById('latitud').value,
+    longitud: document.getElementById('longitud').value,
+    telefono: document.getElementById('telefono').value.trim(),
+    whatsapp: document.getElementById('whatsapp').value.trim(),
+    correo: document.getElementById('correo').value.trim(),
+    horario: document.getElementById('horario').value.trim(),
+    rol: document.getElementById('rol').value,
+    urlFacebook: document.getElementById('urlFacebook').value.trim(),
+    Urlexterna: document.getElementById('urlExterna').value.trim(),
+    activo: document.getElementById('activo').value === 'true',
+    fotos: fotosSeleccionadas.filter(f => f && f.url),
+    logo: document.getElementById('logo').value,
+    banner: document.getElementById('banner').value,
+    video: document.getElementById('video').value,
+    duenoMensaje: document.getElementById('duenoMensaje').value.trim(),
+    duenoTelefono: document.getElementById('duenoTelefono').value.trim(),
+    duenoCorreo: document.getElementById('duenoCorreo').value.trim(),
+    colorPrimario: document.getElementById('colorPrimario').value,
+    colorSecundario: document.getElementById('colorSecundario').value,
+    colorAcento: document.getElementById('colorAcento').value,
+    fuenteLanding: document.getElementById('fuenteLanding').value,
+    plantillaLanding: document.getElementById('plantillaLanding').value
+  };
+
+  const editId = document.getElementById('editId').value;
+  const action = editId ? 'editarNegocio' : 'agregarNegocio';
+  const btnGuardar = document.getElementById('btnGuardar');
+
+  btnGuardar.disabled = true;
+  showLoading();
+
+  try {
+    const result = await postViaIframe(action, editId, datos);
+    hideLoading();
+    btnGuardar.disabled = false;
+
+    if (result.success) {
+      showToast(editId ? '✅ Negocio actualizado' : '✅ Negocio guardado', 'success');
+      cerrarModal();
+      cargarNegocios();
+    } else {
+      showToast('❌ Error: ' + (result.error || 'desconocido'), 'error');
+    }
+  } catch (e) {
+    hideLoading();
+    btnGuardar.disabled = false;
+    showToast('❌ Error de conexión al guardar', 'error');
+  }
+}}
+  // ============================================================
 // ELIMINAR
 // ============================================================
 async function eliminarNegocio(id) {
