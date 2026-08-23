@@ -2037,72 +2037,14 @@ function abrirNegocioOnlineConNombre() {
   window.open(url, '_blank');
   showToast('✅ Abriendo: ' + nombre, 'success');
 }
-// ============================================================
-// ABRIR NEGOCIO ONLINE - BOTÓN IZQUIERDO
-// ============================================================
-function abrirNegocioOnline(e) {
-  e.preventDefault();
-  
-  const overlay = document.createElement('div');
-  overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.8);z-index:6000;display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(5px);';
-  overlay.innerHTML = `
-    <div style="background:#1A1A2E;border-radius:20px;padding:30px;width:100%;max-width:400px;border:2px solid #7B2FF7;box-shadow:0 0 60px rgba(123,47,247,0.4);">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
-        <h2 style="color:#E0E0E0;font-size:18px;margin:0;">🏪 Negocio Online</h2>
-        <button onclick="this.closest('div[style*="position:fixed"]').remove()" style="background:none;border:none;font-size:28px;color:#888;cursor:pointer;transition:color 0.2s;" onmouseover="this.style.color='#00D4FF'" onmouseout="this.style.color='#888'">&times;</button>
-      </div>
-      <p style="color:#AAA;font-size:14px;margin-bottom:16px;">Ingresa el nombre del negocio:</p>
-      <input type="text" id="nombreNegocioInput" placeholder="Ej: Mariscos La Kachora" style="width:100%;padding:12px 16px;border:2px solid #2A2A4A;border-radius:10px;font-size:16px;background:#0D1117;color:#E0E0E0;margin-bottom:16px;transition:border-color 0.3s;" onfocus="this.style.borderColor='#00D4FF'" onblur="this.style.borderColor='#2A2A4A'">
-      <div style="display:flex;gap:10px;">
-        <button onclick="abrirNegocioOnlineConNombre()" style="flex:1;padding:12px;background:#7B2FF7;color:white;border:none;border-radius:10px;font-weight:700;font-size:15px;cursor:pointer;transition:all 0.3s ease;box-shadow:0 0 15px rgba(123,47,247,0.4);" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 0 25px rgba(123,47,247,0.6)'" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 0 15px rgba(123,47,247,0.4)'">
-          🚀 Abrir
-        </button>
-        <button onclick="this.closest('div[style*="position:fixed"]').remove()" style="padding:12px 20px;background:#2A2A4A;color:#E0E0E0;border:none;border-radius:10px;font-weight:600;font-size:15px;cursor:pointer;transition:background 0.3s;" onmouseover="this.style.background='#3A3A5A'" onmouseout="this.style.background='#2A2A4A'">
-          Cancelar
-        </button>
-      </div>
-    </div>
-  `;
-  document.body.appendChild(overlay);
-  
-  setTimeout(() => {
-    document.getElementById('nombreNegocioInput').focus();
-  }, 300);
-  
-  document.getElementById('nombreNegocioInput').addEventListener('keydown', function(e) {
-    if (e.key === 'Enter') {
-      abrirNegocioOnlineConNombre();
-    }
-  });
-}
-
-function abrirNegocioOnlineConNombre() {
-  const nombre = document.getElementById('nombreNegocioInput').value.trim();
-  const overlay = document.querySelector('div[style*="position:fixed"][style*="z-index:6000"]');
-  
-  if (!nombre) {
-    showToast('⚠️ Ingresa un nombre para el negocio', 'error');
-    return;
-  }
-  
-  if (overlay) overlay.remove();
-  
-  const url = `https://proyectosolaronline.github.io/NegociosHtml/tu-negocio-online.html?nombre=${encodeURIComponent(nombre)}`;
-  window.open(url, '_blank');
-  showToast('✅ Abriendo: ' + nombre, 'success');
-}
-
-console.log('✅ Sistema I.A. Futurista activo');
 console.log('✅ Sistema I.A. Futurista activo');
 </script>
-<!-- Botón flotante IZQUIERDO - Negocio Online -->
-<a href="#" onclick="abrirNegocioOnline(event)" class="fab-left" aria-label="Negocio Online">
+<a href="https://proyectosolaronline.github.io/NegociosHtml/tu-negocio-online.html" target="_blank" class="fab-left" aria-label="Negocio Online">
   🏪
   <span class="fab-tooltip-left">Negocio Online</span>
 </a>
 
 <style>
-/* ===== BOTÓN FLOTANTE IZQUIERDO ===== */
 .fab-left {
   position: fixed;
   bottom: 20px;
@@ -2153,7 +2095,6 @@ console.log('✅ Sistema I.A. Futurista activo');
 .fab-left:hover .fab-tooltip-left {
   opacity: 1;
 }
-
 @media (max-width: 768px) {
   .fab-left {
     bottom: 16px;
