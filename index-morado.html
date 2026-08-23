@@ -1737,10 +1737,13 @@ footer{background:#000;text-align:center;padding:22px 20px;font-size:14px}
 </style></head><body>
 <div class="l-wrap">
   <div class="l-banner"><div class="l-banner-inner">
-    ${n.logo?`<img class="l-logo" src="${n.logo}" alt="Logo">`:''}
-    <div class="l-banner-text"><h1>${n.nombre||''}</h1>${descLarga?`<p>${descLarga}</p>`:''}</div>
-  </div></div>
-  ${n.slogan?`<p class="l-slogan">✨ ${n.slogan}</p>`:''}
+  ${n.logo?`<img class="l-logo" src="${n.logo}" alt="Logo">`:''}
+  <div class="l-banner-text">
+    <h1>${n.nombre||''}</h1>
+    ${n.slogan?`<p style="color:rgba(255,255,255,0.9);font-size:13px;font-weight:600;margin-top:4px;">✨ ${n.slogan}</p>`:''}
+  </div>
+</div></div>
+${descLarga?`<p style="padding:12px 24px 0;font-size:13px;color:#AAA;font-style:italic;">📝 ${descLarga}</p>`:''}
   ${n.mision?`<section class="l-section"><h2>🎯 Nuestra Misión</h2><p style="color:#AAA;">${n.mision}</p></section>`:''}
   ${videoHTML}
   ${urlExternaHTML}
