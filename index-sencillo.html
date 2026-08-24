@@ -1970,9 +1970,11 @@ ${getPlantillaOverridesCSS(plantilla, colorPrimario, colorSecundario, colorAcent
 ${descLarga?`<p style="padding:12px 24px 0;font-size:13px;color:#AAA;font-style:italic;">📝 ${descLarga}</p>`:''}
 
   ${n.mision?`<section class="l-section"><h2>🎯 Nuestra Misión</h2><p style="color:#AAA;">${n.mision}</p></section>`:''}
-  ${videoHTML}
-  ${urlExternaHTML}
+  
   ${galeriaHTML}
+  ${videoHTML}
+    ${urlExternaHTML}
+
   <div class="l-contact-grid">
     ${contactoItems.map(([icon,label,valor]) => `<div class="l-contact-item"><div class="cl">${icon} ${label}</div><div class="cv">${valor}</div></div>`).join('')}
   </div>
