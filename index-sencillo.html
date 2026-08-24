@@ -676,7 +676,7 @@ let fotosSeleccionadas = [null, null, null, null];
 let currentPreviewHTML = '';
 let currentPreviewNombre = '';
 let currentPreviewId = '';
-
+let videoPollInterval = null;
 // ============================================================
 // INICIALIZACIÓN
 // ============================================================
@@ -749,7 +749,28 @@ function actualizarIndicadorVideo() {
     indicador.textContent = '⚠️ Sin video configurado';
   }
 }
+function iniciarVerificacionVideo(id) {
+  detenerVerificacionVideo();
+  videoPollInterval = setInterval(async function() {
+    if (!document.getElementById('modalOverlay').classList.contains('active')) { detenerVerificacionVideo(); return; }
+    const idActual = document.getElementById('editId').value;
+    if (!idActual || idActual !== id) { detenerVerificacionVideo(); return; }
+    try {
+      const result = await callAPI('video.get', { storeId: id });
+      if (result && result.ok) {
+        const actual = document.getElementById('video').value;
+        if ((result.videoUrl || '') !== actual) {
+          document.getElementById('video').value = result.videoUrl || '';
+          actualizarIndicadorVideo();
+        }
+      }
+    } catch(e) {}
+  }, 4000);
+}
 
+function detenerVerificacionVideo() {
+  if (videoPollInterval) { clearInterval(videoPollInterval); videoPollInterval = null; }
+}
 // ============================================================
 // CARGAR NEGOCIOS
 // ============================================================
@@ -1398,6 +1419,7 @@ function abrirModalNuevo() {
   document.getElementById('modalTitle').textContent = '➕ Nuevo Negocio';
   document.getElementById('btnGuardar').textContent = '💾 Guardar Negocio';
   document.getElementById('editId').value = '';
+  detenerVerificacionVideo();
   document.getElementById('formNegocio').reset();
   document.getElementById('activo').value = 'true';
   document.getElementById('rol').value = 'Admin';
@@ -1474,15 +1496,14 @@ function abrirModalEditar(id) {
   // Video
   document.getElementById('video').value = negocio.video || '';
   actualizarIndicadorVideo();
-  if (negocio.latitud && negocio.longitud) { setUbicacionEnMapa(negocio.latitud, negocio.longitud); ubicacionSeleccionada = true; }
+  iniciarVerificacionVideo(id);  if (negocio.latitud && negocio.longitud) { setUbicacionEnMapa(negocio.latitud, negocio.longitud); ubicacionSeleccionada = true; }
   else { ubicacionSeleccionada = false; document.getElementById('mapStatus').textContent = '⚠️ Haz clic en el mapa'; document.getElementById('mapStatus').className = 'map-status pending'; }
   generarSlotsFotos();
   document.getElementById('modalOverlay').classList.add('active');
   setTimeout(() => { if (map) map.invalidateSize(); }, 300);
 }
 
-function cerrarModal() { document.getElementById('modalOverlay').classList.remove('active'); }
-
+function cerrarModal() { detenerVerificacionVideo(); document.getElementById('modalOverlay').classList.remove('active'); }
 // ============================================================
 // DETALLE
 // ============================================================
@@ -2214,7 +2235,26 @@ function limpiarCapsulaInput() {
     document.getElementById('capsulaInput').value = '';
     document.getElementById('capsulaStatus').innerHTML = '';
 }
-
+// ============================================================
+// RECIBIR NOTIFICACIÓN DESDE video.html
+// ============================================================
+window.addEventListener('message', function(e) {
+  if (e.data && e.data.action === 'videoActualizado') {
+    const idActual = document.getElementById('editId').value;
+    const modalAbierto = document.getElementById('modalOverlay').classList.contains('active');
+    if (modalAbierto && idActual === e.data.storeId) {
+      callAPI('video.get', { storeId: idActual }).then(function(result) {
+        if (result && result.ok) {
+          document.getElementById('video').value = result.videoUrl || '';
+          actualizarIndicadorVideo();
+          showToast('✅ Video actualizado', 'success');
+        }
+      });
+    } else {
+      cargarNegocios();
+    }
+  }
+});
 console.log('✅ Sistema I.A. Futurista activo');
 </script>
 <a href="https://proyectosolaronline.github.io/NegociosHtml/tu-negocio-online.html" target="_blank" class="fab-left" aria-label="Negocio Online">
