@@ -1,4 +1,4 @@
-<!DOCTYPE html>ver 1
+<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
@@ -381,11 +381,10 @@
             <span class="timer-text" id="timer-text">02:00:00</span>
         </div>
 
-        <div class="reminder">
-            <span class="reminder-icon">💡</span>
-            <span>Oye ver 2 Para ofrecerte el <strong>mejor servicio</strong> y que tu página quede exactamente como la imaginas, te pedimos completar todos los campos. ¡Tu presencia online lo merece!</span>
-        </div>
-
+      <div class="reminder">
+    <span class="reminder-icon">💡</span>
+    <span>Para ofrecerte el <strong>mejor servicio</strong> y que tu página quede exactamente como la imaginas, te pedimos completar todos los campos. ¡Tu presencia online lo merece!</span>
+</div>
         <form id="client-form" novalidate>
             <div class="form-group">
                 <label for="nombre">Nombre del Negocio <span class="required">*</span></label>
@@ -743,7 +742,6 @@ function abrirMapaPantallaCompleta() {
         mostrarToast('⚠️ Error al abrir pantalla completa');
     }
 }
-
 function mostrarToast(mensaje) {
     const toast = document.getElementById('toast');
     if (!toast) return;
@@ -753,19 +751,7 @@ function mostrarToast(mensaje) {
     toastTimeout = setTimeout(() => {
         toast.classList.remove('show');
     }, 3000);
-}            
-        
-            ////////////
-function mostrarToast(mensaje) {
-  const toast = document.getElementById('toast');
-  if (!toast) return;
-  toast.textContent = mensaje;
-  toast.classList.add('show');
-  clearTimeout(toastTimeout);
-  toastTimeout = setTimeout(() => { toast.classList.remove('show'); }, 3000);
 }
-
-
 
             
             // ============================================
