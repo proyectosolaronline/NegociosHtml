@@ -1,0 +1,1876 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+<title>Generador de Ruta + Scroll Tránsito</title>
+
+<!-- Leaflet CSS -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+
+<style>
+  :root{
+    --bg:#0b1420;
+    --panel:#101c2c;
+    --panel-alt:#16263a;
+    --line:#223449;
+    --text:#e8eef5;
+    --text-dim:#8ea3b8;
+    --accent:#35c2a4;
+    --warn:#e0a53c;
+    --danger:#e05a4e;
+  }
+
+  *{
+    box-sizing:border-box;
+    margin:0;
+    padding:0;
+  }
+
+  html, body{
+    margin:0;
+    height:100%;
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Segoe UI', Roboto, -apple-system, sans-serif;
+    -webkit-tap-highlight-color:transparent;
+  }
+
+  #app{
+    display:flex;
+    flex-direction:column;
+    height:100dvh;
+    overflow:hidden;
+  }
+
+  header{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    flex-wrap:wrap;
+    gap:6px;
+    padding: 8px 12px;
+    border-bottom:1px solid var(--line);
+    background: var(--panel);
+    min-height: 52px;
+  }
+
+  .brand{
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+
+  .dot{
+    width:8px;
+    height:8px;
+    border-radius:50%;
+    background:var(--accent);
+    box-shadow:0 0 0 3px rgba(53,194,164,0.15);
+  }
+
+  .brand h1{
+    font-size:14px;
+    margin:0;
+    font-weight:600;
+  }
+
+  nav{
+    display:flex;
+    gap:6px;
+    align-items:center;
+    flex-wrap: wrap;
+  }
+
+  nav button{
+    color:var(--text);
+    background: transparent;
+    border:1px solid var(--line);
+    padding:6px 10px;
+    border-radius:6px;
+    font-size:12px;
+    cursor:pointer;
+    white-space:nowrap;
+  }
+
+  nav button:hover{
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  main{
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    min-height:0;
+    position:relative;
+  }
+
+  #mapa{
+    flex:1;
+    width:100%;
+    height:100%;
+    z-index:1;
+  }
+
+  aside{
+    width:100%;
+    max-height:45vh;
+    background: var(--panel);
+    border-top:1px solid var(--line);
+    display:flex;
+    flex-direction:column;
+    overflow:hidden;
+    transition: max-height 0.3s ease;
+    z-index:10;
+    position: relative;
+  }
+
+  aside.colapsado{
+    max-height: 0;
+    border-top:none;
+  }
+
+  .aside-tabs{
+    display:flex;
+    border-bottom:1px solid var(--line);
+    background:var(--panel-alt);
+    flex-shrink:0;
+  }
+
+  .aside-tabs button{
+    flex:1;
+    background:none;
+    border:none;
+    color: var(--text-dim);
+    padding:10px;
+    font-size:12.5px;
+    font-weight:600;
+    cursor:pointer;
+    border-bottom:2px solid transparent;
+    transition:0.2s;
+  }
+
+  .aside-tabs button.activo{
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+    background: rgba(53,194,164,0.05);
+  }
+
+  .panel-lista{
+    flex:1;
+    overflow-y:auto;
+    padding:10px;
+    display:none;
+    -webkit-overflow-scrolling:touch;
+  }
+
+  .panel-lista.activo{
+    display:block;
+  }
+
+  .toggle-panel{
+    position:absolute;
+    top:-28px;
+    left:50%;
+    transform:translateX(-50%);
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-bottom:none;
+    color:var(--text-dim);
+    padding:4px 16px;
+    border-radius:12px 12px 0 0;
+    font-size:18px;
+    cursor:pointer;
+    z-index:20;
+    line-height:1.2;
+    box-shadow:0 -2px 8px rgba(0,0,0,0.4);
+  }
+
+  .toggle-panel:hover{
+    color:var(--accent);
+  }
+
+  .fab-container{
+    position:fixed;
+    bottom:20px;
+    right:20px;
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+    z-index:9999;
+  }
+
+  .fab{
+    width:56px;
+    height:56px;
+    border-radius:50%;
+    border:none;
+    background:var(--accent);
+    color:#fff;
+    font-size:24px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    box-shadow:0 4px 16px rgba(53,194,164,0.4);
+    cursor:pointer;
+    transition:0.2s;
+    position: relative;
+  }
+
+  .fab:active{
+    transform:scale(0.92);
+  }
+
+  .fab.secondary{
+    background:var(--panel-alt);
+    border:1px solid var(--line);
+    box-shadow:0 4px 16px rgba(0,0,0,0.5);
+  }
+
+  .fab span{
+    position:absolute;
+    right:64px;
+    background:var(--panel);
+    padding:4px 12px;
+    border-radius:6px;
+    font-size:12px;
+    white-space:nowrap;
+    color:var(--text);
+    border:1px solid var(--line);
+    opacity:0;
+    pointer-events:none;
+    transition:0.2s;
+  }
+
+  .fab:hover span{
+    opacity:1;
+  }
+
+  .modal-overlay{
+    position:fixed;
+    top:0; left:0; right:0; bottom:0;
+    background:rgba(0,0,0,0.7);
+    display:none;
+    align-items:center;
+    justify-content:center;
+    z-index:10000;
+    padding:20px;
+  }
+
+  .modal-overlay.activo{
+    display:flex;
+  }
+
+  .modal{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:16px;
+    padding:24px;
+    width:100%;
+    max-width:360px;
+    text-align:center;
+  }
+
+  .modal h3{
+    font-size:16px;
+    margin-bottom:12px;
+    font-weight:600;
+  }
+
+  .modal p{
+    font-size:14px;
+    color:var(--text-dim);
+    margin-bottom:16px;
+    line-height:1.5;
+  }
+
+  .modal input{
+    width:100%;
+    padding:12px 14px;
+    border-radius:8px;
+    border:1px solid var(--line);
+    background:var(--bg);
+    color:var(--text);
+    font-size:16px;
+    outline:none;
+    margin-bottom:16px;
+  }
+
+  .modal input:focus{
+    border-color:var(--accent);
+  }
+
+  .modal-buttons{
+    display:flex;
+    gap:10px;
+  }
+
+  .modal-buttons button{
+    flex:1;
+    padding:12px;
+    border-radius:8px;
+    border:none;
+    font-size:14px;
+    font-weight:600;
+    cursor:pointer;
+    transition:0.2s;
+  }
+
+  .btn-confirmar{
+    background:var(--accent);
+    color:#fff;
+  }
+
+  .btn-cancelar{
+    background:var(--panel-alt);
+    color:var(--text);
+    border:1px solid var(--line) !important;
+  }
+
+  .modal .cafe-icono{
+    font-size:36px;
+    margin-bottom:8px;
+  }
+
+  .item-parada{
+    background: var(--panel-alt);
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding: 12px 14px;
+    margin-bottom:8px;
+    cursor:pointer;
+    transition:0.15s;
+  }
+
+  .item-parada:active{
+    transform:scale(0.98);
+    background:var(--panel);
+  }
+
+  .item-parada .nombre{
+    font-size:15px;
+    font-weight:600;
+  }
+
+  .item-parada .meta{
+    font-size:12px;
+    color: var(--text-dim);
+    margin-top:4px;
+  }
+
+  .item-parada .borrar{
+    display:inline-block;
+    margin-top:8px;
+    font-size:12px;
+    color: var(--danger);
+    cursor:pointer;
+  }
+
+  .vacio{
+    text-align:center;
+    color: var(--text-dim);
+    font-size:13px;
+    padding: 40px 10px;
+  }
+
+  @media (min-width: 820px) {
+    main{ flex-direction:row; }
+
+    aside{
+      width:340px;
+      min-width:280px;
+      max-height:100%;
+      border-top:none;
+      border-left:1px solid var(--line);
+    }
+
+    .toggle-panel{ display:none; }
+    .fab-container{ bottom:30px; right:30px; }
+  }
+
+  /* ===== MODO SCROLL TRÁNSITO - MOBILE FIRST ===== */
+  #visualizadorEmbebido{
+    display:none;
+    width:100%; 
+    height:100dvh;
+    background:#000; 
+    color:#fff;
+    position:fixed; 
+    top:0; 
+    left:0; 
+    z-index:99999;
+    overflow:hidden;
+    font-family:'Segoe UI', Roboto, -apple-system, sans-serif;
+  }
+  
+  #visualizadorEmbebido.activo{
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+  }
+  
+  .pantalla-completa{
+    width:100%; 
+    height:100%;
+    display:flex; 
+    flex-direction:column;
+    justify-content:center; 
+    align-items:center;
+    padding:0; 
+    text-align:center;
+    position:relative;
+    overflow:hidden;
+  }
+  
+  .texto-scroll{
+    font-weight:700; 
+    letter-spacing:2px;
+    text-transform:uppercase;
+    white-space:nowrap;
+    position:absolute;
+    will-change: transform;
+  }
+  
+  .texto-ruta{
+    color:#35c2a4; 
+    font-size: clamp(40px, 12vw, 100px);
+    text-shadow: 0 0 30px rgba(53,194,164,0.7);
+    animation: brillo 2s ease-in-out infinite;
+  }
+  
+  @keyframes brillo {
+    0%, 100% { text-shadow: 0 0 30px rgba(53,194,164,0.7); }
+    50% { text-shadow: 0 0 60px rgba(53,194,164,1); }
+  }
+  
+  .texto-parada{
+    color:#fff; 
+    font-size: clamp(45px, 14vw, 110px);
+    animation: parpadeo 2s ease-in-out infinite;
+  }
+  
+  @keyframes parpadeo {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+  }
+  
+  .texto-referencia{
+    color:#e0a53c; 
+    font-size: clamp(38px, 11vw, 90px);
+    text-shadow: 0 0 20px rgba(224,165,60,0.5);
+  }
+  
+  .texto-distancia{
+    color:#e0a53c; 
+    font-size: clamp(42px, 13vw, 105px);
+    text-shadow: 0 0 20px rgba(224,165,60,0.5);
+  }
+  
+  .texto-llegada{
+    color:#35c2a4; 
+    font-size: clamp(50px, 15vw, 120px);
+    animation: parpadeo 0.5s ease-in-out infinite;
+    text-shadow: 0 0 30px rgba(53,194,164,0.7);
+    display:inline-block;
+    padding:0 20px;
+  }
+
+  .mensaje-centrado{
+    position:absolute;
+    top:50%;
+    left:0;
+    width:100%;
+    transform:translateY(-50%);
+    text-align:center;
+    white-space:normal;
+  }
+  
+  .aviso-inseguro{
+    font-weight:600; 
+    color:#e0a53c; 
+    text-align:center;
+    font-size: clamp(16px, 4.5vw, 28px);
+    line-height:1.5;
+    max-width:600px;
+    padding:20px;
+    border:1px solid #e0a53c;
+    border-radius:12px;
+  }
+  
+  .controles-tamano{
+    position:fixed; 
+    bottom:20px; 
+    right:20px; 
+    z-index:100001;
+    display:flex; 
+    gap:10px; 
+    align-items:center;
+  }
+  
+  .btn-tamano{
+    width:50px; 
+    height:50px; 
+    border-radius:50%;
+    background:#16263a; 
+    color:#35c2a4;
+    border:2px solid #35c2a4; 
+    font-size:24px;
+    cursor:pointer; 
+    font-weight:700;
+    transition:0.2s; 
+    display:flex; 
+    align-items:center; 
+    justify-content:center;
+    box-shadow:0 4px 16px rgba(0,0,0,0.5);
+  }
+  
+  .btn-tamano:hover{ 
+    background:#35c2a4; 
+    color:#0b1420; 
+  }
+  
+  .btn-tamano:active{ 
+    transform:scale(0.9); 
+  }
+  
+  .btn-retorno{
+    position:fixed; 
+    bottom:20px; 
+    left:20px; 
+    z-index:100001;
+    background:#16263a; 
+    color:#35c2a4;
+    border:2px solid #35c2a4; 
+    border-radius:12px;
+    padding:12px 20px; 
+    font-size:16px; 
+    font-weight:600;
+    cursor:pointer; 
+    box-shadow:0 4px 16px rgba(0,0,0,0.5);
+    transition:0.2s; 
+    font-family:'Segoe UI', Roboto, -apple-system, sans-serif;
+  }
+  
+  .btn-retorno:hover{ 
+    background:#35c2a4; 
+    color:#0b1420; 
+  }
+  
+  .btn-retorno:active{ 
+    transform:scale(0.95); 
+  }
+
+  @media (min-width: 768px) {
+    .texto-ruta{ font-size: clamp(60px, 10vw, 140px); }
+    .texto-parada{ font-size: clamp(65px, 11vw, 150px); }
+    .texto-referencia{ font-size: clamp(55px, 9vw, 130px); }
+    .texto-distancia{ font-size: clamp(60px, 10vw, 140px); }
+  }
+
+  @media (orientation: landscape) and (max-height: 500px) {
+    .texto-ruta{ font-size: clamp(40px, 15vh, 90px); }
+    .texto-parada{ font-size: clamp(45px, 18vh, 100px); }
+    .texto-referencia{ font-size: clamp(38px, 14vh, 85px); }
+    .texto-distancia{ font-size: clamp(42px, 16vh, 95px); }
+  }
+</style>
+</head>
+<body>
+
+<div id="app">
+  <header>
+    <div class="brand">
+      <div class="dot"></div>
+      <h1>Generador de Ruta</h1>
+    </div>
+    <nav>
+      <button onclick="previsualizarScroll()">👁️ Ver Letrero</button>
+      <button onclick="terminarRuta()">💾 Guardar HTML</button>
+      <button onclick="limpiarRuta()">🗑️ Limpiar</button>
+    </nav>
+  </header>
+
+  <main>
+    <div id="mapa"></div>
+
+    <aside id="panelLateral">
+      <button class="toggle-panel" id="btnTogglePanel">⌃</button>
+      <div class="aside-tabs">
+        <button class="activo" data-tab="paradas">📍 Paradas</button>
+        <button data-tab="info">ℹ️ Info</button>
+      </div>
+
+      <div class="panel-lista activo" id="panelParadas">
+        <div class="vacio">Cargando paradas guardadas...</div>
+      </div>
+
+      <div class="panel-lista" id="panelInfo">
+        <div class="vacio">
+          <strong>Instrucciones:</strong><br><br>
+          1️⃣ Recorre la ruta en tu vehículo.<br>
+          2️⃣ Presiona 📍 cuando estés en una parada.<br>
+          3️⃣ Confirma la ubicación GPS.<br>
+          4️⃣ Escribe el nombre de la parada.<br>
+          5️⃣ Usa & para referencias (ej: "RUTA & PLAZA & MERCADO")<br>
+          6️⃣ Al finalizar, presiona 💾 Guardar HTML.
+        </div>
+      </div>
+    </aside>
+  </main>
+</div>
+
+<div class="fab-container">
+  <button class="fab" id="btnAgregarParada" title="Agregar Parada">
+    📍
+    <span>Agregar Parada</span>
+  </button>
+  <button class="fab secondary" id="btnCentrar" title="Centrar en mi ubicación">
+    🎯
+    <span>Centrar en mi ubicación</span>
+  </button>
+</div>
+
+<div class="modal-overlay" id="modalConfirmar">
+  <div class="modal">
+    <h3>¿Es aquí la parada?</h3>
+    <p id="modalCoords"></p>
+    <div class="modal-buttons">
+      <button class="btn-cancelar" onclick="cerrarModal()">No</button>
+      <button class="btn-confirmar" onclick="confirmarParada()">Sí</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modalNombre">
+  <div class="modal">
+    <h3>Nombre de la parada</h3>
+    <input type="text" id="inputNombre" placeholder="Ej: Universidad & Centro" autocomplete="off" maxlength="120">
+    <div class="modal-buttons">
+      <button class="btn-cancelar" onclick="cerrarModal()">Cancelar</button>
+      <button class="btn-confirmar" onclick="guardarParada()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modalNombreRuta">
+  <div class="modal">
+    <h3 id="tituloModalRuta">Nombre de la ruta</h3>
+    <p>Puedes agregar referencias con &amp; (ej: "RUTA CENTRO &amp; PLAZA &amp; MERCADO")</p>
+    <input type="text" id="inputNombreRuta" placeholder="Ej: CENTRO" autocomplete="off" maxlength="120">
+    <div class="modal-buttons">
+      <button class="btn-cancelar" onclick="cerrarModalNombreRuta()">Cancelar</button>
+      <button class="btn-confirmar" onclick="confirmarNombreRuta()">Continuar</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modalCafe">
+  <div class="modal">
+    <div class="cafe-icono">☕</div>
+    <h3>¿Funciona bien tu ruta?</h3>
+    <p>¿Te gusta cómo funciona? Ojalá tu negocio crezca cada vez más con este ruteador. Si te fue útil, invítame un café 🙂</p>
+    <div class="modal-buttons">
+      <button class="btn-cancelar" onclick="cerrarModalCafe()">Cerrar</button>
+      <button class="btn-confirmar" id="btnInvitarCafe">☕ Invitar un café</button>
+    </div>
+  </div>
+</div>
+
+<!-- Visualizador Scroll Tránsito -->
+<div id="visualizadorEmbebido">
+  <div class="pantalla-completa" id="pantallaScrollEmbebido"></div>
+  <div class="controles-tamano">
+    <button class="btn-tamano" onclick="disminuirTamanoEmbebido()" title="Disminuir texto">A-</button>
+    <button class="btn-tamano" onclick="aumentarTamanoEmbebido()" title="Aumentar texto">A+</button>
+  </div>
+  <button class="btn-retorno" onclick="salirScrollEmbebido()">🏠 Volver</button>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+
+<script>
+  let mapa;
+  let marcadorUsuario;
+  let marcadoresParadas = [];
+  let paradas = [];
+  let ubicacionActual = { lat: null, lng: null };
+  let panelColapsado = false;
+  let gpsErrorMostrado = false;
+
+  function iniciarMapa() {
+    const capaSatelite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution: '© Esri' });
+    const capaCalle = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' });
+
+    mapa = L.map('mapa', {
+      center: [20.5881, -100.3899],
+      zoom: 13,
+      layers: [capaSatelite]
+    });
+
+    L.control.layers({ '🌍 Calle': capaCalle, '🛰️ Satélite': capaSatelite }, null, { position: 'topright' }).addTo(mapa);
+
+    cargarParadasGuardadas();
+    iniciarGeolocalizacion();
+  }
+
+  function cargarParadasGuardadas() {
+    let datos = null;
+    try {
+      datos = localStorage.getItem('paradasRuta');
+    } catch (e) {
+      console.error('No se pudo acceder a localStorage:', e);
+    }
+
+    if (datos) {
+      try {
+        const cargadas = JSON.parse(datos);
+        if (Array.isArray(cargadas)) {
+          paradas = cargadas;
+          if (paradas.length > 0) {
+            paradas.forEach(function(p) { agregarMarcadorParada(p); });
+            renderizarParadas();
+            const ultima = paradas[paradas.length - 1];
+            mapa.setView([ultima.lat, ultima.lng], 14);
+          } else {
+            renderizarParadas();
+          }
+        } else {
+          renderizarParadas();
+        }
+      } catch(e) {
+        console.error('Error cargando localStorage:', e);
+        renderizarParadas();
+      }
+    } else {
+      renderizarParadas();
+    }
+  }
+
+  function mensajeErrorGPS(error) {
+    if (error && error.code === 1) {
+      return 'Permiso de ubicación denegado. Actívalo en la configuración de tu navegador (candado junto a la URL) para poder agregar paradas.';
+    }
+    if (error && error.code === 2) {
+      return 'Tu ubicación no está disponible en este momento. Verifica tu señal GPS, WiFi o conexión de datos.';
+    }
+    if (error && error.code === 3) {
+      return 'Se agotó el tiempo esperando tu ubicación GPS. Sal a espacio abierto e intenta de nuevo.';
+    }
+    return 'No se pudo obtener tu ubicación GPS.';
+  }
+
+  function iniciarGeolocalizacion() {
+    if (!navigator.geolocation) { alert('Tu dispositivo o navegador no soporta GPS.'); return; }
+    if (!window.isSecureContext) {
+      alert('Este generador debe abrirse con HTTPS (o en localhost) para que el navegador permita usar el GPS.');
+      return;
+    }
+
+    navigator.geolocation.watchPosition(
+      function(pos) {
+        gpsErrorMostrado = false;
+        ubicacionActual.lat = pos.coords.latitude;
+        ubicacionActual.lng = pos.coords.longitude;
+
+        if (!marcadorUsuario) {
+          marcadorUsuario = L.circleMarker([ubicacionActual.lat, ubicacionActual.lng], {
+            radius: 8, color: '#35c2a4', fillColor: '#35c2a4', fillOpacity: 0.8
+          }).addTo(mapa);
+        } else {
+          marcadorUsuario.setLatLng([ubicacionActual.lat, ubicacionActual.lng]);
+        }
+
+        if (!mapa.__centrado && paradas.length === 0) {
+          mapa.setView([ubicacionActual.lat, ubicacionActual.lng], 15);
+          mapa.__centrado = true;
+        }
+      },
+      function(error) {
+        console.error('Error GPS:', error);
+        if (!gpsErrorMostrado) {
+          gpsErrorMostrado = true;
+          alert(mensajeErrorGPS(error));
+        }
+      },
+      { enableHighAccuracy: true, maximumAge: 0, timeout: 10000 }
+    );
+  }
+
+  document.getElementById('btnCentrar').addEventListener('click', function() {
+    if (ubicacionActual.lat && ubicacionActual.lng) {
+      mapa.setView([ubicacionActual.lat, ubicacionActual.lng], 16);
+    } else {
+      alert('Todavía no se obtiene tu ubicación GPS. Verifica que el permiso de ubicación esté activo.');
+    }
+  });
+
+  document.getElementById('btnAgregarParada').addEventListener('click', function() {
+    if (!ubicacionActual.lat || !ubicacionActual.lng) {
+      alert('Espera a que el GPS obtenga tu ubicación antes de agregar una parada.');
+      return;
+    }
+
+    document.getElementById('modalCoords').textContent =
+      'Lat: ' + ubicacionActual.lat.toFixed(6) + ' | Lon: ' + ubicacionActual.lng.toFixed(6);
+    document.getElementById('modalConfirmar').classList.add('activo');
+  });
+
+  function confirmarParada() {
+    cerrarModal();
+    document.getElementById('modalNombre').classList.add('activo');
+    document.getElementById('inputNombre').focus();
+  }
+
+  function guardarParada() {
+    const nombre = document.getElementById('inputNombre').value.trim();
+    if (!nombre) { alert('Escribe el nombre de la parada.'); return; }
+    if (ubicacionActual.lat == null || ubicacionActual.lng == null) {
+      alert('Se perdió la ubicación GPS, intenta de nuevo.');
+      return;
+    }
+
+    const parada = {
+      nombre: nombre,
+      lat: ubicacionActual.lat,
+      lng: ubicacionActual.lng,
+      timestamp: new Date().toISOString()
+    };
+
+    paradas.push(parada);
+    guardarEnLocalStorage();
+    agregarMarcadorParada(parada);
+    renderizarParadas();
+
+    document.getElementById('inputNombre').value = '';
+    cerrarModal();
+  }
+
+  function agregarMarcadorParada(parada) {
+    const marcador = L.marker([parada.lat, parada.lng], { draggable: false }).addTo(mapa);
+    marcador.bindPopup('<strong>' + escapeHtml(parada.nombre) + '</strong>');
+    marcadoresParadas.push(marcador);
+  }
+
+  function renderizarParadas() {
+    const panel = document.getElementById('panelParadas');
+    if (!paradas.length) {
+      panel.innerHTML = '<div class="vacio">No hay paradas capturadas aún.</div>';
+      return;
+    }
+
+    panel.innerHTML = paradas.map(function(p, i) {
+      return '<div class="item-parada">' +
+        '<div onclick="centrarParada(' + i + ')">' +
+        '<div class="nombre">' + (i + 1) + '. ' + escapeHtml(p.nombre) + '</div>' +
+        '<div class="meta">Lat: ' + p.lat.toFixed(6) + ' | Lon: ' + p.lng.toFixed(6) + '</div>' +
+        '</div>' +
+        '<span class="borrar" onclick="event.stopPropagation(); borrarParada(' + i + ')">🗑️ Borrar esta parada</span>' +
+        '</div>';
+    }).join('');
+  }
+
+  function borrarParada(index) {
+    if (!paradas[index]) return;
+    if (!confirm('¿Borrar la parada "' + paradas[index].nombre + '"?')) return;
+    paradas.splice(index, 1);
+    marcadoresParadas[index].remove();
+    marcadoresParadas.splice(index, 1);
+    guardarEnLocalStorage();
+    renderizarParadas();
+  }
+
+  function centrarParada(index) {
+    const p = paradas[index];
+    if (p) {
+      mapa.setView([p.lat, p.lng], 17);
+      marcadoresParadas[index].openPopup();
+    }
+  }
+
+  function guardarEnLocalStorage() {
+    try {
+      localStorage.setItem('paradasRuta', JSON.stringify(paradas));
+    } catch (e) {
+      console.error('No se pudo guardar en localStorage:', e);
+      alert('No se pudieron guardar las paradas localmente (almacenamiento lleno o bloqueado). Recuerda descargar tu HTML seguido para no perder tu trabajo.');
+    }
+  }
+
+  function limpiarRuta() {
+    if (paradas.length && confirm('¿Seguro que quieres limpiar todas las paradas? Esta acción no se puede deshacer.')) {
+      paradas = [];
+      marcadoresParadas.forEach(function(m) { m.remove(); });
+      marcadoresParadas = [];
+      try { localStorage.removeItem('paradasRuta'); } catch (e) { console.error(e); }
+      renderizarParadas();
+    }
+  }
+
+  // ===== Flujo para pedir nombre de ruta con modal (reemplaza prompt) =====
+  let accionNombreRuta = null; // 'previsualizar' | 'guardar'
+
+  function pedirNombreRuta(accion) {
+    if (!paradas.length) { alert('No hay paradas capturadas.'); return; }
+    accionNombreRuta = accion;
+    const guardado = obtenerUltimoNombreRuta();
+    document.getElementById('inputNombreRuta').value = guardado || '';
+    document.getElementById('tituloModalRuta').textContent =
+      accion === 'previsualizar' ? 'Nombre de la ruta (vista previa)' : 'Nombre de la ruta';
+    document.getElementById('modalNombreRuta').classList.add('activo');
+    setTimeout(function() { document.getElementById('inputNombreRuta').focus(); }, 50);
+  }
+
+  function cerrarModalNombreRuta() {
+    document.getElementById('modalNombreRuta').classList.remove('activo');
+  }
+
+  function obtenerUltimoNombreRuta() {
+    try { return localStorage.getItem('ultimaRuta') || ''; } catch (e) { return ''; }
+  }
+
+  function guardarUltimoNombreRuta(nombre) {
+    try { localStorage.setItem('ultimaRuta', nombre); } catch (e) { console.error(e); }
+  }
+
+  function confirmarNombreRuta() {
+    const nombreRuta = document.getElementById('inputNombreRuta').value.trim();
+    if (!nombreRuta) { alert('Escribe el nombre de la ruta.'); return; }
+
+    guardarUltimoNombreRuta(nombreRuta);
+    cerrarModalNombreRuta();
+
+    if (accionNombreRuta === 'previsualizar') {
+      iniciarScrollEmbebido(nombreRuta, paradas);
+    } else if (accionNombreRuta === 'guardar') {
+      const html = generarScrollTránsito(nombreRuta);
+      descargarHTML(html, 'RUTA_' + sanitizarNombreArchivo(nombreRuta) + '.html');
+      mostrarModalCafe();
+    }
+    accionNombreRuta = null;
+  }
+
+  function sanitizarNombreArchivo(nombre) {
+    return nombre.replace(/[\\/:*?"<>|&]/g, '').trim().replace(/\s+/g, '_').slice(0, 60) || 'RUTA';
+  }
+
+  function previsualizarScroll() {
+    pedirNombreRuta('previsualizar');
+  }
+
+  function terminarRuta() {
+    pedirNombreRuta('guardar');
+  }
+
+  // ===== FUNCIONES PARA MANEJAR REFERENCIAS CON & =====
+  function extraerReferencias(texto) {
+    if (!texto) return { nombrePrincipal: '', referencias: [] };
+    const partes = texto.split('&');
+    const nombrePrincipal = partes[0].trim();
+    const referencias = partes.slice(1).map(ref => ref.trim()).filter(ref => ref);
+    return { nombrePrincipal, referencias };
+  }
+
+  // ===== MODO SCROLL TRÁNSITO - SISTEMA MEJORADO =====
+  let scrollEmb = {
+    ruta: [],
+    nombreRuta: 'RUTA',
+    indiceParadaActual: 0,
+    escalaTexto: 1,
+    escalaMinima: 0.5,
+    escalaMaxima: 3,
+    pasoEscala: 0.25,
+    watchId: null,
+    pantalla: null,
+    llegando: false,
+    animacionActiva: false,
+    timerPantalla: null,
+    timerLlegada: null,
+    cicloId: 0,
+    gpsErrorMostrado: false
+  };
+
+  // Velocidad del scroll: pixeles por segundo (más alto = más rápido)
+  const VELOCIDAD_SCROLL_PX_S = 300;
+  // Tiempo mínimo que dura cada pantalla
+  const TIEMPO_MINIMO_PANTALLA = 6000; // 6 segundos
+
+  function iniciarScrollEmbebido(nombreRuta, listaParadas) {
+    if (!listaParadas || !listaParadas.length) {
+      alert('No hay paradas capturadas.');
+      return;
+    }
+
+    if (scrollEmb.timerPantalla) clearTimeout(scrollEmb.timerPantalla);
+    if (scrollEmb.timerLlegada) clearTimeout(scrollEmb.timerLlegada);
+    if (scrollEmb.watchId !== null) {
+      navigator.geolocation.clearWatch(scrollEmb.watchId);
+      scrollEmb.watchId = null;
+    }
+
+    scrollEmb.ruta = listaParadas;
+    scrollEmb.nombreRuta = nombreRuta;
+    scrollEmb.indiceParadaActual = 0;
+    scrollEmb.escalaTexto = 1;
+    scrollEmb.llegando = false;
+    scrollEmb.animacionActiva = false;
+    scrollEmb.gpsErrorMostrado = false;
+    scrollEmb.cicloId++;
+
+    document.getElementById('visualizadorEmbebido').classList.add('activo');
+    scrollEmb.pantalla = document.getElementById('pantallaScrollEmbebido');
+
+    if (!window.isSecureContext) {
+      scrollEmb.pantalla.innerHTML =
+        '<div class="aviso-inseguro">⚠️ Esta página se abrió sin HTTPS (o como archivo local).<br><br>' +
+        'El navegador bloquea el GPS en este modo por seguridad.<br><br>' +
+        'Abre este archivo desde un hosting con HTTPS para que el tránsito funcione.</div>';
+      return;
+    }
+
+    iniciarCicloScroll();
+    iniciarGPSEmbebido();
+  }
+
+  let pantallaActualEmb = 0;
+  const TOTAL_PANTALLAS_EMB = 3; // 0=Nombre Ruta, 1=Próxima Parada, 2=Distancia
+
+  function iniciarCicloScroll() {
+    pantallaActualEmb = 0;
+    mostrarPantallaScrollEmb(0);
+  }
+
+  function mostrarPantallaScrollEmb(indice) {
+    if (scrollEmb.llegando) return; // No interrumpir pantalla de llegada
+
+    const parada = scrollEmb.ruta[scrollEmb.indiceParadaActual];
+    if (!parada) return;
+
+    let claseCSS = '';
+    let texto = '';
+    
+    if (indice === 0) {
+      const { nombrePrincipal, referencias } = extraerReferencias(scrollEmb.nombreRuta);
+      let textoRuta = 'RUTA ' + nombrePrincipal;
+      if (referencias.length > 0) {
+        textoRuta += ' & ' + referencias.join(' & ');
+      }
+      texto = textoRuta;
+      claseCSS = 'texto-ruta';
+    } else if (indice === 1) {
+      const { nombrePrincipal, referencias } = extraerReferencias(parada.nombre);
+      let textoParada = 'PRÓXIMA PARADA: ' + nombrePrincipal;
+      if (referencias.length > 0) {
+        textoParada += ' & ' + referencias.join(' & ');
+      }
+      texto = textoParada;
+      claseCSS = 'texto-parada';
+    } else {
+      let textoDistancia = 'DISTANCIA: CALCULANDO...';
+      if (window.ultimaPosicion) {
+        const distancia = calcularDistanciaEmbebido(
+          window.ultimaPosicion.lat,
+          window.ultimaPosicion.lng,
+          parada.lat,
+          parada.lng
+        );
+        textoDistancia = 'DISTANCIA: ' + formatearDistanciaEmbebido(distancia);
+      }
+      texto = textoDistancia;
+      claseCSS = 'texto-distancia';
+    }
+
+    scrollEmb.pantalla.innerHTML = '';
+    const textoEl = document.createElement('div');
+    textoEl.className = 'texto-scroll ' + claseCSS;
+    textoEl.textContent = texto;
+    textoEl.style.fontSize = getBaseFontSize(claseCSS) * scrollEmb.escalaTexto + 'px';
+    scrollEmb.pantalla.appendChild(textoEl);
+
+    iniciarAnimacionScroll(textoEl, indice);
+  }
+
+  function getBaseFontSize(claseCSS) {
+    if (claseCSS === 'texto-ruta') return 80;
+    if (claseCSS === 'texto-parada') return 90;
+    if (claseCSS === 'texto-distancia') return 85;
+    return 80;
+  }
+
+  function iniciarAnimacionScroll(elemento, indicePantalla) {
+    const cicloAlIniciar = scrollEmb.cicloId;
+    const pantallaWidth = scrollEmb.pantalla.offsetWidth;
+    const textoWidth = elemento.scrollWidth;
+    
+    let posX = pantallaWidth;
+    elemento.style.transform = 'translateX(' + posX + 'px)';
+    elemento.style.left = '0';
+    elemento.style.top = '50%';
+    elemento.style.marginTop = '-' + (elemento.offsetHeight / 2) + 'px';
+    
+    const distanciaTotal = pantallaWidth + textoWidth;
+    let duracion = distanciaTotal / VELOCIDAD_SCROLL_PX_S * 1000;
+    
+    if (duracion < TIEMPO_MINIMO_PANTALLA) {
+      duracion = TIEMPO_MINIMO_PANTALLA;
+    }
+    
+    const inicio = performance.now();
+    scrollEmb.animacionActiva = true;
+    
+    function animar(timestamp) {
+      if (scrollEmb.llegando || cicloAlIniciar !== scrollEmb.cicloId) {
+        scrollEmb.animacionActiva = false;
+        return;
+      }
+      
+      const progreso = (timestamp - inicio) / duracion;
+      
+      if (progreso < 1) {
+        const nuevaPos = pantallaWidth - (distanciaTotal * progreso);
+        elemento.style.transform = 'translateX(' + nuevaPos + 'px)';
+        requestAnimationFrame(animar);
+      } else {
+        scrollEmb.animacionActiva = false;
+        if (scrollEmb.timerPantalla) clearTimeout(scrollEmb.timerPantalla);
+        scrollEmb.timerPantalla = setTimeout(function() {
+          if (cicloAlIniciar !== scrollEmb.cicloId) return;
+          pantallaActualEmb = (indicePantalla + 1) % TOTAL_PANTALLAS_EMB;
+          mostrarPantallaScrollEmb(pantallaActualEmb);
+        }, 500);
+      }
+    }
+    
+    requestAnimationFrame(animar);
+  }
+
+  function iniciarGPSEmbebido() {
+    if (!navigator.geolocation) {
+      alert('Tu dispositivo no soporta GPS');
+      return;
+    }
+
+    if (scrollEmb.watchId !== null) {
+      navigator.geolocation.clearWatch(scrollEmb.watchId);
+    }
+
+    scrollEmb.watchId = navigator.geolocation.watchPosition(
+      function(pos) { 
+        scrollEmb.gpsErrorMostrado = false;
+        window.ultimaPosicion = {
+          lat: pos.coords.latitude,
+          lng: pos.coords.longitude
+        };
+        verificarProximidad(pos); 
+      },
+      function(error) {
+        console.error('Error GPS:', error);
+        if (!scrollEmb.gpsErrorMostrado) {
+          scrollEmb.gpsErrorMostrado = true;
+          alert(mensajeErrorGPS(error));
+        }
+      },
+      { enableHighAccuracy: true, maximumAge: 0, timeout: 10000 }
+    );
+  }
+
+  function verificarProximidad(pos) {
+    const parada = scrollEmb.ruta[scrollEmb.indiceParadaActual];
+    if (!parada) return;
+    
+    const distancia = calcularDistanciaEmbebido(
+      pos.coords.latitude,
+      pos.coords.longitude,
+      parada.lat,
+      parada.lng
+    );
+    
+    if (distancia < 20 && !scrollEmb.llegando) {
+      scrollEmb.llegando = true;
+      if (scrollEmb.timerPantalla) clearTimeout(scrollEmb.timerPantalla);
+      
+      scrollEmb.pantalla.innerHTML = '';
+      const llegadaEl = document.createElement('div');
+      llegadaEl.className = 'texto-llegada';
+      llegadaEl.textContent = 'LLEGANDO A: ' + parada.nombre;
+      llegadaEl.style.fontSize = (getBaseFontSize('texto-ruta') * scrollEmb.escalaTexto) + 'px';
+      scrollEmb.pantalla.appendChild(llegadaEl);
+      
+      llegadaEl.style.position = 'absolute';
+      llegadaEl.style.top = '50%';
+      llegadaEl.style.left = '50%';
+      llegadaEl.style.transform = 'translate(-50%, -50%)';
+      llegadaEl.style.textAlign = 'center';
+      llegadaEl.style.width = '100%';
+      llegadaEl.style.padding = '0 20px';
+      
+      if (scrollEmb.timerLlegada) clearTimeout(scrollEmb.timerLlegada);
+      const cicloAlLlegar = scrollEmb.cicloId;
+      scrollEmb.timerLlegada = setTimeout(function() {
+        if (cicloAlLlegar !== scrollEmb.cicloId) return;
+        scrollEmb.llegando = false;
+        scrollEmb.indiceParadaActual++;
+        if (scrollEmb.indiceParadaActual >= scrollEmb.ruta.length) {
+          scrollEmb.indiceParadaActual = 0;
+        }
+        pantallaActualEmb = 0;
+        iniciarCicloScroll();
+      }, 5000);
+    } else if (!scrollEmb.llegando && pantallaActualEmb === 2) {
+      actualizarTextoDistanciaEmbebido();
+    }
+  }
+
+  function actualizarTextoDistanciaEmbebido() {
+    const parada = scrollEmb.ruta[scrollEmb.indiceParadaActual];
+    const el = scrollEmb.pantalla.querySelector('.texto-distancia');
+    if (!parada || !el || !window.ultimaPosicion) return;
+    const distancia = calcularDistanciaEmbebido(
+      window.ultimaPosicion.lat, window.ultimaPosicion.lng, parada.lat, parada.lng
+    );
+    el.textContent = 'DISTANCIA: ' + formatearDistanciaEmbebido(distancia);
+  }
+
+  function salirScrollEmbebido() {
+    if (scrollEmb.watchId !== null) {
+      navigator.geolocation.clearWatch(scrollEmb.watchId);
+      scrollEmb.watchId = null;
+    }
+    if (scrollEmb.timerPantalla) clearTimeout(scrollEmb.timerPantalla);
+    if (scrollEmb.timerLlegada) clearTimeout(scrollEmb.timerLlegada);
+    scrollEmb.llegando = false;
+    scrollEmb.animacionActiva = false;
+    scrollEmb.cicloId++;
+    document.getElementById('visualizadorEmbebido').classList.remove('activo');
+  }
+
+  function calcularDistanciaEmbebido(lat1, lon1, lat2, lon2) {
+    const R = 6371;
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+              Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c * 1000;
+  }
+
+  function formatearDistanciaEmbebido(metros) {
+    if (metros < 1000) return Math.round(metros) + ' m';
+    return (metros / 1000).toFixed(1) + ' km';
+  }
+
+  function aplicarEscalaTextoEmbebido() {
+    const elementos = scrollEmb.pantalla.querySelectorAll('.texto-scroll, .texto-llegada');
+    elementos.forEach(function(el) {
+      let tamanoBase = 80;
+      if (el.classList.contains('texto-parada')) tamanoBase = 90;
+      if (el.classList.contains('texto-distancia')) tamanoBase = 85;
+      if (el.classList.contains('texto-llegada')) tamanoBase = 80;
+      
+      el.style.fontSize = (tamanoBase * scrollEmb.escalaTexto) + 'px';
+    });
+  }
+
+  function aumentarTamanoEmbebido() {
+    if (scrollEmb.escalaTexto < scrollEmb.escalaMaxima) {
+      scrollEmb.escalaTexto += scrollEmb.pasoEscala;
+      aplicarEscalaTextoEmbebido();
+    }
+  }
+
+  function disminuirTamanoEmbebido() {
+    if (scrollEmb.escalaTexto > scrollEmb.escalaMinima) {
+      scrollEmb.escalaTexto -= scrollEmb.pasoEscala;
+      aplicarEscalaTextoEmbebido();
+    }
+  }
+
+  // ===== Escapes seguros para insertar el nombre de ruta en el HTML generado =====
+  function escaparParaCadenaJS(texto) {
+    return String(texto)
+      .replace(/\\/g, '\\\\')
+      .replace(/'/g, "\\'")
+      .replace(/\r?\n/g, ' ');
+  }
+
+  function escaparParaHTML(texto) {
+    return String(texto)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  function generarScrollTránsito(nombreRuta) {
+    const paradasJSON = JSON.stringify(paradas);
+    const nombreRutaJS = escaparParaCadenaJS(nombreRuta);
+    const nombreRutaHTML = escaparParaHTML(nombreRuta);
+
+    return `<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+<title>RUTA ${nombreRutaHTML}</title>
+<style>
+  *{ margin:0; padding:0; box-sizing:border-box; }
+  html, body{
+    width:100%; height:100%;
+    background:#000; color:#fff;
+    font-family:'Segoe UI', Roboto, -apple-system, sans-serif;
+    overflow:hidden;
+  }
+  #visualizador{
+    width:100%; height:100dvh;
+    display:flex; flex-direction:column;
+    justify-content:center; align-items:center;
+    overflow:hidden; position:relative;
+  }
+  .pantalla-completa{
+    width:100%; height:100%;
+    position:relative;
+    overflow:hidden;
+  }
+  
+  .texto-scroll{
+    font-weight:700; 
+    letter-spacing:2px;
+    text-transform:uppercase;
+    white-space:nowrap;
+    position:absolute;
+    will-change: transform;
+  }
+  
+  .texto-ruta{
+    color:#35c2a4; 
+    font-size: 80px;
+    text-shadow: 0 0 30px rgba(53,194,164,0.7);
+    animation: brillo 2s ease-in-out infinite;
+  }
+  
+  @keyframes brillo {
+    0%, 100% { text-shadow: 0 0 30px rgba(53,194,164,0.7); }
+    50% { text-shadow: 0 0 60px rgba(53,194,164,1); }
+  }
+  
+  .texto-parada{
+    color:#fff; 
+    font-size: 90px;
+    animation: parpadeo 2s ease-in-out infinite;
+  }
+  
+  @keyframes parpadeo {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+  }
+  
+  .texto-distancia{
+    color:#e0a53c; 
+    font-size: 85px;
+    text-shadow: 0 0 20px rgba(224,165,60,0.5);
+  }
+  
+  .texto-llegada{
+    color:#35c2a4; 
+    font-size: 80px;
+    animation: parpadeo 0.5s ease-in-out infinite;
+    text-shadow: 0 0 30px rgba(53,194,164,0.7);
+    display:inline-block;
+    padding:0 20px;
+    text-align:center;
+  }
+
+  .mensaje-centrado{
+    position:absolute;
+    top:50%;
+    left:0;
+    width:100%;
+    transform:translateY(-50%);
+    text-align:center;
+    white-space:normal;
+  }
+  
+  .aviso-inseguro{
+    font-weight:600; 
+    color:#e0a53c; 
+    text-align:center;
+    font-size: clamp(16px, 4.5vw, 28px);
+    line-height:1.5;
+    max-width:600px;
+    padding:20px;
+    border:1px solid #e0a53c;
+    border-radius:12px;
+  }
+  
+  .controles-tamano{
+    position:fixed; 
+    bottom:20px; 
+    right:20px; 
+    z-index:9999;
+    display:flex; 
+    gap:10px; 
+    align-items:center;
+  }
+  
+  .btn-tamano{
+    width:50px; 
+    height:50px; 
+    border-radius:50%;
+    background:#16263a; 
+    color:#35c2a4;
+    border:2px solid #35c2a4; 
+    font-size:24px;
+    cursor:pointer; 
+    font-weight:700;
+    transition:0.2s; 
+    display:flex; 
+    align-items:center; 
+    justify-content:center;
+    box-shadow:0 4px 16px rgba(0,0,0,0.5);
+  }
+  
+  .btn-tamano:hover{ 
+    background:#35c2a4; 
+    color:#0b1420; 
+  }
+  
+  .btn-tamano:active{ 
+    transform:scale(0.9); 
+  }
+  
+  .btn-retorno{
+    position:fixed; 
+    bottom:20px; 
+    left:20px; 
+    z-index:9999;
+    background:#16263a; 
+    color:#35c2a4;
+    border:2px solid #35c2a4; 
+    border-radius:12px;
+    padding:12px 20px; 
+    font-size:16px; 
+    font-weight:600;
+    cursor:pointer; 
+    box-shadow:0 4px 16px rgba(0,0,0,0.5);
+    transition:0.2s; 
+    font-family:'Segoe UI', Roboto, -apple-system, sans-serif;
+  }
+  
+  .btn-retorno:hover{ 
+    background:#35c2a4; 
+    color:#0b1420; 
+  }
+  
+  .btn-retorno:active{ 
+    transform:scale(0.95); 
+  }
+
+  @media (min-width: 768px) {
+    .texto-ruta{ font-size: 100px; }
+    .texto-parada{ font-size: 110px; }
+    .texto-distancia{ font-size: 105px; }
+  }
+
+  @media (orientation: landscape) and (max-height: 500px) {
+    .texto-ruta{ font-size: 60px; }
+    .texto-parada{ font-size: 70px; }
+    .texto-distancia{ font-size: 65px; }
+  }
+</style>
+</head>
+<body>
+
+<div id="visualizador">
+  <div class="pantalla-completa" id="pantallaScroll"></div>
+</div>
+
+<div class="controles-tamano">
+  <button class="btn-tamano" onclick="disminuirTamano()" title="Disminuir texto">A-</button>
+  <button class="btn-tamano" onclick="aumentarTamano()" title="Aumentar texto">A+</button>
+</div>
+
+<button class="btn-retorno" onclick="window.location.reload()">
+  🔄 Reiniciar Ruta
+</button>
+
+<script>
+  const RUTA = ${paradasJSON};
+  const NOMBRE_RUTA = '${nombreRutaJS}';
+  
+  let indiceParadaActual = 0;
+  let pantallaActual = 0;
+  let pantallaScroll = document.getElementById('pantallaScroll');
+  let escalaTexto = 1;
+  const escalaMinima = 0.5;
+  const escalaMaxima = 3;
+  const pasoEscala = 0.25;
+  let watchId = null;
+  let ultimaPosicion = null;
+  let llegando = false;
+  let animacionActiva = false;
+  let timerPantalla = null;
+  let timerLlegada = null;
+  let gpsErrorMostrado = false;
+  
+  const VELOCIDAD_SCROLL_PX_S = 300;
+  const TIEMPO_MINIMO_PANTALLA = 6000;
+
+  function extraerReferencias(texto) {
+    if (!texto) return { nombrePrincipal: '', referencias: [] };
+    const partes = texto.split('&');
+    const nombrePrincipal = partes[0].trim();
+    const referencias = partes.slice(1).map(ref => ref.trim()).filter(ref => ref);
+    return { nombrePrincipal, referencias };
+  }
+
+  function calcularDistancia(lat1, lon1, lat2, lon2) {
+    const R = 6371;
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+              Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c * 1000;
+  }
+
+  function formatearDistancia(metros) {
+    if (metros < 1000) return Math.round(metros) + ' m';
+    return (metros / 1000).toFixed(1) + ' km';
+  }
+
+  function getBaseFontSize(claseCSS) {
+    if (claseCSS === 'texto-ruta') return 80;
+    if (claseCSS === 'texto-parada') return 90;
+    if (claseCSS === 'texto-distancia') return 85;
+    return 80;
+  }
+
+  function mensajeErrorGPS(error) {
+    if (error && error.code === 1) return 'Permiso de ubicación denegado. Actívalo para que el tránsito funcione.';
+    if (error && error.code === 2) return 'Ubicación no disponible. Verifica tu señal GPS o conexión.';
+    if (error && error.code === 3) return 'Se agotó el tiempo esperando el GPS. Reintentando...';
+    return 'No se pudo obtener tu ubicación GPS.';
+  }
+
+  function aumentarTamano() {
+    if (escalaTexto < escalaMaxima) {
+      escalaTexto += pasoEscala;
+      aplicarEscalaTexto();
+    }
+  }
+
+  function disminuirTamano() {
+    if (escalaTexto > escalaMinima) {
+      escalaTexto -= pasoEscala;
+      aplicarEscalaTexto();
+    }
+  }
+
+  function aplicarEscalaTexto() {
+    const elementos = pantallaScroll.querySelectorAll('.texto-scroll, .texto-llegada');
+    elementos.forEach(function(el) {
+      let tamanoBase = 80;
+      if (el.classList.contains('texto-parada')) tamanoBase = 90;
+      if (el.classList.contains('texto-distancia')) tamanoBase = 85;
+      if (el.classList.contains('texto-llegada')) tamanoBase = 80;
+      
+      el.style.fontSize = (tamanoBase * escalaTexto) + 'px';
+    });
+  }
+
+  function mostrarPantallaScroll(indice) {
+    if (llegando) return;
+    if (!RUTA.length) return;
+
+    const parada = RUTA[indiceParadaActual];
+    if (!parada) return;
+
+    let claseCSS = '';
+    let texto = '';
+    
+    if (indice === 0) {
+      const { nombrePrincipal, referencias } = extraerReferencias(NOMBRE_RUTA);
+      let textoRuta = 'RUTA ' + nombrePrincipal;
+      if (referencias.length > 0) {
+        textoRuta += ' & ' + referencias.join(' & ');
+      }
+      texto = textoRuta;
+      claseCSS = 'texto-ruta';
+    } else if (indice === 1) {
+      const { nombrePrincipal, referencias } = extraerReferencias(parada.nombre);
+      let textoParada = 'PRÓXIMA PARADA: ' + nombrePrincipal;
+      if (referencias.length > 0) {
+        textoParada += ' & ' + referencias.join(' & ');
+      }
+      texto = textoParada;
+      claseCSS = 'texto-parada';
+    } else {
+      let textoDistancia = 'DISTANCIA: CALCULANDO...';
+      if (ultimaPosicion) {
+        const distancia = calcularDistancia(
+          ultimaPosicion.lat,
+          ultimaPosicion.lng,
+          parada.lat,
+          parada.lng
+        );
+        textoDistancia = 'DISTANCIA: ' + formatearDistancia(distancia);
+      }
+      texto = textoDistancia;
+      claseCSS = 'texto-distancia';
+    }
+
+    pantallaScroll.innerHTML = '';
+    const textoEl = document.createElement('div');
+    textoEl.className = 'texto-scroll ' + claseCSS;
+    textoEl.textContent = texto;
+    textoEl.style.fontSize = getBaseFontSize(claseCSS) * escalaTexto + 'px';
+    pantallaScroll.appendChild(textoEl);
+
+    iniciarAnimacionScroll(textoEl, indice);
+  }
+
+  function iniciarAnimacionScroll(elemento, indicePantalla) {
+    const pantallaWidth = pantallaScroll.offsetWidth;
+    const textoWidth = elemento.scrollWidth;
+    
+    let posX = pantallaWidth;
+    elemento.style.transform = 'translateX(' + posX + 'px)';
+    elemento.style.left = '0';
+    elemento.style.top = '50%';
+    elemento.style.marginTop = '-' + (elemento.offsetHeight / 2) + 'px';
+    
+    const distanciaTotal = pantallaWidth + textoWidth;
+    let duracion = distanciaTotal / VELOCIDAD_SCROLL_PX_S * 1000;
+    
+    if (duracion < TIEMPO_MINIMO_PANTALLA) {
+      duracion = TIEMPO_MINIMO_PANTALLA;
+    }
+    
+    const inicio = performance.now();
+    animacionActiva = true;
+    
+    function animar(timestamp) {
+      if (llegando) {
+        animacionActiva = false;
+        return;
+      }
+      
+      const progreso = (timestamp - inicio) / duracion;
+      
+      if (progreso < 1) {
+        const nuevaPos = pantallaWidth - (distanciaTotal * progreso);
+        elemento.style.transform = 'translateX(' + nuevaPos + 'px)';
+        requestAnimationFrame(animar);
+      } else {
+        animacionActiva = false;
+        if (timerPantalla) clearTimeout(timerPantalla);
+        timerPantalla = setTimeout(function() {
+          pantallaActual = (indicePantalla + 1) % 3;
+          mostrarPantallaScroll(pantallaActual);
+        }, 500);
+      }
+    }
+    
+    requestAnimationFrame(animar);
+  }
+
+  function iniciarCicloScroll() {
+    pantallaActual = 0;
+    mostrarPantallaScroll(0);
+  }
+
+  function verificarProximidad(pos) {
+    const parada = RUTA[indiceParadaActual];
+    if (!parada) return;
+    
+    const distancia = calcularDistancia(
+      pos.coords.latitude,
+      pos.coords.longitude,
+      parada.lat,
+      parada.lng
+    );
+    
+    if (distancia < 20 && !llegando) {
+      llegando = true;
+      if (timerPantalla) clearTimeout(timerPantalla);
+      
+      pantallaScroll.innerHTML = '';
+      const llegadaEl = document.createElement('div');
+      llegadaEl.className = 'texto-llegada';
+      llegadaEl.textContent = 'LLEGANDO A: ' + parada.nombre;
+      llegadaEl.style.fontSize = (getBaseFontSize('texto-ruta') * escalaTexto) + 'px';
+      pantallaScroll.appendChild(llegadaEl);
+      
+      llegadaEl.style.position = 'absolute';
+      llegadaEl.style.top = '50%';
+      llegadaEl.style.left = '50%';
+      llegadaEl.style.transform = 'translate(-50%, -50%)';
+      llegadaEl.style.textAlign = 'center';
+      llegadaEl.style.width = '100%';
+      llegadaEl.style.padding = '0 20px';
+      
+      if (timerLlegada) clearTimeout(timerLlegada);
+      timerLlegada = setTimeout(function() {
+        llegando = false;
+        indiceParadaActual++;
+        if (indiceParadaActual >= RUTA.length) {
+          indiceParadaActual = 0;
+        }
+        pantallaActual = 0;
+        iniciarCicloScroll();
+      }, 5000);
+    } else if (!llegando && pantallaActual === 2) {
+      actualizarTextoDistancia();
+    }
+  }
+
+  function actualizarTextoDistancia() {
+    const parada = RUTA[indiceParadaActual];
+    const el = pantallaScroll.querySelector('.texto-distancia');
+    if (!parada || !el || !ultimaPosicion) return;
+    const distancia = calcularDistancia(
+      ultimaPosicion.lat, ultimaPosicion.lng, parada.lat, parada.lng
+    );
+    el.textContent = 'DISTANCIA: ' + formatearDistancia(distancia);
+  }
+
+  function iniciarGPS() {
+    if (!window.isSecureContext) {
+      pantallaScroll.innerHTML =
+        '<div class="aviso-inseguro">⚠️ Este archivo se abrió sin HTTPS (o como archivo local).<br><br>' +
+        'El navegador bloquea el GPS en este modo por seguridad.<br><br>' +
+        'Sube este HTML a un hosting con HTTPS para que el tránsito funcione.</div>';
+      return;
+    }
+
+    if (!navigator.geolocation) {
+      pantallaScroll.innerHTML =
+        '<div class="aviso-inseguro">⚠️ Tu dispositivo o navegador no soporta GPS.</div>';
+      return;
+    }
+
+    if (!RUTA.length) {
+      pantallaScroll.innerHTML =
+        '<div class="aviso-inseguro">⚠️ Esta ruta no tiene paradas guardadas.</div>';
+      return;
+    }
+
+    watchId = navigator.geolocation.watchPosition(
+      function(pos) {
+        gpsErrorMostrado = false;
+        ultimaPosicion = {
+          lat: pos.coords.latitude,
+          lng: pos.coords.longitude
+        };
+        verificarProximidad(pos);
+      },
+      function(error) {
+        console.error('Error GPS:', error);
+        if (!gpsErrorMostrado) {
+          gpsErrorMostrado = true;
+          alert(mensajeErrorGPS(error));
+        }
+      },
+      {
+        enableHighAccuracy: true,
+        maximumAge: 0,
+        timeout: 10000
+      }
+    );
+  }
+
+  // Iniciar GPS y ciclo de scroll
+  iniciarGPS();
+  
+  if (window.isSecureContext && RUTA.length > 0) {
+    iniciarCicloScroll();
+  }
+
+  document.body.addEventListener('click', function(e) {
+    if (e.target.tagName === 'BUTTON') return;
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(function(){});
+    } else {
+      document.exitFullscreen().catch(function(){});
+    }
+  });
+<\/script>
+</body>
+</html>`;
+  }
+
+  function descargarHTML(contenido, nombreArchivo) {
+    const blob = new Blob([contenido], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = nombreArchivo;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  function cerrarModal() {
+    document.getElementById('modalConfirmar').classList.remove('activo');
+    document.getElementById('modalNombre').classList.remove('activo');
+  }
+
+  function alternarPanel() {
+    const aside = document.getElementById('panelLateral');
+    const btn = document.getElementById('btnTogglePanel');
+    panelColapsado = !panelColapsado;
+    aside.classList.toggle('colapsado');
+    btn.textContent = panelColapsado ? '⌄' : '⌃';
+    setTimeout(function() { mapa.invalidateSize(); }, 350);
+  }
+
+  document.getElementById('btnTogglePanel').addEventListener('click', alternarPanel);
+
+  document.querySelectorAll('.aside-tabs button').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      document.querySelectorAll('.aside-tabs button').forEach(function(b) { b.classList.remove('activo'); });
+      document.querySelectorAll('.panel-lista').forEach(function(p) { p.classList.remove('activo'); });
+      btn.classList.add('activo');
+      document.getElementById('panel' + (btn.dataset.tab === 'paradas' ? 'Paradas' : 'Info')).classList.add('activo');
+      if (window.innerWidth < 820 && panelColapsado) alternarPanel();
+    });
+  });
+
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str || '';
+    return div.innerHTML;
+  }
+
+  // ===== Modal de café (correo oculto para evitar que bots lo raspen) =====
+  function obtenerCorreoAutor() {
+    const usuario = [112,114,111,116,111,116,105,112,111,119,101,98,97,112,112].map(function(c){ return String.fromCharCode(c); }).join('');
+    const dominio = [103,109,97,105,108,46,99,111,109].map(function(c){ return String.fromCharCode(c); }).join('');
+    return usuario + String.fromCharCode(64) + dominio;
+  }
+
+  function mostrarModalCafe() {
+    document.getElementById('modalCafe').classList.add('activo');
+  }
+
+  function cerrarModalCafe() {
+    document.getElementById('modalCafe').classList.remove('activo');
+  }
+
+  document.getElementById('btnInvitarCafe').addEventListener('click', function() {
+    const correo = obtenerCorreoAutor();
+    const asunto = encodeURIComponent('¡Café para el Generador de Rutas! ☕');
+    const cuerpo = encodeURIComponent('Hola, probé el Generador de Rutas y quiero invitarte un café. ¡Gracias por la herramienta!');
+    window.location.href = 'mailto:' + correo + '?subject=' + asunto + '&body=' + cuerpo;
+  });
+
+  window.addEventListener('DOMContentLoaded', iniciarMapa);
+</script>
+
+</body>
+</html>
