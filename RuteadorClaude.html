@@ -1,0 +1,2011 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+<title>Generador de Letrero Digital - Transporte Público</title>
+
+<!-- Leaflet CSS -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+
+<style>
+  :root{
+    --bg:#0b1420;
+    --panel:#101c2c;
+    --panel-alt:#16263a;
+    --line:#223449;
+    --text:#e8eef5;
+    --text-dim:#8ea3b8;
+    --accent:#35c2a4;
+    --accent-hover:#2aa88d;
+    --warn:#e0a53c;
+    --danger:#e05a4e;
+    --coffee:#c8a27a;
+  }
+
+  *{
+    box-sizing:border-box;
+    margin:0;
+    padding:0;
+  }
+
+  html, body{
+    margin:0;
+    height:100%;
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Segoe UI', Roboto, -apple-system, sans-serif;
+    -webkit-tap-highlight-color:transparent;
+    overflow:hidden;
+  }
+
+  #app{
+    display:flex;
+    flex-direction:column;
+    height:100dvh;
+    overflow:hidden;
+  }
+
+  /* ===== HEADER ===== */
+  header{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    flex-wrap:wrap;
+    gap:8px;
+    padding: 10px 16px;
+    border-bottom:1px solid var(--line);
+    background: var(--panel);
+    min-height: 56px;
+    z-index:100;
+  }
+
+  .brand{
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+
+  .brand-icon{
+    width:36px;
+    height:36px;
+    border-radius:50%;
+    background:var(--accent);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:20px;
+    box-shadow:0 0 20px rgba(53,194,164,0.3);
+  }
+
+  .brand h1{
+    font-size:16px;
+    margin:0;
+    font-weight:700;
+    letter-spacing:0.5px;
+  }
+
+  .brand small{
+    display:block;
+    font-size:11px;
+    color:var(--text-dim);
+    font-weight:400;
+  }
+
+  nav{
+    display:flex;
+    gap:8px;
+    align-items:center;
+    flex-wrap: wrap;
+  }
+
+  .btn-nav{
+    color:var(--text);
+    background: var(--panel-alt);
+    border:1px solid var(--line);
+    padding:8px 14px;
+    border-radius:8px;
+    font-size:13px;
+    cursor:pointer;
+    white-space:nowrap;
+    transition:all 0.2s;
+    font-weight:500;
+    display:flex;
+    align-items:center;
+    gap:6px;
+  }
+
+  .btn-nav:hover{
+    border-color: var(--accent);
+    color: var(--accent);
+    background: rgba(53,194,164,0.05);
+  }
+
+  .btn-nav:active{
+    transform:scale(0.95);
+  }
+
+  /* ===== MAIN CONTENT ===== */
+  main{
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    min-height:0;
+    position:relative;
+  }
+
+  #mapa{
+    flex:1;
+    width:100%;
+    height:100%;
+    z-index:1;
+  }
+
+  /* ===== SIDEBAR ===== */
+  aside{
+    width:100%;
+    max-height:45vh;
+    background: var(--panel);
+    border-top:1px solid var(--line);
+    display:flex;
+    flex-direction:column;
+    overflow:hidden;
+    transition: max-height 0.3s ease;
+    z-index:10;
+    position: relative;
+  }
+
+  aside.colapsado{
+    max-height: 0;
+    border-top:none;
+  }
+
+  .toggle-panel{
+    position:absolute;
+    top:-30px;
+    left:50%;
+    transform:translateX(-50%);
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-bottom:none;
+    color:var(--text-dim);
+    padding:6px 20px;
+    border-radius:14px 14px 0 0;
+    font-size:20px;
+    cursor:pointer;
+    z-index:20;
+    line-height:1;
+    box-shadow:0 -2px 10px rgba(0,0,0,0.3);
+    transition:all 0.2s;
+  }
+
+  .toggle-panel:hover{
+    color:var(--accent);
+  }
+
+  .aside-tabs{
+    display:flex;
+    border-bottom:1px solid var(--line);
+    background:var(--panel-alt);
+    flex-shrink:0;
+  }
+
+  .aside-tabs button{
+    flex:1;
+    background:none;
+    border:none;
+    color: var(--text-dim);
+    padding:12px;
+    font-size:13px;
+    font-weight:600;
+    cursor:pointer;
+    border-bottom:3px solid transparent;
+    transition:all 0.2s;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:6px;
+  }
+
+  .aside-tabs button.activo{
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+    background: rgba(53,194,164,0.05);
+  }
+
+  .panel-lista{
+    flex:1;
+    overflow-y:auto;
+    padding:12px;
+    display:none;
+    -webkit-overflow-scrolling:touch;
+  }
+
+  .panel-lista.activo{
+    display:block;
+  }
+
+  /* ===== FLOATING ACTION BUTTONS ===== */
+  .fab-container{
+    position:fixed;
+    bottom:24px;
+    right:24px;
+    display:flex;
+    flex-direction:column;
+    gap:14px;
+    z-index:9999;
+  }
+
+  .fab{
+    width:60px;
+    height:60px;
+    border-radius:50%;
+    border:none;
+    background:var(--accent);
+    color:#fff;
+    font-size:28px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    box-shadow:0 4px 20px rgba(53,194,164,0.4);
+    cursor:pointer;
+    transition:all 0.2s;
+    position: relative;
+  }
+
+  .fab:hover{
+    background:var(--accent-hover);
+    transform:translateY(-2px);
+    box-shadow:0 6px 25px rgba(53,194,164,0.5);
+  }
+
+  .fab:active{
+    transform:scale(0.9);
+  }
+
+  .fab.secondary{
+    background:var(--panel-alt);
+    border:2px solid var(--line);
+    box-shadow:0 4px 20px rgba(0,0,0,0.5);
+  }
+
+  .fab.secondary:hover{
+    border-color:var(--accent);
+  }
+
+  .fab .tooltip{
+    position:absolute;
+    right:72px;
+    background:var(--panel);
+    padding:6px 14px;
+    border-radius:8px;
+    font-size:13px;
+    white-space:nowrap;
+    color:var(--text);
+    border:1px solid var(--line);
+    opacity:0;
+    pointer-events:none;
+    transition:all 0.2s;
+    font-weight:500;
+  }
+
+  .fab:hover .tooltip{
+    opacity:1;
+  }
+
+  /* ===== MODALS ===== */
+  .modal-overlay{
+    position:fixed;
+    top:0; left:0; right:0; bottom:0;
+    background:rgba(0,0,0,0.8);
+    display:none;
+    align-items:center;
+    justify-content:center;
+    z-index:10000;
+    padding:20px;
+    backdrop-filter:blur(4px);
+  }
+
+  .modal-overlay.activo{
+    display:flex;
+  }
+
+  .modal{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:20px;
+    padding:28px;
+    width:100%;
+    max-width:380px;
+    text-align:center;
+    animation:modalIn 0.3s ease;
+  }
+
+  @keyframes modalIn{
+    from{ transform:scale(0.8); opacity:0; }
+    to{ transform:scale(1); opacity:1; }
+  }
+
+  .modal-icon{
+    font-size:48px;
+    margin-bottom:16px;
+  }
+
+  .modal h3{
+    font-size:18px;
+    margin-bottom:12px;
+    font-weight:700;
+  }
+
+  .modal p{
+    font-size:14px;
+    color:var(--text-dim);
+    margin-bottom:20px;
+    line-height:1.5;
+  }
+
+  .modal input{
+    width:100%;
+    padding:14px 16px;
+    border-radius:12px;
+    border:2px solid var(--line);
+    background:var(--bg);
+    color:var(--text);
+    font-size:16px;
+    outline:none;
+    margin-bottom:20px;
+    transition:all 0.2s;
+  }
+
+  .modal input:focus{
+    border-color:var(--accent);
+  }
+
+  .modal-buttons{
+    display:flex;
+    gap:12px;
+  }
+
+  .modal-buttons button{
+    flex:1;
+    padding:14px;
+    border-radius:12px;
+    border:none;
+    font-size:15px;
+    font-weight:700;
+    cursor:pointer;
+    transition:all 0.2s;
+  }
+
+  .btn-confirmar{
+    background:var(--accent);
+    color:#fff;
+  }
+
+  .btn-confirmar:hover{
+    background:var(--accent-hover);
+  }
+
+  .btn-cancelar{
+    background:var(--panel-alt);
+    color:var(--text);
+    border:2px solid var(--line) !important;
+  }
+
+  .btn-cancelar:hover{
+    border-color:var(--danger) !important;
+    color:var(--danger);
+  }
+
+  /* ===== PARADA ITEMS ===== */
+  .item-parada{
+    background: var(--panel-alt);
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding: 14px 16px;
+    margin-bottom:10px;
+    cursor:pointer;
+    transition:all 0.2s;
+    position:relative;
+  }
+
+  .item-parada:hover{
+    border-color:var(--accent);
+    transform:translateX(4px);
+  }
+
+  .item-parada:active{
+    transform:scale(0.97);
+  }
+
+  .item-parada .num{
+    display:inline-block;
+    background:var(--accent);
+    color:#fff;
+    width:24px;
+    height:24px;
+    border-radius:50%;
+    text-align:center;
+    line-height:24px;
+    font-size:12px;
+    font-weight:700;
+    margin-right:8px;
+  }
+
+  .item-parada .nombre{
+    font-size:15px;
+    font-weight:600;
+    display:inline;
+  }
+
+  .item-parada .meta{
+    font-size:11px;
+    color: var(--text-dim);
+    margin-top:6px;
+    padding-left:32px;
+  }
+
+  .item-parada .btn-eliminar{
+    position:absolute;
+    right:12px;
+    top:50%;
+    transform:translateY(-50%);
+    background:none;
+    border:none;
+    color:var(--danger);
+    font-size:18px;
+    cursor:pointer;
+    opacity:0;
+    transition:all 0.2s;
+  }
+
+  .item-parada:hover .btn-eliminar{
+    opacity:1;
+  }
+
+  .vacio{
+    text-align:center;
+    color: var(--text-dim);
+    font-size:13px;
+    padding: 40px 10px;
+    line-height:1.6;
+  }
+
+  /* ===== COFFEE BUTTON ===== */
+  .coffee-banner{
+    background:linear-gradient(135deg, #2a1f14, #1a120a);
+    border:1px solid var(--coffee);
+    border-radius:12px;
+    padding:16px;
+    margin:12px;
+    text-align:center;
+    animation:coffeePulse 2s ease-in-out infinite;
+  }
+
+  @keyframes coffeePulse{
+    0%, 100%{ box-shadow:0 0 10px rgba(200,162,122,0.3); }
+    50%{ box-shadow:0 0 25px rgba(200,162,122,0.5); }
+  }
+
+  .coffee-banner p{
+    color:var(--coffee);
+    font-size:14px;
+    margin-bottom:10px;
+    font-weight:500;
+  }
+
+  .btn-coffee{
+    background:var(--coffee);
+    color:#1a120a;
+    border:none;
+    padding:10px 20px;
+    border-radius:20px;
+    font-size:14px;
+    font-weight:700;
+    cursor:pointer;
+    transition:all 0.2s;
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+  }
+
+  .btn-coffee:hover{
+    transform:translateY(-2px);
+    box-shadow:0 4px 15px rgba(200,162,122,0.4);
+  }
+
+  /* ===== TUTORIAL ===== */
+  .tutorial-overlay{
+    position:fixed;
+    top:0; left:0; right:0; bottom:0;
+    background:rgba(0,0,0,0.9);
+    display:none;
+    align-items:center;
+    justify-content:center;
+    z-index:10001;
+    padding:20px;
+  }
+
+  .tutorial-overlay.activo{
+    display:flex;
+  }
+
+  .tutorial-content{
+    background:var(--panel);
+    border:1px solid var(--accent);
+    border-radius:20px;
+    padding:32px;
+    width:100%;
+    max-width:400px;
+    text-align:center;
+    animation:modalIn 0.3s ease;
+  }
+
+  .tutorial-step{
+    display:none;
+    animation:fadeIn 0.3s ease;
+  }
+
+  .tutorial-step.activo{
+    display:block;
+  }
+
+  @keyframes fadeIn{
+    from{ opacity:0; transform:translateY(20px); }
+    to{ opacity:1; transform:translateY(0); }
+  }
+
+  .tutorial-icon{
+    font-size:64px;
+    margin-bottom:20px;
+  }
+
+  .tutorial-content h2{
+    font-size:20px;
+    margin-bottom:16px;
+  }
+
+  .tutorial-content p{
+    color:var(--text-dim);
+    font-size:14px;
+    line-height:1.6;
+    margin-bottom:20px;
+  }
+
+  .tutorial-nav{
+    display:flex;
+    justify-content:space-between;
+    gap:12px;
+  }
+
+  .btn-tutorial{
+    padding:12px 24px;
+    border-radius:12px;
+    border:none;
+    font-size:14px;
+    font-weight:700;
+    cursor:pointer;
+    transition:all 0.2s;
+    flex:1;
+  }
+
+  .btn-tutorial.prev{
+    background:var(--panel-alt);
+    color:var(--text);
+  }
+
+  .btn-tutorial.next{
+    background:var(--accent);
+    color:#fff;
+  }
+
+  .btn-tutorial:hover{
+    transform:translateY(-2px);
+  }
+
+  /* ===== SCROLL TRÁNSITO ===== */
+  #visualizadorEmbebido{
+    display:none;
+    width:100%; 
+    height:100dvh;
+    background:#000; 
+    color:#fff;
+    position:fixed; 
+    top:0; 
+    left:0; 
+    z-index:99999;
+    overflow:hidden;
+    font-family:'Segoe UI', Roboto, -apple-system, sans-serif;
+  }
+  
+  #visualizadorEmbebido.activo{
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+  }
+  
+  .pantalla-completa{
+    width:100%; 
+    height:100%;
+    position:relative;
+    overflow:hidden;
+  }
+  
+  .texto-scroll{
+    font-weight:700; 
+    letter-spacing:2px;
+    text-transform:uppercase;
+    white-space:nowrap;
+    position:absolute;
+    will-change: transform;
+  }
+  
+  .texto-ruta{
+    color:#35c2a4; 
+    font-size:80px;
+    text-shadow:0 0 30px rgba(53,194,164,0.7);
+    animation:brillo 2s ease-in-out infinite;
+  }
+  
+  @keyframes brillo{
+    0%, 100%{ text-shadow:0 0 30px rgba(53,194,164,0.7); }
+    50%{ text-shadow:0 0 60px rgba(53,194,164,1); }
+  }
+  
+  .texto-parada{
+    color:#fff; 
+    font-size:90px;
+    animation:parpadeo 2s ease-in-out infinite;
+  }
+  
+  @keyframes parpadeo{
+    0%, 100%{ opacity:1; }
+    50%{ opacity:0.6; }
+  }
+  
+  .texto-distancia{
+    color:#e0a53c; 
+    font-size:85px;
+    text-shadow:0 0 20px rgba(224,165,60,0.5);
+  }
+  
+  .texto-llegada{
+    color:#35c2a4; 
+    font-size:80px;
+    animation:parpadeo 0.5s ease-in-out infinite;
+    text-shadow:0 0 30px rgba(53,194,164,0.7);
+    display:inline-block;
+    padding:0 20px;
+    text-align:center;
+  }
+
+  .aviso-inseguro{
+    font-weight:600; 
+    color:#e0a53c; 
+    text-align:center;
+    font-size:clamp(16px, 4.5vw, 28px);
+    line-height:1.5;
+    max-width:600px;
+    padding:20px;
+    border:1px solid #e0a53c;
+    border-radius:12px;
+    margin:20px;
+  }
+  
+  .controles-tamano{
+    position:fixed; 
+    bottom:20px; 
+    right:20px; 
+    z-index:100001;
+    display:flex; 
+    gap:10px; 
+    align-items:center;
+  }
+  
+  .btn-tamano{
+    width:50px; 
+    height:50px; 
+    border-radius:50%;
+    background:#16263a; 
+    color:#35c2a4;
+    border:2px solid #35c2a4; 
+    font-size:24px;
+    cursor:pointer; 
+    font-weight:700;
+    transition:all 0.2s; 
+    display:flex; 
+    align-items:center; 
+    justify-content:center;
+    box-shadow:0 4px 16px rgba(0,0,0,0.5);
+  }
+  
+  .btn-tamano:hover{ 
+    background:#35c2a4; 
+    color:#0b1420; 
+  }
+  
+  .btn-tamano:active{ 
+    transform:scale(0.9); 
+  }
+  
+  .btn-retorno{
+    position:fixed; 
+    bottom:20px; 
+    left:20px; 
+    z-index:100001;
+    background:#16263a; 
+    color:#35c2a4;
+    border:2px solid #35c2a4; 
+    border-radius:12px;
+    padding:12px 20px; 
+    font-size:16px; 
+    font-weight:600;
+    cursor:pointer; 
+    box-shadow:0 4px 16px rgba(0,0,0,0.5);
+    transition:all 0.2s; 
+    font-family:'Segoe UI', Roboto, -apple-system, sans-serif;
+  }
+  
+  .btn-retorno:hover{ 
+    background:#35c2a4; 
+    color:#0b1420; 
+  }
+  
+  .btn-retorno:active{ 
+    transform:scale(0.95); 
+  }
+
+  /* ===== RESPONSIVE ===== */
+  @media (min-width: 820px) {
+    main{ flex-direction:row; }
+    aside{
+      width:360px;
+      min-width:300px;
+      max-height:100%;
+      border-top:none;
+      border-left:1px solid var(--line);
+    }
+    .toggle-panel{ display:none; }
+    .fab-container{ bottom:30px; right:30px; }
+  }
+
+  @media (min-width: 768px) {
+    .texto-ruta{ font-size:100px; }
+    .texto-parada{ font-size:110px; }
+    .texto-distancia{ font-size:105px; }
+  }
+
+  @media (orientation: landscape) and (max-height: 500px) {
+    .texto-ruta{ font-size:60px; }
+    .texto-parada{ font-size:70px; }
+    .texto-distancia{ font-size:65px; }
+  }
+</style>
+</head>
+<body>
+
+<div id="app">
+  <header>
+    <div class="brand">
+      <div class="brand-icon">🚌</div>
+      <div>
+        <h1>Generador de Letrero Digital</h1>
+        <small>Para Transporte Público</small>
+      </div>
+    </div>
+    <nav>
+      <button class="btn-nav" onclick="previsualizarScroll()">👁️ Ver Letrero</button>
+      <button class="btn-nav" onclick="terminarRuta()">💾 Guardar HTML</button>
+      <button class="btn-nav" onclick="mostrarTutorial()">📖 Ayuda</button>
+      <button class="btn-nav" onclick="limpiarRuta()">🗑️ Limpiar</button>
+    </nav>
+  </header>
+
+  <main>
+    <div id="mapa"></div>
+
+    <aside id="panelLateral">
+      <button class="toggle-panel" id="btnTogglePanel">⌃</button>
+      <div class="aside-tabs">
+        <button class="activo" data-tab="paradas">📍 Paradas</button>
+        <button data-tab="info">ℹ️ Info</button>
+      </div>
+
+      <div class="panel-lista activo" id="panelParadas">
+        <div class="vacio">Cargando paradas guardadas...</div>
+      </div>
+
+      <div class="panel-lista" id="panelInfo">
+        <div class="vacio">
+          <strong>📖 Instrucciones Rápidas:</strong><br><br>
+          1️⃣ Presiona <strong>📍</strong> para agregar parada<br>
+          2️⃣ Confirma tu ubicación GPS<br>
+          3️⃣ Escribe el nombre de la parada<br>
+          4️⃣ Usa <strong>&</strong> para referencias<br>
+          &nbsp;&nbsp;&nbsp;Ej: "Universidad & Centro"<br>
+          5️⃣ Presiona <strong>💾</strong> para guardar<br><br>
+          <em>El letrero mostrará:<br>
+          Ruta → Próxima Parada → Distancia</em>
+        </div>
+      </div>
+    </aside>
+  </main>
+</div>
+
+<!-- FABs -->
+<div class="fab-container">
+  <button class="fab" id="btnAgregarParada">
+    📍
+    <span class="tooltip">Agregar Parada</span>
+  </button>
+  <button class="fab secondary" id="btnCentrar">
+    🎯
+    <span class="tooltip">Centrar en mi ubicación</span>
+  </button>
+  <button class="fab secondary" id="btnDeshacer" style="display:none;">
+    ↩️
+    <span class="tooltip">Deshacer última parada</span>
+  </button>
+</div>
+
+<!-- Modals -->
+<div class="modal-overlay" id="modalConfirmar">
+  <div class="modal">
+    <div class="modal-icon">📍</div>
+    <h3>¿Es aquí la parada?</h3>
+    <p id="modalCoords"></p>
+    <div class="modal-buttons">
+      <button class="btn-cancelar" onclick="cerrarModal()">❌ No</button>
+      <button class="btn-confirmar" onclick="confirmarParada()">✅ Sí</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modalNombre">
+  <div class="modal">
+    <div class="modal-icon">✏️</div>
+    <h3>Nombre de la parada</h3>
+    <p>Usa & para referencias<br>Ej: "Universidad & Centro"</p>
+    <input type="text" id="inputNombre" placeholder="Nombre de la parada" autocomplete="off">
+    <div class="modal-buttons">
+      <button class="btn-cancelar" onclick="cerrarModal()">Cancelar</button>
+      <button class="btn-confirmar" onclick="guardarParada()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Coffee Banner -->
+<div class="modal-overlay" id="modalCoffee">
+  <div class="modal">
+    <div class="modal-icon">☕</div>
+    <h3>¿Te gusta cómo funciona?</h3>
+    <p>Este generador es <strong>100% gratuito</strong>.<br>
+    Si te ahorró tiempo y dinero,<br>
+    invítame un café para seguir mejorándolo.</p>
+    <div class="modal-buttons">
+      <button class="btn-cancelar" onclick="cerrarModal()">Ahora no</button>
+      <button class="btn-confirmar" onclick="invitarCafe()">☕ Invitar Café</button>
+    </div>
+  </div>
+</div>
+
+<!-- Tutorial -->
+<div class="tutorial-overlay" id="tutorialOverlay">
+  <div class="tutorial-content">
+    <div class="tutorial-step activo" id="tutorialStep1">
+      <div class="tutorial-icon">🚌</div>
+      <h2>¡Bienvenido!</h2>
+      <p>Este generador crea letreros digitales para transporte público.<br><br>
+      Te guiaré paso a paso para que aprendas a usarlo.</p>
+      <div class="tutorial-nav">
+        <button class="btn-tutorial next" onclick="siguientePaso()">Comenzar →</button>
+      </div>
+    </div>
+
+    <div class="tutorial-step" id="tutorialStep2">
+      <div class="tutorial-icon">📍</div>
+      <h2>Paso 1: Agregar Paradas</h2>
+      <p>Cuando estés en una parada,<br>
+      presiona el botón <strong>📍</strong><br>
+      en la esquina inferior derecha.</p>
+      <div class="tutorial-nav">
+        <button class="btn-tutorial prev" onclick="anteriorPaso()">← Atrás</button>
+        <button class="btn-tutorial next" onclick="siguientePaso()">Siguiente →</button>
+      </div>
+    </div>
+
+    <div class="tutorial-step" id="tutorialStep3">
+      <div class="tutorial-icon">✏️</div>
+      <h2>Paso 2: Nombrar Paradas</h2>
+      <p>Escribe el nombre de cada parada.<br><br>
+      Usa <strong>&</strong> para agregar referencias:<br>
+      "Universidad & Centro & Mercado"</p>
+      <div class="tutorial-nav">
+        <button class="btn-tutorial prev" onclick="anteriorPaso()">← Atrás</button>
+        <button class="btn-tutorial next" onclick="siguientePaso()">Siguiente →</button>
+      </div>
+    </div>
+
+    <div class="tutorial-step" id="tutorialStep4">
+      <div class="tutorial-icon">💾</div>
+      <h2>Paso 3: Guardar HTML</h2>
+      <p>Cuando termines tu ruta,<br>
+      presiona <strong>💾 Guardar HTML</strong>.<br><br>
+      Se descargará un archivo que puedes usar<br>
+      en cualquier dispositivo.</p>
+      <div class="tutorial-nav">
+        <button class="btn-tutorial prev" onclick="anteriorPaso()">← Atrás</button>
+        <button class="btn-tutorial next" onclick="siguientePaso()">Siguiente →</button>
+      </div>
+    </div>
+
+    <div class="tutorial-step" id="tutorialStep5">
+      <div class="tutorial-icon">👁️</div>
+      <h2>Paso 4: Ver Letrero</h2>
+      <p>El letrero mostrará cíclicamente:<br><br>
+      <strong>🟢 Nombre de Ruta</strong><br>
+      <strong>⚪ Próxima Parada</strong><br>
+      <strong>🟡 Distancia en tiempo real</strong></p>
+      <div class="tutorial-nav">
+        <button class="btn-tutorial prev" onclick="anteriorPaso()">← Atrás</button>
+        <button class="btn-tutorial next" onclick="cerrarTutorial()">¡Entendido! ✅</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Visualizador Scroll Tránsito -->
+<div id="visualizadorEmbebido">
+  <div class="pantalla-completa" id="pantallaScrollEmbebido"></div>
+  <div class="controles-tamano">
+    <button class="btn-tamano" onclick="disminuirTamanoEmbebido()">A-</button>
+    <button class="btn-tamano" onclick="aumentarTamanoEmbebido()">A+</button>
+  </div>
+  <button class="btn-retorno" onclick="salirScrollEmbebido()">🏠 Volver</button>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+
+<script>
+  // ===== VARIABLES GLOBALES =====
+  let mapa;
+  let marcadorUsuario;
+  let marcadoresParadas = [];
+  let paradas = [];
+  let ubicacionActual = { lat: null, lng: null };
+  let panelColapsado = false;
+  let ultimaPosicion = null;
+
+  // ===== INICIALIZACIÓN =====
+  function iniciarMapa() {
+    const capaSatelite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution: '© Esri' });
+    const capaCalle = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' });
+
+    mapa = L.map('mapa', {
+      center: [20.5881, -100.3899],
+      zoom: 13,
+      layers: [capaSatelite]
+    });
+
+    L.control.layers({ '🌍 Calle': capaCalle, '🛰️ Satélite': capaSatelite }, null, { position: 'topright' }).addTo(mapa);
+
+    cargarParadasGuardadas();
+    iniciarGeolocalizacion();
+    
+    // Mostrar tutorial solo la primera vez
+    if (!localStorage.getItem('tutorialVisto')) {
+      setTimeout(mostrarTutorial, 500);
+    }
+  }
+
+  // ===== TUTORIAL =====
+  let tutorialPasoActual = 1;
+
+  function mostrarTutorial() {
+    document.getElementById('tutorialOverlay').classList.add('activo');
+    tutorialPasoActual = 1;
+    mostrarPaso(1);
+  }
+
+  function cerrarTutorial() {
+    document.getElementById('tutorialOverlay').classList.remove('activo');
+    localStorage.setItem('tutorialVisto', 'true');
+  }
+
+  function mostrarPaso(numero) {
+    document.querySelectorAll('.tutorial-step').forEach(step => step.classList.remove('activo'));
+    document.getElementById('tutorialStep' + numero).classList.add('activo');
+    tutorialPasoActual = numero;
+  }
+
+  function siguientePaso() {
+    if (tutorialPasoActual < 5) {
+      mostrarPaso(tutorialPasoActual + 1);
+    } else {
+      cerrarTutorial();
+    }
+  }
+
+  function anteriorPaso() {
+    if (tutorialPasoActual > 1) {
+      mostrarPaso(tutorialPasoActual - 1);
+    }
+  }
+
+  // ===== GEOLOCALIZACIÓN =====
+  function iniciarGeolocalizacion() {
+    if (!navigator.geolocation) { 
+      alert('Tu dispositivo no soporta GPS'); 
+      return; 
+    }
+
+    navigator.geolocation.watchPosition(
+      function(pos) {
+        ubicacionActual.lat = pos.coords.latitude;
+        ubicacionActual.lng = pos.coords.longitude;
+        ultimaPosicion = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+
+        if (!marcadorUsuario) {
+          marcadorUsuario = L.circleMarker([ubicacionActual.lat, ubicacionActual.lng], {
+            radius: 8, 
+            color: '#35c2a4', 
+            fillColor: '#35c2a4', 
+            fillOpacity: 0.8,
+            weight: 2
+          }).addTo(mapa);
+          marcadorUsuario.bindPopup('📍 Tu ubicación');
+        } else {
+          marcadorUsuario.setLatLng([ubicacionActual.lat, ubicacionActual.lng]);
+        }
+
+        if (!mapa.__centrado && paradas.length === 0) {
+          mapa.setView([ubicacionActual.lat, ubicacionActual.lng], 15);
+          mapa.__centrado = true;
+        }
+      },
+      function(error) { 
+        console.error('Error GPS:', error); 
+      },
+      { enableHighAccuracy: true, maximumAge: 0, timeout: 10000 }
+    );
+  }
+
+  // ===== GESTIÓN DE PARADAS =====
+  function cargarParadasGuardadas() {
+    const datos = localStorage.getItem('paradasRuta');
+    if (datos) {
+      try {
+        paradas = JSON.parse(datos);
+        if (paradas.length > 0) {
+          paradas.forEach(function(p) { agregarMarcadorParada(p); });
+          renderizarParadas();
+          const ultima = paradas[paradas.length - 1];
+          mapa.setView([ultima.lat, ultima.lng], 14);
+          document.getElementById('btnDeshacer').style.display = 'flex';
+        }
+      } catch(e) {
+        console.error('Error cargando localStorage:', e);
+      }
+    } else {
+      renderizarParadas();
+    }
+  }
+
+  function agregarMarcadorParada(parada) {
+    const marcador = L.marker([parada.lat, parada.lng], { draggable: false }).addTo(mapa);
+    marcador.bindPopup('<strong>' + escapeHtml(parada.nombre) + '</strong>');
+    marcadoresParadas.push(marcador);
+  }
+
+  function renderizarParadas() {
+    const panel = document.getElementById('panelParadas');
+    if (!paradas.length) {
+      panel.innerHTML = '<div class="vacio">🚌 No hay paradas capturadas aún.<br>Presiona 📍 para comenzar.</div>';
+      document.getElementById('btnDeshacer').style.display = 'none';
+      return;
+    }
+
+    panel.innerHTML = paradas.map(function(p, i) {
+      return '<div class="item-parada" onclick="centrarParada(' + i + ')">' +
+        '<span class="num">' + (i + 1) + '</span>' +
+        '<div class="nombre">' + escapeHtml(p.nombre) + '</div>' +
+        '<div class="meta">📍 ' + p.lat.toFixed(4) + ', ' + p.lng.toFixed(4) + '</div>' +
+        '<button class="btn-eliminar" onclick="event.stopPropagation(); eliminarParada(' + i + ')">🗑️</button>' +
+        '</div>';
+    }).join('');
+    
+    document.getElementById('btnDeshacer').style.display = 'flex';
+  }
+
+  function centrarParada(index) {
+    const p = paradas[index];
+    if (p) {
+      mapa.setView([p.lat, p.lng], 17);
+      marcadoresParadas[index].openPopup();
+    }
+  }
+
+  function eliminarParada(index) {
+    if (confirm('¿Eliminar la parada "' + paradas[index].nombre + '"?')) {
+      paradas.splice(index, 1);
+      marcadoresParadas[index].remove();
+      marcadoresParadas.splice(index, 1);
+      guardarEnLocalStorage();
+      renderizarParadas();
+    }
+  }
+
+  function guardarEnLocalStorage() {
+    localStorage.setItem('paradasRuta', JSON.stringify(paradas));
+  }
+
+  function limpiarRuta() {
+    if (paradas.length && confirm('¿Seguro que quieres limpiar TODAS las paradas?')) {
+      paradas = [];
+      marcadoresParadas.forEach(function(m) { m.remove(); });
+      marcadoresParadas = [];
+      localStorage.removeItem('paradasRuta');
+      renderizarParadas();
+    }
+  }
+
+  // ===== BOTONES DE ACCIÓN =====
+  document.getElementById('btnCentrar').addEventListener('click', function() {
+    if (ubicacionActual.lat && ubicacionActual.lng) {
+      mapa.setView([ubicacionActual.lat, ubicacionActual.lng], 16);
+    } else {
+      alert('Espera a que el GPS obtenga tu ubicación...');
+    }
+  });
+
+  document.getElementById('btnDeshacer').addEventListener('click', function() {
+    if (paradas.length > 0) {
+      eliminarParada(paradas.length - 1);
+    }
+  });
+
+  document.getElementById('btnAgregarParada').addEventListener('click', function() {
+    if (!ubicacionActual.lat || !ubicacionActual.lng) {
+      alert('⏳ Espera a que el GPS obtenga tu ubicación...');
+      return;
+    }
+
+    document.getElementById('modalCoords').textContent =
+      '📍 Lat: ' + ubicacionActual.lat.toFixed(6) + ' | Lon: ' + ubicacionActual.lng.toFixed(6);
+    document.getElementById('modalConfirmar').classList.add('activo');
+  });
+
+  function confirmarParada() {
+    cerrarModal();
+    document.getElementById('modalNombre').classList.add('activo');
+    setTimeout(function() { document.getElementById('inputNombre').focus(); }, 100);
+  }
+
+  function guardarParada() {
+    const nombre = document.getElementById('inputNombre').value.trim();
+    if (!nombre) { 
+      alert('✏️ Escribe el nombre de la parada.'); 
+      return; 
+    }
+
+    const parada = {
+      nombre: nombre,
+      lat: ubicacionActual.lat,
+      lng: ubicacionActual.lng,
+      timestamp: new Date().toISOString()
+    };
+
+    paradas.push(parada);
+    guardarEnLocalStorage();
+    agregarMarcadorParada(parada);
+    renderizarParadas();
+
+    document.getElementById('inputNombre').value = '';
+    cerrarModal();
+    
+    // Mostrar confirmación
+    mostrarNotificacion('✅ Parada "' + nombre + '" guardada');
+  }
+
+  // Notificación simple
+  function mostrarNotificacion(mensaje) {
+    const div = document.createElement('div');
+    div.style.cssText = 'position:fixed; bottom:100px; left:50%; transform:translateX(-50%); background:var(--accent); color:#fff; padding:12px 24px; border-radius:12px; font-weight:600; z-index:99999; animation:fadeIn 0.3s;';
+    div.textContent = mensaje;
+    document.body.appendChild(div);
+    setTimeout(function() {
+      div.style.opacity = '0';
+      div.style.transition = 'opacity 0.5s';
+      setTimeout(function() { div.remove(); }, 500);
+    }, 2000);
+  }
+
+  // ===== MODALES =====
+  function cerrarModal() {
+    document.getElementById('modalConfirmar').classList.remove('activo');
+    document.getElementById('modalNombre').classList.remove('activo');
+    document.getElementById('modalCoffee').classList.remove('activo');
+  }
+
+  // ===== INVITAR CAFÉ =====
+  function mostrarCoffee() {
+    document.getElementById('modalCoffee').classList.add('activo');
+  }
+
+  function invitarCafe() {
+    // Aquí puedes poner tu enlace de PayPal, MercadoPago, etc.
+    window.open('https://www.paypal.com/paypalme/tucuenta', '_blank');
+    cerrarModal();
+    mostrarNotificacion('☕ ¡Gracias por tu apoyo!');
+  }
+
+  // ===== PREVISUALIZAR Y GUARDAR =====
+  function previsualizarScroll() {
+    if (!paradas.length) { 
+      alert('📍 No hay paradas capturadas.'); 
+      return; 
+    }
+    
+    const nombreRuta = localStorage.getItem('ultimaRuta') || prompt('Nombre de la ruta:', 'RUTA 1');
+    if (!nombreRuta) return;
+    
+    localStorage.setItem('ultimaRuta', nombreRuta);
+    iniciarScrollEmbebido(nombreRuta, paradas);
+  }
+
+  function terminarRuta() {
+    if (!paradas.length) { 
+      alert('📍 No hay paradas capturadas.'); 
+      return; 
+    }
+
+    const nombreRuta = prompt('Nombre de la ruta:', localStorage.getItem('ultimaRuta') || 'RUTA 1');
+    if (!nombreRuta) return;
+
+    localStorage.setItem('ultimaRuta', nombreRuta);
+    const html = generarScrollTránsito(nombreRuta);
+    descargarHTML(html, 'LETRERO_' + nombreRuta.replace(/[^a-zA-Z0-9]/g, '_') + '.html');
+    
+    setTimeout(mostrarCoffee, 1000);
+  }
+
+  // ===== FUNCIONES PARA REFERENCIAS =====
+  function extraerReferencias(texto) {
+    if (!texto) return { nombrePrincipal: '', referencias: [] };
+    const partes = texto.split('&');
+    const nombrePrincipal = partes[0].trim();
+    const referencias = partes.slice(1).map(ref => ref.trim()).filter(ref => ref);
+    return { nombrePrincipal, referencias };
+  }
+
+  // ===== MODO SCROLL TRÁNSITO =====
+  let scrollEmb = {
+    ruta: [],
+    nombreRuta: 'RUTA',
+    indiceParadaActual: 0,
+    escalaTexto: 1,
+    escalaMinima: 0.5,
+    escalaMaxima: 3,
+    pasoEscala: 0.25,
+    watchId: null,
+    pantalla: null,
+    llegando: false,
+    animacionActiva: false,
+    timerPantalla: null,
+    timerLlegada: null,
+    cicloId: 0
+  };
+
+  const VELOCIDAD_SCROLL_PX_S = 300;
+  const TIEMPO_MINIMO_PANTALLA = 6000;
+
+  function iniciarScrollEmbebido(nombreRuta, listaParadas) {
+    if (!listaParadas || !listaParadas.length) {
+      alert('No hay paradas capturadas.');
+      return;
+    }
+
+    if (scrollEmb.timerPantalla) clearTimeout(scrollEmb.timerPantalla);
+    if (scrollEmb.timerLlegada) clearTimeout(scrollEmb.timerLlegada);
+
+    scrollEmb.ruta = listaParadas;
+    scrollEmb.nombreRuta = nombreRuta;
+    scrollEmb.indiceParadaActual = 0;
+    scrollEmb.escalaTexto = 1;
+    scrollEmb.llegando = false;
+    scrollEmb.animacionActiva = false;
+    scrollEmb.cicloId++;
+
+    document.getElementById('visualizadorEmbebido').classList.add('activo');
+    scrollEmb.pantalla = document.getElementById('pantallaScrollEmbebido');
+
+    if (!window.isSecureContext) {
+      scrollEmb.pantalla.innerHTML =
+        '<div class="aviso-inseguro">⚠️ Esta página se abrió sin HTTPS (o como archivo local).<br><br>' +
+        'El navegador bloquea el GPS en este modo por seguridad.<br><br>' +
+        'Sube este archivo a un hosting con HTTPS para que el GPS funcione.</div>';
+      return;
+    }
+
+    iniciarCicloScroll();
+    iniciarGPSEmbebido();
+  }
+
+  let pantallaActualEmb = 0;
+  const TOTAL_PANTALLAS_EMB = 3;
+
+  function iniciarCicloScroll() {
+    pantallaActualEmb = 0;
+    mostrarPantallaScrollEmb(0);
+  }
+
+  function mostrarPantallaScrollEmb(indice) {
+    if (scrollEmb.llegando) return;
+
+    const parada = scrollEmb.ruta[scrollEmb.indiceParadaActual];
+    if (!parada) return;
+
+    let claseCSS = '';
+    let texto = '';
+    
+    if (indice === 0) {
+      const { nombrePrincipal, referencias } = extraerReferencias(scrollEmb.nombreRuta);
+      let textoRuta = 'RUTA ' + nombrePrincipal;
+      if (referencias.length > 0) {
+        textoRuta += ' & ' + referencias.join(' & ');
+      }
+      texto = textoRuta;
+      claseCSS = 'texto-ruta';
+    } else if (indice === 1) {
+      const { nombrePrincipal, referencias } = extraerReferencias(parada.nombre);
+      let textoParada = 'PRÓXIMA PARADA: ' + nombrePrincipal;
+      if (referencias.length > 0) {
+        textoParada += ' & ' + referencias.join(' & ');
+      }
+      texto = textoParada;
+      claseCSS = 'texto-parada';
+    } else {
+      let textoDistancia = 'DISTANCIA: CALCULANDO...';
+      if (ultimaPosicion) {
+        const distancia = calcularDistanciaEmbebido(
+          ultimaPosicion.lat,
+          ultimaPosicion.lng,
+          parada.lat,
+          parada.lng
+        );
+        textoDistancia = 'DISTANCIA: ' + formatearDistanciaEmbebido(distancia);
+      }
+      texto = textoDistancia;
+      claseCSS = 'texto-distancia';
+    }
+
+    scrollEmb.pantalla.innerHTML = '';
+    const textoEl = document.createElement('div');
+    textoEl.className = 'texto-scroll ' + claseCSS;
+    textoEl.textContent = texto;
+    textoEl.style.fontSize = getBaseFontSize(claseCSS) * scrollEmb.escalaTexto + 'px';
+    scrollEmb.pantalla.appendChild(textoEl);
+
+    iniciarAnimacionScroll(textoEl, indice);
+  }
+
+  function getBaseFontSize(claseCSS) {
+    if (claseCSS === 'texto-ruta') return 80;
+    if (claseCSS === 'texto-parada') return 90;
+    if (claseCSS === 'texto-distancia') return 85;
+    return 80;
+  }
+
+  function iniciarAnimacionScroll(elemento, indicePantalla) {
+    const pantallaWidth = scrollEmb.pantalla.offsetWidth;
+    const textoWidth = elemento.scrollWidth;
+    
+    let posX = pantallaWidth;
+    elemento.style.transform = 'translateX(' + posX + 'px)';
+    elemento.style.left = '0';
+    elemento.style.top = '50%';
+    elemento.style.marginTop = '-' + (elemento.offsetHeight / 2) + 'px';
+    
+    const distanciaTotal = pantallaWidth + textoWidth;
+    let duracion = distanciaTotal / VELOCIDAD_SCROLL_PX_S * 1000;
+    
+    if (duracion < TIEMPO_MINIMO_PANTALLA) {
+      duracion = TIEMPO_MINIMO_PANTALLA;
+    }
+    
+    const inicio = performance.now();
+    scrollEmb.animacionActiva = true;
+    const cicloActual = scrollEmb.cicloId;
+    
+    function animar(timestamp) {
+      if (scrollEmb.llegando || cicloActual !== scrollEmb.cicloId) {
+        scrollEmb.animacionActiva = false;
+        return;
+      }
+      
+      const progreso = (timestamp - inicio) / duracion;
+      
+      if (progreso < 1) {
+        const nuevaPos = pantallaWidth - (distanciaTotal * progreso);
+        elemento.style.transform = 'translateX(' + nuevaPos + 'px)';
+        requestAnimationFrame(animar);
+      } else {
+        scrollEmb.animacionActiva = false;
+        if (scrollEmb.timerPantalla) clearTimeout(scrollEmb.timerPantalla);
+        scrollEmb.timerPantalla = setTimeout(function() {
+          pantallaActualEmb = (indicePantalla + 1) % TOTAL_PANTALLAS_EMB;
+          mostrarPantallaScrollEmb(pantallaActualEmb);
+        }, 500);
+      }
+    }
+    
+    requestAnimationFrame(animar);
+  }
+
+  function iniciarGPSEmbebido() {
+    if (!navigator.geolocation) {
+      alert('Tu dispositivo no soporta GPS');
+      return;
+    }
+
+    if (scrollEmb.watchId !== null) {
+      navigator.geolocation.clearWatch(scrollEmb.watchId);
+    }
+
+    scrollEmb.watchId = navigator.geolocation.watchPosition(
+      function(pos) { 
+        ultimaPosicion = {
+          lat: pos.coords.latitude,
+          lng: pos.coords.longitude
+        };
+        verificarProximidad(pos); 
+      },
+      function(error) {
+        console.error('Error GPS:', error);
+      },
+      { enableHighAccuracy: true, maximumAge: 0, timeout: 5000 }
+    );
+  }
+
+  function verificarProximidad(pos) {
+    const parada = scrollEmb.ruta[scrollEmb.indiceParadaActual];
+    if (!parada) return;
+    
+    const distancia = calcularDistanciaEmbebido(
+      pos.coords.latitude,
+      pos.coords.longitude,
+      parada.lat,
+      parada.lng
+    );
+    
+    if (distancia < 20 && !scrollEmb.llegando) {
+      scrollEmb.llegando = true;
+      if (scrollEmb.timerPantalla) clearTimeout(scrollEmb.timerPantalla);
+      
+      scrollEmb.pantalla.innerHTML = '';
+      const llegadaEl = document.createElement('div');
+      llegadaEl.className = 'texto-llegada';
+      llegadaEl.textContent = 'LLEGANDO A: ' + parada.nombre;
+      llegadaEl.style.fontSize = (80 * scrollEmb.escalaTexto) + 'px';
+      scrollEmb.pantalla.appendChild(llegadaEl);
+      
+      llegadaEl.style.position = 'absolute';
+      llegadaEl.style.top = '50%';
+      llegadaEl.style.left = '50%';
+      llegadaEl.style.transform = 'translate(-50%, -50%)';
+      llegadaEl.style.textAlign = 'center';
+      llegadaEl.style.width = '100%';
+      llegadaEl.style.padding = '0 20px';
+      
+      if (scrollEmb.timerLlegada) clearTimeout(scrollEmb.timerLlegada);
+      scrollEmb.timerLlegada = setTimeout(function() {
+        scrollEmb.llegando = false;
+        scrollEmb.indiceParadaActual++;
+        if (scrollEmb.indiceParadaActual >= scrollEmb.ruta.length) {
+          scrollEmb.indiceParadaActual = 0;
+        }
+        pantallaActualEmb = 0;
+        iniciarCicloScroll();
+      }, 5000);
+    } else if (!scrollEmb.llegando && pantallaActualEmb === 2) {
+      actualizarTextoDistanciaEmbebido();
+    }
+  }
+
+  function actualizarTextoDistanciaEmbebido() {
+    const parada = scrollEmb.ruta[scrollEmb.indiceParadaActual];
+    const el = scrollEmb.pantalla.querySelector('.texto-distancia');
+    if (!parada || !el || !ultimaPosicion) return;
+    const distancia = calcularDistanciaEmbebido(
+      ultimaPosicion.lat, ultimaPosicion.lng, parada.lat, parada.lng
+    );
+    el.textContent = 'DISTANCIA: ' + formatearDistanciaEmbebido(distancia);
+  }
+
+  function salirScrollEmbebido() {
+    if (scrollEmb.watchId !== null) {
+      navigator.geolocation.clearWatch(scrollEmb.watchId);
+      scrollEmb.watchId = null;
+    }
+    if (scrollEmb.timerPantalla) clearTimeout(scrollEmb.timerPantalla);
+    if (scrollEmb.timerLlegada) clearTimeout(scrollEmb.timerLlegada);
+    scrollEmb.llegando = false;
+    scrollEmb.animacionActiva = false;
+    scrollEmb.cicloId++;
+    document.getElementById('visualizadorEmbebido').classList.remove('activo');
+  }
+
+  function calcularDistanciaEmbebido(lat1, lon1, lat2, lon2) {
+    const R = 6371;
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+              Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c * 1000;
+  }
+
+  function formatearDistanciaEmbebido(metros) {
+    if (metros < 1000) return Math.round(metros) + ' m';
+    return (metros / 1000).toFixed(1) + ' km';
+  }
+
+  function aplicarEscalaTextoEmbebido() {
+    const elementos = scrollEmb.pantalla.querySelectorAll('.texto-scroll, .texto-llegada');
+    elementos.forEach(function(el) {
+      let tamanoBase = 80;
+      if (el.classList.contains('texto-parada')) tamanoBase = 90;
+      if (el.classList.contains('texto-distancia')) tamanoBase = 85;
+      el.style.fontSize = (tamanoBase * scrollEmb.escalaTexto) + 'px';
+    });
+  }
+
+  function aumentarTamanoEmbebido() {
+    if (scrollEmb.escalaTexto < scrollEmb.escalaMaxima) {
+      scrollEmb.escalaTexto += scrollEmb.pasoEscala;
+      aplicarEscalaTextoEmbebido();
+    }
+  }
+
+  function disminuirTamanoEmbebido() {
+    if (scrollEmb.escalaTexto > scrollEmb.escalaMinima) {
+      scrollEmb.escalaTexto -= scrollEmb.pasoEscala;
+      aplicarEscalaTextoEmbebido();
+    }
+  }
+
+  // ===== GENERAR HTML =====
+  function generarScrollTránsito(nombreRuta) {
+    const paradasJSON = JSON.stringify(paradas);
+
+    return `<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+<title>LETRERO - ${nombreRuta}</title>
+<style>
+  *{ margin:0; padding:0; box-sizing:border-box; }
+  html, body{
+    width:100%; height:100%;
+    background:#000; color:#fff;
+    font-family:'Segoe UI', Roboto, -apple-system, sans-serif;
+    overflow:hidden;
+  }
+  #visualizador{
+    width:100%; height:100dvh;
+    overflow:hidden; position:relative;
+  }
+  .pantalla-completa{
+    width:100%; height:100%;
+    position:relative;
+    overflow:hidden;
+  }
+  .texto-scroll{
+    font-weight:700; 
+    letter-spacing:2px;
+    text-transform:uppercase;
+    white-space:nowrap;
+    position:absolute;
+    will-change:transform;
+  }
+  .texto-ruta{
+    color:#35c2a4; 
+    font-size:80px;
+    text-shadow:0 0 30px rgba(53,194,164,0.7);
+    animation:brillo 2s ease-in-out infinite;
+  }
+  @keyframes brillo{
+    0%,100%{ text-shadow:0 0 30px rgba(53,194,164,0.7); }
+    50%{ text-shadow:0 0 60px rgba(53,194,164,1); }
+  }
+  .texto-parada{
+    color:#fff; 
+    font-size:90px;
+    animation:parpadeo 2s ease-in-out infinite;
+  }
+  @keyframes parpadeo{
+    0%,100%{ opacity:1; }
+    50%{ opacity:0.6; }
+  }
+  .texto-distancia{
+    color:#e0a53c; 
+    font-size:85px;
+    text-shadow:0 0 20px rgba(224,165,60,0.5);
+  }
+  .texto-llegada{
+    color:#35c2a4; 
+    font-size:80px;
+    animation:parpadeo 0.5s ease-in-out infinite;
+    text-shadow:0 0 30px rgba(53,194,164,0.7);
+    display:inline-block;
+    padding:0 20px;
+    text-align:center;
+  }
+  .aviso-inseguro{
+    font-weight:600; 
+    color:#e0a53c; 
+    text-align:center;
+    font-size:clamp(16px,4.5vw,28px);
+    line-height:1.5;
+    max-width:600px;
+    padding:20px;
+    border:1px solid #e0a53c;
+    border-radius:12px;
+    margin:20px;
+  }
+  .controles-tamano{
+    position:fixed; 
+    bottom:20px; 
+    right:20px; 
+    z-index:9999;
+    display:flex; 
+    gap:10px;
+  }
+  .btn-tamano{
+    width:50px; 
+    height:50px; 
+    border-radius:50%;
+    background:#16263a; 
+    color:#35c2a4;
+    border:2px solid #35c2a4; 
+    font-size:24px;
+    cursor:pointer; 
+    font-weight:700;
+    transition:all 0.2s;
+    display:flex; 
+    align-items:center; 
+    justify-content:center;
+  }
+  .btn-tamano:hover{ 
+    background:#35c2a4; 
+    color:#0b1420; 
+  }
+  .btn-retorno{
+    position:fixed; 
+    bottom:20px; 
+    left:20px; 
+    z-index:9999;
+    background:#16263a; 
+    color:#35c2a4;
+    border:2px solid #35c2a4; 
+    border-radius:12px;
+    padding:12px 20px; 
+    font-size:16px; 
+    font-weight:600;
+    cursor:pointer;
+    font-family:'Segoe UI', Roboto, -apple-system, sans-serif;
+  }
+  .btn-retorno:hover{ 
+    background:#35c2a4; 
+    color:#0b1420; 
+  }
+  @media(min-width:768px){
+    .texto-ruta{ font-size:100px; }
+    .texto-parada{ font-size:110px; }
+    .texto-distancia{ font-size:105px; }
+  }
+  @media(orientation:landscape) and (max-height:500px){
+    .texto-ruta{ font-size:60px; }
+    .texto-parada{ font-size:70px; }
+    .texto-distancia{ font-size:65px; }
+  }
+</style>
+</head>
+<body>
+
+<div id="visualizador">
+  <div class="pantalla-completa" id="pantallaScroll"></div>
+</div>
+
+<div class="controles-tamano">
+  <button class="btn-tamano" onclick="disminuirTamano()">A-</button>
+  <button class="btn-tamano" onclick="aumentarTamano()">A+</button>
+</div>
+
+<button class="btn-retorno" onclick="window.location.href='index.html'">
+  🏠 Volver
+</button>
+
+<script>
+  const RUTA = ${paradasJSON};
+  const NOMBRE_RUTA = '${nombreRuta.replace(/'/g, "\\'")}';
+  
+  let indiceParadaActual = 0;
+  let pantallaActual = 0;
+  let pantallaScroll = document.getElementById('pantallaScroll');
+  let escalaTexto = 1;
+  const escalaMinima = 0.5;
+  const escalaMaxima = 3;
+  const pasoEscala = 0.25;
+  let watchId = null;
+  let ultimaPosicion = null;
+  let llegando = false;
+  let animacionActiva = false;
+  let timerPantalla = null;
+  let timerLlegada = null;
+  
+  const VELOCIDAD_SCROLL_PX_S = 300;
+  const TIEMPO_MINIMO_PANTALLA = 6000;
+
+  function extraerReferencias(texto) {
+    if (!texto) return { nombrePrincipal:'', referencias:[] };
+    const partes = texto.split('&');
+    const nombrePrincipal = partes[0].trim();
+    const referencias = partes.slice(1).map(ref => ref.trim()).filter(ref => ref);
+    return { nombrePrincipal, referencias };
+  }
+
+  function calcularDistancia(lat1, lon1, lat2, lon2) {
+    const R = 6371;
+    const dLat = (lat2-lat1) * Math.PI/180;
+    const dLon = (lon2-lon1) * Math.PI/180;
+    const a = Math.sin(dLat/2)*Math.sin(dLat/2) +
+              Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*
+              Math.sin(dLon/2)*Math.sin(dLon/2);
+    const c = 2*Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R*c*1000;
+  }
+
+  function formatearDistancia(metros) {
+    if (metros < 1000) return Math.round(metros) + ' m';
+    return (metros/1000).toFixed(1) + ' km';
+  }
+
+  function getBaseFontSize(claseCSS) {
+    if (claseCSS === 'texto-ruta') return 80;
+    if (claseCSS === 'texto-parada') return 90;
+    if (claseCSS === 'texto-distancia') return 85;
+    return 80;
+  }
+
+  function aumentarTamano() {
+    if (escalaTexto < escalaMaxima) {
+      escalaTexto += pasoEscala;
+      aplicarEscalaTexto();
+    }
+  }
+
+  function disminuirTamano() {
+    if (escalaTexto > escalaMinima) {
+      escalaTexto -= pasoEscala;
+      aplicarEscalaTexto();
+    }
+  }
+
+  function aplicarEscalaTexto() {
+    const elementos = pantallaScroll.querySelectorAll('.texto-scroll, .texto-llegada');
+    elementos.forEach(function(el) {
+      let tamanoBase = 80;
+      if (el.classList.contains('texto-parada')) tamanoBase = 90;
+      if (el.classList.contains('texto-distancia')) tamanoBase = 85;
+      el.style.fontSize = (tamanoBase * escalaTexto) + 'px';
+    });
+  }
+
+  function mostrarPantallaScroll(indice) {
+    if (llegando) return;
+    const parada = RUTA[indiceParadaActual];
+    if (!parada) return;
+
+    let claseCSS = '';
+    let texto = '';
+    
+    if (indice === 0) {
+      const { nombrePrincipal, referencias } = extraerReferencias(NOMBRE_RUTA);
+      let textoRuta = 'RUTA ' + nombrePrincipal;
+      if (referencias.length > 0) textoRuta += ' & ' + referencias.join(' & ');
+      texto = textoRuta;
+      claseCSS = 'texto-ruta';
+    } else if (indice === 1) {
+      const { nombrePrincipal, referencias } = extraerReferencias(parada.nombre);
+      let textoParada = 'PRÓXIMA PARADA: ' + nombrePrincipal;
+      if (referencias.length > 0) textoParada += ' & ' + referencias.join(' & ');
+      texto = textoParada;
+      claseCSS = 'texto-parada';
+    } else {
+      let textoDistancia = 'DISTANCIA: CALCULANDO...';
+      if (ultimaPosicion) {
+        const distancia = calcularDistancia(ultimaPosicion.lat, ultimaPosicion.lng, parada.lat, parada.lng);
+        textoDistancia = 'DISTANCIA: ' + formatearDistancia(distancia);
+      }
+      texto = textoDistancia;
+      claseCSS = 'texto-distancia';
+    }
+
+    pantallaScroll.innerHTML = '';
+    const textoEl = document.createElement('div');
+    textoEl.className = 'texto-scroll ' + claseCSS;
+    textoEl.textContent = texto;
+    textoEl.style.fontSize = getBaseFontSize(claseCSS) * escalaTexto + 'px';
+    pantallaScroll.appendChild(textoEl);
+
+    iniciarAnimacionScroll(textoEl, indice);
+  }
+
+  function iniciarAnimacionScroll(elemento, indicePantalla) {
+    const pantallaWidth = pantallaScroll.offsetWidth;
+    const textoWidth = elemento.scrollWidth;
+    let posX = pantallaWidth;
+    elemento.style.transform = 'translateX(' + posX + 'px)';
+    elemento.style.left = '0';
+    elemento.style.top = '50%';
+    elemento.style.marginTop = '-' + (elemento.offsetHeight/2) + 'px';
+    const distanciaTotal = pantallaWidth + textoWidth;
+    let duracion = distanciaTotal / VELOCIDAD_SCROLL_PX_S * 1000;
+    if (duracion < TIEMPO_MINIMO_PANTALLA) duracion = TIEMPO_MINIMO_PANTALLA;
+    const inicio = performance.now();
+    animacionActiva = true;
+
+    function animar(timestamp) {
+      if (llegando) { animacionActiva = false; return; }
+      const progreso = (timestamp - inicio) / duracion;
+      if (progreso < 1) {
+        const nuevaPos = pantallaWidth - (distanciaTotal * progreso);
+        elemento.style.transform = 'translateX(' + nuevaPos + 'px)';
+        requestAnimationFrame(animar);
+      } else {
+        animacionActiva = false;
+        if (timerPantalla) clearTimeout(timerPantalla);
+        timerPantalla = setTimeout(function() {
+          pantallaActual = (indicePantalla + 1) % 3;
+          mostrarPantallaScroll(pantallaActual);
+        }, 500);
+      }
+    }
+    requestAnimationFrame(animar);
+  }
+
+  function iniciarCicloScroll() {
+    pantallaActual = 0;
+    mostrarPantallaScroll(0);
+  }
+
+  function verificarProximidad(pos) {
+    const parada = RUTA[indiceParadaActual];
+    if (!parada) return;
+    const distancia = calcularDistancia(pos.coords.latitude, pos.coords.longitude, parada.lat, parada.lng);
+    
+    if (distancia < 20 && !llegando) {
+      llegando = true;
+      if (timerPantalla) clearTimeout(timerPantalla);
+      pantallaScroll.innerHTML = '';
+      const llegadaEl = document.createElement('div');
+      llegadaEl.className = 'texto-llegada';
+      llegadaEl.textContent = 'LLEGANDO A: ' + parada.nombre;
+      llegadaEl.style.fontSize = (80 * escalaTexto) + 'px';
+      pantallaScroll.appendChild(llegadaEl);
+      llegadaEl.style.position = 'absolute';
+      llegadaEl.style.top = '50%';
+      llegadaEl.style.left = '50%';
+      llegadaEl.style.transform = 'translate(-50%, -50%)';
+      llegadaEl.style.textAlign = 'center';
+      llegadaEl.style.width = '100%';
+      llegadaEl.style.padding = '0 20px';
+      
+      if (timerLlegada) clearTimeout(timerLlegada);
+      timerLlegada = setTimeout(function() {
+        llegando = false;
+        indiceParadaActual++;
+        if (indiceParadaActual >= RUTA.length) indiceParadaActual = 0;
+        pantallaActual = 0;
+        iniciarCicloScroll();
+      }, 5000);
+    } else if (!llegando && pantallaActual === 2) {
+      actualizarTextoDistancia();
+    }
+  }
+
+  function actualizarTextoDistancia() {
+    const parada = RUTA[indiceParadaActual];
+    const el = pantallaScroll.querySelector('.texto-distancia');
+    if (!parada || !el || !ultimaPosicion) return;
+    const distancia = calcularDistancia(ultimaPosicion.lat, ultimaPosicion.lng, parada.lat, parada.lng);
+    el.textContent = 'DISTANCIA: ' + formatearDistancia(distancia);
+  }
+
+  function iniciarGPS() {
+    if (!window.isSecureContext) {
+      pantallaScroll.innerHTML = '<div class="aviso-inseguro">⚠️ Abre este archivo desde un hosting con HTTPS para que el GPS funcione.</div>';
+      return;
+    }
+    if (!navigator.geolocation) { alert('Tu dispositivo no soporta GPS'); return; }
+    watchId = navigator.geolocation.watchPosition(
+      function(pos) {
+        ultimaPosicion = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+        verificarProximidad(pos);
+      },
+      function(error) { console.error('Error GPS:', error); },
+      { enableHighAccuracy:true, maximumAge:0, timeout:5000 }
+    );
+  }
+
+  iniciarGPS();
+  if (window.isSecureContext && RUTA.length > 0) iniciarCicloScroll();
+
+  document.body.addEventListener('click', function(e) {
+    if (e.target.tagName === 'BUTTON') return;
+    if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+    else document.exitFullscreen();
+  });
+<\/script>
+</body>
+</html>`;
+  }
+
+  function descargarHTML(contenido, nombreArchivo) {
+    const blob = new Blob([contenido], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = nombreArchivo;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  // ===== PANEL LATERAL =====
+  function alternarPanel() {
+    const aside = document.getElementById('panelLateral');
+    const btn = document.getElementById('btnTogglePanel');
+    panelColapsado = !panelColapsado;
+    aside.classList.toggle('colapsado');
+    btn.textContent = panelColapsado ? '⌄' : '⌃';
+    setTimeout(function() { mapa.invalidateSize(); }, 350);
+  }
+
+  document.getElementById('btnTogglePanel').addEventListener('click', alternarPanel);
+
+  document.querySelectorAll('.aside-tabs button').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      document.querySelectorAll('.aside-tabs button').forEach(function(b) { b.classList.remove('activo'); });
+      document.querySelectorAll('.panel-lista').forEach(function(p) { p.classList.remove('activo'); });
+      btn.classList.add('activo');
+      document.getElementById('panel' + (btn.dataset.tab === 'paradas' ? 'Paradas' : 'Info')).classList.add('activo');
+      if (window.innerWidth < 820 && panelColapsado) alternarPanel();
+    });
+  });
+
+  // ===== UTILIDADES =====
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str || '';
+    return div.innerHTML;
+  }
+
+  // Enter para guardar parada
+  document.getElementById('inputNombre').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+      guardarParada();
+    }
+  });
+
+  // Iniciar mapa cuando cargue la página
+  window.addEventListener('DOMContentLoaded', iniciarMapa);
+</script>
+
+</body>
+</html>
