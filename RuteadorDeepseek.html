@@ -2108,5 +2108,268 @@
   window.addEventListener('DOMContentLoaded', iniciarMapa);
 </script>
 
+
+<!-- ===== BOTÓN COMPARTIR CON QR ===== -->
+<style>
+  .share-container{
+    position:fixed;
+    bottom:24px;
+    left:24px;
+    z-index:9998;
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+  }
+
+  .btn-share{
+    width:50px;
+    height:50px;
+    border-radius:50%;
+    background:var(--accent);
+    color:#fff;
+    border:none;
+    font-size:24px;
+    cursor:pointer;
+    box-shadow:0 4px 20px rgba(53,194,164,0.4);
+    transition:all 0.2s;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+
+  .btn-share:hover{
+    transform:scale(1.1);
+    box-shadow:0 6px 25px rgba(53,194,164,0.6);
+  }
+
+  .btn-share:active{
+    transform:scale(0.9);
+  }
+
+  .share-options{
+    display:none;
+    flex-direction:column;
+    gap:10px;
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:16px;
+    padding:16px;
+    box-shadow:0 10px 40px rgba(0,0,0,0.5);
+    animation:fadeIn 0.3s ease;
+    width:280px;
+  }
+
+  .share-options.activo{
+    display:flex;
+  }
+
+  .share-options h4{
+    font-size:14px;
+    margin-bottom:8px;
+    text-align:center;
+    color:var(--text);
+  }
+
+  .qr-container{
+    background:#fff;
+    border-radius:12px;
+    padding:12px;
+    margin-bottom:10px;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+  }
+
+  .qr-container img{
+    width:180px;
+    height:180px;
+  }
+
+  .share-buttons{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+  }
+
+  .btn-share-option{
+    flex:1;
+    min-width:80px;
+    padding:10px;
+    border-radius:10px;
+    border:none;
+    font-size:12px;
+    font-weight:600;
+    cursor:pointer;
+    transition:all 0.2s;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:6px;
+    color:#fff;
+  }
+
+  .btn-share-option:hover{
+    transform:translateY(-2px);
+  }
+
+  .btn-share-option:active{
+    transform:scale(0.95);
+  }
+
+  .btn-whatsapp{
+    background:#25D366;
+  }
+
+  .btn-facebook{
+    background:#1877F2;
+  }
+
+  .btn-copiar{
+    background:var(--panel-alt);
+    border:1px solid var(--line);
+    color:var(--text);
+  }
+
+  .btn-copiar:hover{
+    border-color:var(--accent);
+    color:var(--accent);
+  }
+
+  @media (min-width: 820px) {
+    .share-container{
+      bottom:30px;
+      left:30px;
+    }
+  }
+</style>
+
+<div class="share-container">
+  <button class="btn-share" id="btnShare" title="Compartir página">
+    📤
+  </button>
+  
+  <div class="share-options" id="shareOptions">
+    <h4>📲 Comparte este generador</h4>
+    
+    <div class="qr-container">
+      <img id="qrImage" src="" alt="QR para compartir">
+    </div>
+    
+    <p style="font-size:11px; color:var(--text-dim); text-align:center; margin-bottom:10px;">
+      Escanea el QR o comparte el enlace
+    </p>
+    
+    <div class="share-buttons">
+      <button class="btn-share-option btn-whatsapp" onclick="compartirWhatsApp()">
+        📱 WhatsApp
+      </button>
+      
+      <button class="btn-share-option btn-facebook" onclick="compartirFacebook()">
+        👍 Facebook
+      </button>
+      
+      <button class="btn-share-option btn-copiar" onclick="copiarEnlace()">
+        🔗 Copiar
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Librería QR -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+<script>
+  // ===== COMPARTIR PÁGINA =====
+  const btnShare = document.getElementById('btnShare');
+  const shareOptions = document.getElementById('shareOptions');
+  let shareAbierto = false;
+
+  btnShare.addEventListener('click', function() {
+    shareAbierto = !shareAbierto;
+    shareOptions.classList.toggle('activo');
+    
+    if (shareAbierto) {
+      generarQR();
+    }
+  });
+
+  // Cerrar compartir al hacer clic fuera
+  document.addEventListener('click', function(e) {
+    if (shareAbierto && !shareOptions.contains(e.target) && e.target !== btnShare) {
+      shareOptions.classList.remove('activo');
+      shareAbierto = false;
+    }
+  });
+
+  function generarQR() {
+    const qrContainer = document.getElementById('qrImage');
+    const urlActual = window.location.href;
+    
+    // Usar API de Google para generar QR (sin librería externa)
+    qrContainer.src = 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' + encodeURIComponent(urlActual);
+    
+    // Alternativa con librería QRCode.js
+    // if (window.QRCode) {
+    //   qrContainer.innerHTML = '';
+    //   new QRCode(qrContainer, {
+    //     text: urlActual,
+    //     width: 180,
+    //     height: 180,
+    //     colorDark: "#000000",
+    //     colorLight: "#ffffff",
+    //     correctLevel: QRCode.CorrectLevel.H
+    //   });
+    // }
+  }
+
+  function compartirWhatsApp() {
+    const urlActual = window.location.href;
+    const texto = '🚌 *Generador de Letrero Digital GRATIS* 🚌\n\n' +
+                  'Crea letreros para tu ruta de transporte:\n' +
+                  '✅ GPS automático\n' +
+                  '✅ Scroll de texto\n' +
+                  '✅ Distancia en tiempo real\n' +
+                  '✅ 100% Gratis\n\n' +
+                  '👉 ' + urlActual;
+    
+    const enlaceWhatsApp = 'https://wa.me/?text=' + encodeURIComponent(texto);
+    window.open(enlaceWhatsApp, '_blank');
+  }
+
+  function compartirFacebook() {
+    const urlActual = window.location.href;
+    const enlaceFacebook = 'https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(urlActual);
+    window.open(enlaceFacebook, '_blank');
+  }
+
+  function copiarEnlace() {
+    const urlActual = window.location.href;
+    
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(urlActual).then(function() {
+        mostrarNotificacion('🔗 ¡Enlace copiado!');
+      }).catch(function() {
+        copiarEnlaceFallback(urlActual);
+      });
+    } else {
+      copiarEnlaceFallback(urlActual);
+    }
+  }
+
+  function copiarEnlaceFallback(texto) {
+    const textarea = document.createElement('textarea');
+    textarea.value = texto;
+    textarea.style.position = 'fixed';
+    textarea.style.opacity = '0';
+    document.body.appendChild(textarea);
+    textarea.select();
+    textarea.setSelectionRange(0, 99999);
+    document.execCommand('copy');
+    document.body.removeChild(textarea);
+    mostrarNotificacion('🔗 ¡Enlace copiado!');
+  }
+</script>
+
+  
 </body>
 </html>
