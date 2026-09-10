@@ -2340,14 +2340,18 @@ console.log('✅ Sistema I.A. Futurista activo');
 }
 </style>
 
-<button id="btnGenerarLandingFloat" onclick="lanzarGeneradorDesdePreview()">🚀 Generar Landing</button>
+<button id="btnGenerarLandingFloat" onclick="lanzarGeneradorDesdePreview()">
+  <span class="icon-btn">🚀</span>
+  <span class="spinner-btn"></span>
+  <span class="txt-btn">Generar Landing</span>
+</button>
 <style>
 #btnGenerarLandingFloat{
   position:fixed;
   bottom:calc(24px + env(safe-area-inset-bottom));
   left:50%;
   transform:translateX(-50%);
-  z-index:10000;
+  z-index:3999; /* detrás del popup emergente (4000) */
   padding:10px 22px;
   border:none;
   border-radius:24px;
@@ -2361,14 +2365,31 @@ console.log('✅ Sistema I.A. Futurista activo');
   transition:transform .2s,opacity .3s;
   display:none;
   align-items:center;
-  gap:6px;
+  gap:8px;
 }
 #btnGenerarLandingFloat.visible{display:flex}
 #btnGenerarLandingFloat:hover{transform:translateX(-50%) translateY(-3px)}
 #btnGenerarLandingFloat:active{transform:translateX(-50%) scale(0.95)}
+#btnGenerarLandingFloat.procesando{
+  background:linear-gradient(135deg,#7B2FF7,#00D4FF);
+  color:#fff;
+  cursor:wait;
+  pointer-events:none;
+}
+#btnGenerarLandingFloat .spinner-btn{
+  display:none;
+  width:14px;
+  height:14px;
+  border:2px solid rgba(255,255,255,0.3);
+  border-top-color:#00FF88;
+  border-radius:50%;
+  animation:spinBtn .8s linear infinite;
+}
+#btnGenerarLandingFloat.procesando .spinner-btn{display:inline-block}
+#btnGenerarLandingFloat.procesando .icon-btn{display:none}
+@keyframes spinBtn{to{transform:rotate(360deg)}}
 </style>
 <script>
-// Espera a que "ver landing" active el preview
 (function(){
   function chequearPreview(){
     var overlay = document.getElementById('previewOverlay');
@@ -2378,9 +2399,10 @@ console.log('✅ Sistema I.A. Futurista activo');
       btn.classList.add('visible');
     } else {
       btn.classList.remove('visible');
+      btn.classList.remove('procesando');
+      btn.innerHTML = '<span class="icon-btn">🚀</span><span class="spinner-btn"></span><span class="txt-btn">Generar Landing</span>';
     }
   }
-
   document.addEventListener('DOMContentLoaded', function(){
     var overlay = document.getElementById('previewOverlay');
     if (!overlay) return;
@@ -2390,17 +2412,39 @@ console.log('✅ Sistema I.A. Futurista activo');
 })();
 
 function lanzarGeneradorDesdePreview() {
+  var btn = document.getElementById('btnGenerarLandingFloat');
   var negocio = negocios.find(function(n){ return n.id === currentPreviewId; });
   if (!negocio) { showToast('❌ No hay negocio seleccionado', 'error'); return; }
   if (!negocio.logo || !negocio.banner) { showToast('⚠️ Necesita logo y banner', 'error'); return; }
-  try { localStorage.setItem('landingData', JSON.stringify(negocio)); }
-  catch(e) { showToast('❌ No se pudo guardar', 'error'); return; }
-  var v = window.open('generar-landing.html', '_blank');
-  if (!v) { showToast('⚠️ Permite ventanas emergentes', 'error'); return; }
-  showToast('🚀 Abriendo generador...', 'success');
+
+  btn.classList.add('procesando');
+  btn.innerHTML = '<span class="icon-btn">🚀</span><span class="spinner-btn"></span><span class="txt-btn">Procesando landing...</span>';
+
+  setTimeout(function(){
+    try { localStorage.setItem('landingData', JSON.stringify(negocio)); }
+    catch(e) {
+      showToast('❌ No se pudo guardar', 'error');
+      restaurarBoton();
+      return;
+    }
+    var v = window.open('generar-landing.html', '_blank');
+    if (!v) {
+      showToast('⚠️ Permite ventanas emergentes', 'error');
+      restaurarBoton();
+      return;
+    }
+    showToast('✅ Landing lista para personalizar', 'success');
+    setTimeout(restaurarBoton, 2500);
+  }, 600);
+}
+
+function restaurarBoton() {
+  var btn = document.getElementById('btnGenerarLandingFloat');
+  if (!btn) return;
+  btn.classList.remove('procesando');
+  btn.innerHTML = '<span class="icon-btn">🚀</span><span class="spinner-btn"></span><span class="txt-btn">Generar Landing</span>';
 }
 </script>
-
   
 </body>
 </html>
