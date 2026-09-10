@@ -2339,5 +2339,68 @@ console.log('✅ Sistema I.A. Futurista activo');
   }
 }
 </style>
+
+<button id="btnGenerarLandingFloat" onclick="lanzarGeneradorDesdePreview()">🚀 Generar Landing</button>
+<style>
+#btnGenerarLandingFloat{
+  position:fixed;
+  bottom:calc(24px + env(safe-area-inset-bottom));
+  left:50%;
+  transform:translateX(-50%);
+  z-index:10000;
+  padding:10px 22px;
+  border:none;
+  border-radius:24px;
+  background:linear-gradient(135deg,#00FF88,#00D4FF);
+  color:#0A0E17;
+  font-weight:700;
+  font-size:13px;
+  font-family:'Segoe UI',system-ui,sans-serif;
+  cursor:pointer;
+  box-shadow:0 0 20px rgba(0,255,136,0.6),0 4px 15px rgba(0,0,0,0.3);
+  transition:transform .2s,opacity .3s;
+  display:none;
+  align-items:center;
+  gap:6px;
+}
+#btnGenerarLandingFloat.visible{display:flex}
+#btnGenerarLandingFloat:hover{transform:translateX(-50%) translateY(-3px)}
+#btnGenerarLandingFloat:active{transform:translateX(-50%) scale(0.95)}
+</style>
+<script>
+// Espera a que "ver landing" active el preview
+(function(){
+  function chequearPreview(){
+    var overlay = document.getElementById('previewOverlay');
+    var btn = document.getElementById('btnGenerarLandingFloat');
+    if (!overlay || !btn) return;
+    if (overlay.classList.contains('active')) {
+      btn.classList.add('visible');
+    } else {
+      btn.classList.remove('visible');
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', function(){
+    var overlay = document.getElementById('previewOverlay');
+    if (!overlay) return;
+    new MutationObserver(chequearPreview).observe(overlay, { attributes: true, attributeFilter: ['class'] });
+    chequearPreview();
+  });
+})();
+
+function lanzarGeneradorDesdePreview() {
+  var negocio = negocios.find(function(n){ return n.id === currentPreviewId; });
+  if (!negocio) { showToast('❌ No hay negocio seleccionado', 'error'); return; }
+  if (!negocio.logo || !negocio.banner) { showToast('⚠️ Necesita logo y banner', 'error'); return; }
+  try { localStorage.setItem('landingData', JSON.stringify(negocio)); }
+  catch(e) { showToast('❌ No se pudo guardar', 'error'); return; }
+  var v = window.open('generar-landing.html', '_blank');
+  if (!v) { showToast('⚠️ Permite ventanas emergentes', 'error'); return; }
+  showToast('🚀 Abriendo generador...', 'success');
+}
+</script>
+
+  
 </body>
 </html>
