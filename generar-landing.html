@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Generando Landing...</title>
+<meta name="robots" content="noindex, nofollow">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:#0A0E17;color:#E0E0E0;font-family:'Segoe UI',system-ui,sans-serif}
+
+#previewFrame{position:fixed;inset:0;width:100%;height:100%;border:none;background:#fff;z-index:1;opacity:0;transition:opacity .8s ease}
+#previewFrame.visible{opacity:1}
+
+.topbar{position:fixed;top:0;left:0;right:0;z-index:100;padding:10px 12px;padding-top:calc(10px + env(safe-area-inset-top));background:linear-gradient(180deg,rgba(10,14,23,0.95) 0%,rgba(10,14,23,0) 100%);display:flex;justify-content:space-between;align-items:center;gap:8px;pointer-events:none;transition:opacity .5s;opacity:0}
+.topbar > *{pointer-events:auto}
+.topbar.visible{opacity:1}
+.topbar.hidden{opacity:0;pointer-events:none}
+.badge{background:rgba(0,0,0,0.7);backdrop-filter:blur(10px);color:#00D4FF;padding:6px 14px;border-radius:20px;font-size:11px;font-weight:700;border:1px solid rgba(0,212,255,0.4);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:50vw}
+.actions{display:flex;gap:6px}
+.btn{padding:9px 14px;border:none;border-radius:20px;cursor:pointer;font-weight:700;font-size:12px;min-height:38px;display:inline-flex;align-items:center;justify-content:center;gap:5px;transition:all .2s;font-family:inherit;white-space:nowrap}
+.btn:active{transform:scale(0.96)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn-ghost{background:rgba(0,0,0,0.7);backdrop-filter:blur(10px);color:#fff;border:1px solid rgba(255,255,255,0.2)}
+.btn-success{background:#00FF88;color:#0A0E17;box-shadow:0 0 15px rgba(0,255,136,0.5)}
+.btn-danger{background:#FF0040;color:#fff}
+
+.bottombar{position:fixed;bottom:0;left:0;right:0;z-index:100;padding:10px 12px;padding-bottom:calc(10px + env(safe-area-inset-bottom));background:linear-gradient(0deg,rgba(10,14,23,0.95) 0%,rgba(10,14,23,0) 100%);display:flex;gap:6px;justify-content:center;overflow-x:auto;scrollbar-width:none;transition:opacity .5s;opacity:0}
+.bottombar::-webkit-scrollbar{display:none}
+.bottombar.visible{opacity:1}
+.bottombar.hidden{opacity:0;pointer-events:none}
+.plantilla-btn{background:rgba(0,0,0,0.7);backdrop-filter:blur(10px);border:1px solid rgba(0,212,255,0.3);color:#00D4FF;padding:9px 16px;border-radius:20px;font-size:12px;font-weight:700;white-space:nowrap;cursor:pointer;transition:all .2s;font-family:inherit}
+.plantilla-btn.activa{background:#00D4FF;color:#0A0E17;border-color:#00D4FF;box-shadow:0 0 20px rgba(0,212,255,0.5)}
+
+.fab-toggle{position:fixed;bottom:calc(72px + env(safe-area-inset-bottom));right:16px;width:44px;height:44px;border-radius:50%;background:rgba(0,0,0,0.7);backdrop-filter:blur(10px);color:#00D4FF;border:1px solid rgba(0,212,255,0.4);font-size:20px;cursor:pointer;z-index:101;display:flex;align-items:center;justify-content:center;transition:transform .2s,opacity .5s;opacity:0}
+.fab-toggle.visible{opacity:1}
+.fab-toggle:active{transform:scale(0.9)}
+
+/* ===== ANIMACIÓN DE CONSTRUCCIÓN ===== */
+.builder{position:fixed;inset:0;background:#0A0E17;z-index:9999;display:flex;flex-direction:column;transition:opacity .6s ease,transform .6s ease}
+.builder.fade-out{opacity:0;transform:scale(0.98);pointer-events:none}
+
+.builder-header{text-align:center;padding:24px 20px 12px;padding-top:calc(24px + env(safe-area-inset-top))}
+.builder-title{font-size:18px;font-weight:800;color:#fff;margin-bottom:4px;text-shadow:0 0 20px rgba(123,47,247,0.5)}
+.builder-subtitle{font-size:11.5px;color:#888;font-weight:500;min-height:16px;transition:color .3s}
+
+.builder-canvas{flex:1;display:flex;align-items:center;justify-content:center;padding:8px 16px;overflow:hidden}
+.builder-stage{width:100%;max-width:340px;background:#1A1A2E;border-radius:18px;overflow:hidden;box-shadow:0 0 60px rgba(123,47,247,0.4),0 0 100px rgba(0,212,255,0.15);border:1px solid #7B2FF7;position:relative;min-height:400px;max-height:88%;overflow-y:auto;scrollbar-width:none}
+.builder-stage::-webkit-scrollbar{display:none}
+
+/* Elementos internos de la mini pantalla */
+.b-fondo{position:absolute;inset:0;z-index:0;opacity:0;transition:opacity .5s ease}
+.b-fondo.show{opacity:1}
+
+.b-banner{position:relative;width:100%;height:120px;background-size:cover;background-position:center;background-color:#0D1117;z-index:1;opacity:0;transition:opacity .6s,transform .6s;transform:scale(1.08)}
+.b-banner.show{opacity:1;transform:scale(1)}
+.b-banner-overlay{position:absolute;inset:0;background:linear-gradient(135deg,rgba(0,0,0,0.4),rgba(0,0,0,0.65));display:flex;align-items:center;gap:12px;padding:14px}
+
+.b-logo{width:56px;height:56px;border-radius:50%;object-fit:cover;border:3px solid #00D4FF;flex-shrink:0;background:#fff;opacity:0;transition:opacity .5s,transform .6s;transform:scale(0.4) rotate(-90deg)}
+.b-logo.show{opacity:1;transform:scale(1) rotate(0deg)}
+
+.b-titulo{color:#fff;font-size:14px;font-weight:800;opacity:0;transition:opacity .5s,transform .5s;transform:translateX(-15px);text-shadow:0 0 12px rgba(0,0,0,0.5);line-height:1.2}
+.b-titulo.show{opacity:1;transform:translateX(0)}
+
+.b-slogan{padding:12px 14px 0;font-size:11.5px;font-style:italic;color:#00D4FF;text-align:center;font-weight:600;opacity:0;transition:opacity .5s}
+.b-slogan.show{opacity:1}
+
+.b-desc{padding:6px 14px 0;font-size:10.5px;color:#AAA;text-align:center;line-height:1.5;opacity:0;transition:opacity .5s}
+.b-desc.show{opacity:1}
+
+.b-mision{padding:10px 14px 0;opacity:0;transition:opacity .5s}
+.b-mision.show{opacity:1}
+.b-mision h4{font-size:10px;font-weight:700;color:#E0E0E0;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px}
+.b-mision p{font-size:10px;color:#999;line-height:1.45}
+
+.b-galeria{display:grid;grid-template-columns:repeat(2,1fr);gap:6px;padding:12px 12px 0;position:relative;z-index:1}
+.b-foto{height:56px;border-radius:8px;background-size:cover;background-position:center;background-color:#0D1117;border:1px solid #7B2FF7;opacity:0;transform:scale(0.8);transition:opacity .4s,transform .4s}
+.b-foto.show{opacity:1;transform:scale(1)}
+
+.b-video{margin:12px 12px 0;border-radius:10px;overflow:hidden;background:#000;border:2px solid #7B2FF7;opacity:0;transform:scale(0.95);transition:opacity .4s,transform .4s;position:relative;padding-bottom:56.25%}
+.b-video.show{opacity:1;transform:scale(1)}
+.b-video .b-video-icon{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:32px;color:#00D4FF;background:rgba(0,0,0,0.5)}
+
+.b-externo{margin:12px 12px 0;padding:10px;background:#0D1117;border-radius:10px;border:2px solid #00D4FF;text-align:center;opacity:0;transform:translateY(10px);transition:opacity .4s,transform .4s}
+.b-externo.show{opacity:1;transform:translateY(0)}
+.b-externo .b-ext-name{font-size:10px;color:#E0E0E0;font-weight:700;margin-bottom:6px}
+.b-externo .b-ext-btn{display:inline-block;padding:6px 14px;background:linear-gradient(135deg,#7B2FF7,#FF00E5);color:#fff;border-radius:8px;font-size:9px;font-weight:700}
+
+.b-contactos{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:12px 12px 0}
+.b-contacto{background:#0D1117;border-radius:8px;padding:7px 8px;border-left:3px solid #00D4FF;opacity:0;transform:translateX(-10px);transition:opacity .4s,transform .4s}
+.b-contacto.show{opacity:1;transform:translateX(0)}
+.b-contacto .bc-label{font-size:7.5px;color:#888;text-transform:uppercase;font-weight:700;letter-spacing:.3px}
+.b-contacto .bc-valor{font-size:9.5px;color:#E0E0E0;margin-top:2px;font-weight:600;word-break:break-word}
+
+.b-mapa{margin:12px 12px 0;border-radius:10px;overflow:hidden;border:2px solid #7B2FF7;opacity:0;transform:scale(0.95);transition:opacity .4s,transform .4s;height:80px;background:linear-gradient(135deg,#1A1A2E,#0D1117);display:flex;align-items:center;justify-content:center;font-size:24px}
+.b-mapa.show{opacity:1;transform:scale(1)}
+
+.b-botones{display:flex;flex-direction:column;gap:6px;padding:12px 12px 10px}
+.b-btn{padding:9px;border-radius:8px;text-align:center;font-size:10.5px;font-weight:700;color:#fff;opacity:0;transform:translateY(10px);transition:opacity .4s,transform .4s;min-height:32px;display:flex;align-items:center;justify-content:center}
+.b-btn.show{opacity:1;transform:translateY(0)}
+.b-btn-wa{background:#25D366}
+.b-btn-call{background:#7B2FF7}
+.b-btn-maps{background:#4285F4}
+.b-btn-fb{background:#1877F2}
+
+.b-qr{text-align:center;padding:10px 12px 16px;opacity:0;transition:opacity .4s}
+.b-qr.show{opacity:1}
+.b-qr .b-qr-box{width:60px;height:60px;margin:0 auto;border-radius:8px;border:3px solid #00D4FF;background:#fff;display:flex;align-items:center;justify-content:center;font-size:26px}
+.b-qr .b-qr-label{font-size:9px;color:#888;margin-top:5px}
+
+/* Indicador de progreso */
+.builder-progress{position:relative;padding:12px 40px 24px;padding-bottom:calc(24px + env(safe-area-inset-bottom));text-align:center}
+.progress-bar{height:4px;background:#1A1A2E;border-radius:2px;overflow:hidden;margin-bottom:10px}
+.progress-fill{height:100%;width:0%;background:linear-gradient(90deg,#7B2FF7,#FF00E5,#00D4FF);border-radius:2px;transition:width .4s ease;box-shadow:0 0 15px rgba(123,47,247,0.6)}
+.progress-text{font-size:11px;color:#00D4FF;font-weight:700;letter-spacing:.5px}
+.progress-icon{display:inline-block;margin-right:6px;animation:pulseIcon 1.2s ease-in-out infinite}
+@keyframes pulseIcon{0%,100%{opacity:.5;transform:scale(1)}50%{opacity:1;transform:scale(1.15)}}
+
+.toast{position:fixed;bottom:100px;left:50%;transform:translateX(-50%);padding:14px 24px;border-radius:12px;color:#fff;font-weight:600;font-size:13px;z-index:10000;box-shadow:0 8px 30px rgba(0,0,0,0.5);max-width:90vw;text-align:center;animation:slideUp .3s ease}
+@keyframes slideUp{from{opacity:0;transform:translate(-50%,20px)}to{opacity:1;transform:translate(-50%,0)}}
+.toast-success{background:linear-gradient(135deg,#00FF88,#00D4FF);color:#0A0E17}
+.toast-error{background:linear-gradient(135deg,#FF0040,#FF00E5)}
+.toast-info{background:rgba(0,0,0,0.9);border:1px solid #00D4FF;color:#00D4FF}
+
+.link-modal{position:fixed;inset:0;background:rgba(10,14,23,0.95);backdrop-filter:blur(8px);z-index:11000;display:none;align-items:center;justify-content:center;padding:20px}
+.link-modal.show{display:flex}
+.link-modal-inner{background:#1A1A2E;border:2px solid #00FF88;border-radius:20px;padding:28px 24px;max-width:480px;width:100%;box-shadow:0 0 60px rgba(0,255,136,0.4);animation:popIn .3s ease}
+@keyframes popIn{from{opacity:0;transform:scale(0.9)}to{opacity:1;transform:scale(1)}}
+.link-modal-inner h2{color:#00FF88;font-size:20px;margin-bottom:8px;text-align:center}
+.link-modal-inner p{color:#AAA;font-size:13px;text-align:center;margin-bottom:20px}
+.link-modal-inner .link-box{background:#0D1117;border:2px solid #2A2A4A;border-radius:10px;padding:14px;font-family:monospace;font-size:13px;color:#00D4FF;word-break:break-all;margin-bottom:16px;text-align:center;line-height:1.5}
+.link-modal-inner .link-actions{display:flex;flex-direction:column;gap:10px}
+.link-modal-inner .link-actions a,.link-modal-inner .link-actions button{padding:14px;border-radius:12px;font-weight:700;font-size:15px;text-decoration:none;border:none;cursor:pointer;font-family:inherit;text-align:center;min-height:50px;display:flex;align-items:center;justify-content:center;gap:8px}
+.link-modal-inner .btn-abrir{background:#00D4FF;color:#0A0E17}
+.link-modal-inner .btn-copiar{background:#7B2FF7;color:#fff}
+.link-modal-inner .btn-whatsapp{background:#25D366;color:#fff}
+.link-modal-inner .btn-cerrar-modal{background:#2A2A4A;color:#E0E0E0}
+
+@media (max-width:480px){
+  .badge{font-size:10px;padding:5px 10px}
+  .btn{padding:8px 10px;font-size:11px;min-height:36px}
+  .plantilla-btn{padding:8px 12px;font-size:11px}
+  .fab-toggle{width:40px;height:40px;font-size:18px;bottom:calc(64px + env(safe-area-inset-bottom))}
+  .builder-stage{max-height:82%}
+}
+</style>
+</head>
+<body>
+
+<div class="builder" id="builder">
+  <div class="builder-header">
+    <div class="builder-title">🤖 I.A. construyendo tu landing</div>
+    <div class="builder-subtitle" id="builderSubtitle">Analizando datos del negocio...</div>
+  </div>
+
+  <div class="builder-canvas">
+    <div class="builder-stage" id="builderStage">
+      <div class="b-fondo" id="bFondo"></div>
+
+      <div class="b-banner" id="bBanner">
+        <div class="b-banner-overlay">
+          <div class="b-logo" id="bLogo"></div>
+          <div class="b-titulo" id="bTitulo"></div>
+        </div>
+      </div>
+
+      <p class="b-slogan" id="bSlogan"></p>
+      <p class="b-desc" id="bDesc"></p>
+      <div class="b-mision" id="bMision"><h4>🎯 Nuestra Misión</h4><p id="bMisionTxt"></p></div>
+      <div class="b-galeria" id="bGaleria"></div>
+      <div class="b-video" id="bVideo"><div class="b-video-icon">🎬</div></div>
+      <div class="b-externo" id="bExterno">
+        <div class="b-ext-name" id="bExtName">Enlace externo</div>
+        <div class="b-ext-btn">🌐 Visitar</div>
+      </div>
+      <div class="b-mapa" id="bMapa">🗺️</div>
+      <div class="b-contactos" id="bContactos"></div>
+      <div class="b-botones" id="bBotones">
+        <div class="b-btn b-btn-wa" id="bBtnWa">💬 WhatsApp</div>
+        <div class="b-btn b-btn-call" id="bBtnCall">📞 Llamar</div>
+        <div class="b-btn b-btn-maps" id="bBtnMaps">🧭 Cómo llegar</div>
+        <div class="b-btn b-btn-fb" id="bBtnFb">📘 Facebook</div>
+      </div>
+      <div class="b-qr" id="bQr"><div class="b-qr-box">📱</div><div class="b-qr-label">Escanea para compartir</div></div>
+    </div>
+  </div>
+
+  <div class="builder-progress">
+    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="progress-text"><span class="progress-icon">⚙️</span><span id="progressText">Preparando...</span></div>
+  </div>
+</div>
+
+<iframe id="previewFrame" sandbox="allow-scripts allow-same-origin allow-popups allow-forms allow-modals"></iframe>
+
+<div class="topbar" id="topbar">
+  <span class="badge" id="previewBadge">👁️ Vista Previa</span>
+  <div class="actions">
+    <button class="btn btn-ghost" id="btnDescargar">⬇️</button>
+    <button class="btn btn-success" id="btnPublicar">🚀 Publicar</button>
+    <button class="btn btn-danger" id="btnCerrar">✖</button>
+  </div>
+</div>
+
+<div class="bottombar" id="bottombar">
+  <button class="plantilla-btn" data-plantilla="futurista" onclick="cambiarPlantilla('futurista')">⚡ Futurista</button>
+  <button class="plantilla-btn" data-plantilla="minimalista" onclick="cambiarPlantilla('minimalista')">◻️ Minimalista</button>
+  <button class="plantilla-btn" data-plantilla="clasico" onclick="cambiarPlantilla('clasico')">🏛️ Clásico</button>
+</div>
+
+<button class="fab-toggle" id="fabToggle" onclick="toggleBarras()">👁️</button>
+
+<div class="link-modal" id="linkModal">
+  <div class="link-modal-inner">
+    <h2>✅ ¡Publicado en GitHub!</h2>
+    <p id="linkModalSub">Tu landing ya está en línea</p>
+    <div class="link-box" id="linkBox">https://...</div>
+    <div class="link-actions">
+      <a href="#" target="_blank" rel="noopener" class="btn-abrir" id="linkAbrir">🌐 Abrir landing</a>
+      <button class="btn-copiar" id="linkCopiar">📋 Copiar link</button>
+      <a href="#" target="_blank" rel="noopener" class="btn-whatsapp" id="linkCompartir">💬 Compartir WhatsApp</a>
+      <button class="btn-cerrar-modal" id="linkCerrar">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<iframe name="hiddenSaveFrame" style="display:none"></iframe>
+<form id="hiddenSaveForm" method="POST" target="hiddenSaveFrame" style="display:none">
+  <input type="hidden" name="action" id="hf_action">
+  <input type="hidden" name="id" id="hf_id">
+  <input type="hidden" name="datos" id="hf_datos">
+</form>
+
+<script>
+const GITHUB_PUBLISH_URL = 'https://script.google.com/macros/s/AKfycbwh4EBEepNZrWVibk7L4jq3KZHx9ly_tFsF7OjFDInt6GS-gjdiQcWVrd83tzLNp-aKSw/exec';
+const GOOGLE_VERIFICATION = 'o7Qk58AlI2FmeW05yL8c0p5epUhBa8rBgb6ldSqReOo';
+const GITHUB_USER = 'proyectosolaronline';
+const GITHUB_PAGES_BASE = `https://${GITHUB_USER}.github.io`;
+
+let negocioActual = null;
+let currentPreviewHTML = '';
+let currentPreviewNombre = '';
+let currentPreviewSlug = '';
+let plantillaActual = 'futurista';
+let barrasVisibles = true;
+let urlPublicada = '';
+
+document.addEventListener('DOMContentLoaded', () => {
+  let datos = null;
+  try { const raw = localStorage.getItem('landingData'); if (raw) datos = JSON.parse(raw); } catch(e) {}
+  if (!datos || !datos.nombre) {
+    document.getElementById('builderSubtitle').textContent = '❌ No se recibieron datos. Abre esta página desde el sistema de gestión.';
+    document.getElementById('builderSubtitle').style.color = '#FF0040';
+    return;
+  }
+  if (!datos.logo || !datos.banner) {
+    document.getElementById('builderSubtitle').textContent = '❌ Faltan logo y banner obligatorios.';
+    document.getElementById('builderSubtitle').style.color = '#FF0040';
+    return;
+  }
+  negocioActual = datos;
+  document.getElementById('previewBadge').textContent = '👁️ ' + (datos.nombre || 'Vista Previa');
+  plantillaActual = datos.plantillaLanding || 'futurista';
+  animarConstruccion(datos);
+});
+
+// ============================================================
+// ANIMACIÓN DE CONSTRUCCIÓN INTEGRANDO TODOS LOS ELEMENTOS
+// ============================================================
+function animarConstruccion(n) {
+  const steps = [];
+  const cp = n.colorPrimario || '#7B2FF7';
+  const cs = n.colorSecundario || '#FF00E5';
+
+  steps.push(() => {
+    setProgress(4, 'Aplicando colores...');
+    const f = document.getElementById('bFondo');
+    f.style.background = `linear-gradient(135deg, ${cp}, ${cs})`;
+    f.classList.add('show');
+  });
+
+  steps.push(() => {
+    setProgress(12, 'Cargando banner...');
+    const b = document.getElementById('bBanner');
+    b.style.backgroundImage = `url('${n.banner}')`;
+    b.classList.add('show');
+  });
+
+  steps.push(() => {
+    setProgress(20, 'Insertando logo...');
+    const l = document.getElementById('bLogo');
+    l.style.backgroundImage = `url('${n.logo}')`;
+    l.classList.add('show');
+  });
+
+  steps.push(() => {
+    setProgress(28, 'Colocando nombre...');
+    const t = document.getElementById('bTitulo');
+    t.textContent = n.nombre || '';
+    t.classList.add('show');
+  });
+
+  if (n.slogan) steps.push(() => {
+    setProgress(35, 'Agregando slogan...');
+    const s = document.getElementById('bSlogan');
+    s.textContent = '"' + n.slogan + '"';
+    s.classList.add('show');
+  });
+
+  const desc = (n.descripcion || '').split('&')[0].trim();
+  if (desc) steps.push(() => {
+    setProgress(42, 'Insertando descripción...');
+    const d = document.getElementById('bDesc');
+    d.textContent = desc.substring(0, 90) + (desc.length > 90 ? '...' : '');
+    d.classList.add('show');
+  });
+
+  if (n.mision) steps.push(() => {
+    setProgress(48, 'Añadiendo misión...');
+    document.getElementById('bMisionTxt').textContent = n.mision.substring(0, 80) + (n.mision.length > 80 ? '...' : '');
+    document.getElementById('bMision').classList.add('show');
+  });
+
+  const fotos = (n.fotos || []).filter(f => f && f.url).slice(0, 4);
+  if (fotos.length > 0) steps.push(() => {
+    setProgress(58, 'Agregando ' + fotos.length + ' foto(s)...');
+    const g = document.getElementById('bGaleria');
+    fotos.forEach((f, i) => {
+      const el = document.createElement('div');
+      el.className = 'b-foto';
+      el.style.backgroundImage = `url('${f.url}')`;
+      g.appendChild(el);
+      setTimeout(() => el.classList.add('show'), i * 120);
+    });
+  });
+
+  if (n.video && n.video.trim()) steps.push(() => {
+    setProgress(66, 'Insertando video...');
+    document.getElementById('bVideo').classList.add('show');
+  });
+
+  const uext = n.Urlexterna || n.urlexterna || '';
+  if (uext.trim()) steps.push(() => {
+    setProgress(72, 'Añadiendo enlace externo...');
+    let sep = uext.indexOf('&'); if (sep === -1) sep = uext.indexOf('|'); if (sep === -1) sep = uext.indexOf(';');
+    const nombreExt = sep !== -1 ? uext.substring(0, sep).trim() : 'Enlace externo';
+    document.getElementById('bExtName').textContent = '🔗 ' + (nombreExt || 'Enlace externo');
+    document.getElementById('bExterno').classList.add('show');
+  });
+
+  if (n.latitud && n.longitud) steps.push(() => {
+    setProgress(78, 'Cargando mapa...');
+    document.getElementById('bMapa').classList.add('show');
+  });
+
+  const contactos = [
+    ['📞','Teléfono',n.telefono], ['💬','WhatsApp',n.whatsapp],
+    ['🕐','Horario',n.horario], ['✉️','Correo',n.correo]
+  ].filter(c => c[2]);
+  if (contactos.length > 0) steps.push(() => {
+    setProgress(84, 'Insertando contacto...');
+    const c = document.getElementById('bContactos');
+    contactos.forEach((ct, i) => {
+      const el = document.createElement('div');
+      el.className = 'b-contacto';
+      el.innerHTML = `<div class="bc-label">${ct[0]} ${ct[1]}</div><div class="bc-valor">${ct[2]}</div>`;
+      c.appendChild(el);
+      setTimeout(() => el.classList.add('show'), i * 100);
+    });
+  });
+
+  steps.push(() => {
+    setProgress(90, 'Activando botones...');
+    document.getElementById('bBtnWa').classList.add('show');
+    setTimeout(() => document.getElementById('bBtnCall').classList.add('show'), 80);
+    if (n.latitud && n.longitud) setTimeout(() => document.getElementById('bBtnMaps').classList.add('show'), 160);
+    if (n.urlFacebook) setTimeout(() => document.getElementById('bBtnFb').classList.add('show'), 240);
+  });
+
+  steps.push(() => {
+    setProgress(96, 'Generando código QR...');
+    document.getElementById('bQr').classList.add('show');
+  });
+
+  steps.push(() => setProgress(100, '✅ Landing lista'));
+
+  let i = 0;
+  const next = () => {
+    if (i >= steps.length) { setTimeout(finalizarConstruccion, 700); return; }
+    steps[i](); i++;
+    setTimeout(next, 340);
+  };
+  setTimeout(next, 400);
+}
+
+function setProgress(pct, texto) {
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressText').textContent = texto;
+  document.getElementById('builderSubtitle').textContent = texto;
+}
+
+function finalizarConstruccion() {
+  currentPreviewHTML = construirLandingHTML(negocioActual, plantillaActual);
+  currentPreviewSlug = slugify(negocioActual.nombre);
+  currentPreviewNombre = currentPreviewSlug + '.html';
+  document.getElementById('previewFrame').srcdoc = currentPreviewHTML;
+  const builder = document.getElementById('builder');
+  builder.classList.add('fade-out');
+  setTimeout(() => {
+    builder.style.display = 'none';
+    document.getElementById('previewFrame').classList.add('visible');
+    document.getElementById('topbar').classList.add('visible');
+    document.getElementById('bottombar').classList.add('visible');
+    document.getElementById('fabToggle').classList.add('visible');
+    actualizarBotonesPlantilla(plantillaActual);
+    setTimeout(() => { if (barrasVisibles) toggleBarras(); }, 3500);
+  }, 700);
+}
+
+function slugify(str) { return String(str || 'negocio').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''); }
+function mostrarToast(msg, tipo) {
+  document.querySelectorAll('.toast').forEach(t => t.remove());
+  const t = document.createElement('div');
+  t.className = 'toast toast-' + (tipo || 'success');
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 300); }, 3200);
+}
+function toggleBarras() {
+  barrasVisibles = !barrasVisibles;
+  const top = document.getElementById('topbar'), bot = document.getElementById('bottombar'), fab = document.getElementById('fabToggle');
+  if (barrasVisibles) { top.classList.remove('hidden'); bot.classList.remove('hidden'); fab.textContent = '👁️'; }
+  else { top.classList.add('hidden'); bot.classList.add('hidden'); fab.textContent = '⚙️'; }
+}
+function cambiarPlantilla(p) {
+  plantillaActual = p;
+  if (!negocioActual) return;
+  currentPreviewHTML = construirLandingHTML(negocioActual, p);
+  document.getElementById('previewFrame').srcdoc = currentPreviewHTML;
+  actualizarBotonesPlantilla(p);
+  mostrarToast('🎭 Plantilla: ' + p, 'info');
+}
+function actualizarBotonesPlantilla(a) { document.querySelectorAll('.plantilla-btn').forEach(b => b.classList.toggle('activa', b.dataset.plantilla === a)); }
+
+document.getElementById('btnCerrar').onclick = () => { try { localStorage.removeItem('landingData'); } catch(e) {} window.close(); setTimeout(() => { window.location.href = 'about:blank'; }, 200); };
+document.getElementById('btnDescargar').onclick = () => {
+  if (!currentPreviewHTML) return;
+  const blob = new Blob([currentPreviewHTML], { type: 'text/html;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = currentPreviewNombre; a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 3000);
+  mostrarToast('✅ HTML descargado', 'success');
+};
+document.getElementById('btnPublicar').onclick = () => {
+  if (!currentPreviewHTML || !negocioActual) return;
+  const slug = currentPreviewSlug;
+  const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>${GITHUB_PAGES_BASE}/${slug}/</loc><lastmod>${new Date().toISOString().split('T')[0]}</lastmod><changefreq>weekly</changefreq><priority>1.0</priority></url>
+</urlset>`;
+  const btn = document.getElementById('btnPublicar');
+  btn.disabled = true; btn.textContent = '⏳ Publicando...';
+  const datos = { nombreArchivo: currentPreviewNombre, html: currentPreviewHTML, sitemap, nombreSitemap: 'sitemap.xml', slug, nombreNegocio: negocioActual.nombre || '' };
+  function onMessage(e) {
+    if (e.data && typeof e.data === 'object' && 'success' in e.data) {
+      window.removeEventListener('message', onMessage);
+      btn.disabled = false; btn.textContent = '🚀 Publicar';
+      if (e.data.success) {
+        urlPublicada = (e.data.url || (GITHUB_PAGES_BASE + '/' + slug + '/')).trim();
+        mostrarToast('🚀 Publicado', 'success');
+        mostrarModalLink(urlPublicada, negocioActual.nombre || '');
+      } else mostrarToast('❌ Error: ' + (e.data.error || 'desconocido'), 'error');
+    }
+  }
+  window.addEventListener('message', onMessage);
+  document.getElementById('hf_action').value = 'publicarGitHub';
+  document.getElementById('hf_id').value = '';
+  document.getElementById('hf_datos').value = JSON.stringify(datos);
+  const form = document.getElementById('hiddenSaveForm');
+  form.action = GITHUB_PUBLISH_URL;
+  form.submit();
+  setTimeout(() => { window.removeEventListener('message', onMessage); btn.disabled = false; btn.textContent = '🚀 Publicar'; }, 30000);
+};
+
+function mostrarModalLink(url, nombre) {
+  document.getElementById('linkBox').textContent = url;
+  document.getElementById('linkModalSub').textContent = nombre ? 'Landing de "' + nombre + '"' : 'Tu landing está en línea';
+  document.getElementById('linkAbrir').href = url;
+  document.getElementById('linkCompartir').href = 'https://wa.me/?text=' + encodeURIComponent('Mira la landing de ' + (nombre || 'nuestro negocio') + ': ' + url);
+  document.getElementById('linkModal').classList.add('show');
+}
+document.getElementById('linkCerrar').onclick = () => document.getElementById('linkModal').classList.remove('show');
+document.getElementById('linkCopiar').onclick = async () => { try { await navigator.clipboard.writeText(urlPublicada); mostrarToast('📋 Link copiado', 'success'); } catch(e) { mostrarToast('⚠️ No se pudo copiar', 'error'); } };
+document.getElementById('linkModal').addEventListener('click', (e) => { if (e.target === e.currentTarget) document.getElementById('linkModal').classList.remove('show'); });
+
+// ============================================================
+// CONSTRUIR LANDING FINAL (SEO + FULL-BLEED)
+// ============================================================
+function construirLandingHTML(n, plantillaOverride) {
+  const plantilla = plantillaOverride || n.plantillaLanding || 'futurista';
+  const whatsappDigits = String(n.whatsapp || '').replace(/\D/g, '');
+  const telDigits = String(n.telefono || '').replace(/\D/g, '');
+  const fotos = (n.fotos || []).filter(f => f && f.url);
+  const tieneMapa = n.latitud && n.longitud;
+  const cp = n.colorPrimario || '#7B2FF7';
+  const cs = n.colorSecundario || '#FF00E5';
+  const ca = n.colorAcento || '#00D4FF';
+  const fuente = n.fuenteLanding || "'Segoe UI',system-ui,sans-serif";
+  const descParts = (n.descripcion || '').split('&');
+  const descCorta = descParts[0].trim() || '';
+  const descLarga = descParts[1] ? descParts[1].trim() : descCorta;
+  const seoTitle = (`${n.nombre||'Negocio'}${n.slogan ? ' - ' + n.slogan : ''}`).substring(0, 65);
+  const seoDescription = (descLarga || descCorta || `${n.nombre||'Negocio'} en ${n.direccion||n.ubicacion||'México'}`).replace(/\s+/g, ' ').substring(0, 158);
+  const seoSlug = slugify(n.nombre);
+  const ogImage = n.banner || n.logo || '';
+  const canonicalUrl = `${GITHUB_PAGES_BASE}/${seoSlug}/`;
+
+  const LIMITE = 90;
+  const galeriaHTML = fotos.length ? `<section class="gallery">${fotos.map((f, i) => {
+    const partes = (f.descripcion || '').split('&');
+    const titulo = partes[0].trim() || '📸 Foto';
+    const dLarga = partes[1] ? partes[1].trim() : '';
+    let dc = dLarga, dr = '';
+    if (dLarga.length > LIMITE) { let corte = dLarga.lastIndexOf(' ', LIMITE); if (corte === -1) corte = LIMITE; dc = dLarga.substring(0, corte); dr = dLarga.substring(corte); }
+    return `<div class="gallery-item"><img src="${f.url}" alt="${titulo}" loading="lazy" onclick="lOpenLightbox(${i})"><div class="gallery-info"><div class="gallery-titulo">${titulo}</div>${dLarga ? `<p class="gallery-desc"><span>${dc}</span><span id="lDescResto${i}" style="display:none;">${dr}</span>${dr ? `<button class="vermas-btn" onclick="lToggleDescFoto(${i})">Ver más</button>` : ''}</p>` : ''}</div></div>`;
+  }).join('')}</section>` : '';
+
+  let urlExternaHTML = '';
+  const uext = n.Urlexterna || n.urlexterna || '';
+  if (uext.trim()) {
+    let sep = uext.indexOf('&'); if (sep === -1) sep = uext.indexOf('|'); if (sep === -1) sep = uext.indexOf(';');
+    if (sep !== -1) {
+      const nombreExt = uext.substring(0, sep).trim();
+      let urlExt = uext.substring(sep + 1).trim();
+      if (urlExt && !/^https?:/.test(urlExt)) urlExt = 'https://' + urlExt;
+      if (/^https?:/.test(urlExt)) urlExternaHTML = `<section class="section"><div class="externo-card"><h2>🔗 ${nombreExt || 'Enlace externo'}</h2><a href="${urlExt}" target="_blank" rel="noopener" class="externo-btn" style="background:linear-gradient(135deg,${cp},${cs})">🌐 Visitar ${nombreExt || 'sitio'}</a></div></section>`;
+    }
+  }
+
+  let videoEmbedUrl = '';
+  if (n.video && n.video.trim()) {
+    const link = n.video.trim();
+    if (link.includes('/d/')) { const fid = link.match(/\/d\/([a-zA-Z0-9_-]+)/); if (fid) videoEmbedUrl = 'https://drive.google.com/file/d/' + fid[1] + '/preview'; }
+    else if (link.includes('youtube.com') || link.includes('youtu.be')) { const m = link.match(/(?:v=|youtu\.be\/|\/shorts\/|\/embed\/)([a-zA-Z0-9_-]{11})/); if (m) videoEmbedUrl = 'https://www.youtube.com/embed/' + m[1] + '?rel=0'; }
+    else videoEmbedUrl = link;
+  }
+  const videoHTML = videoEmbedUrl ? `<section class="section"><div class="video-card"><iframe src="${videoEmbedUrl}" allowfullscreen loading="lazy"></iframe></div></section>` : '';
+
+  const mapaHTML = tieneMapa ? `<section class="section"><h2>📍 Encuéntranos</h2><div class="map-card"><iframe loading="lazy" src="https://www.openstreetmap.org/export/embed.html?bbox=${parseFloat(n.longitud)-0.006}%2C${parseFloat(n.latitud)-0.006}%2C${parseFloat(n.longitud)+0.006}%2C${parseFloat(n.latitud)+0.006}&layer=mapnik&marker=${n.latitud}%2C${n.longitud}"></iframe></div><p class="direccion">${n.direccion||n.ubicacion||''}</p></section>` : '';
+
+  const contactoItems = [['📞','Teléfono',n.telefono],['💬','WhatsApp',n.whatsapp],['🕐','Horario',n.horario],['✉️','Correo',n.correo]].filter(x => x[2]);
+  const contactoBotones = `
+    ${whatsappDigits?`<a href="https://wa.me/${whatsappDigits}" class="btn-link btn-whatsapp" target="_blank">💬 WhatsApp</a>`:''}
+    ${telDigits?`<a href="tel:${telDigits}" class="btn-link btn-call">📞 Llamar</a>`:''}
+    ${tieneMapa?`<a href="https://www.google.com/maps/dir/?api=1&destination=${n.latitud},${n.longitud}" class="btn-link btn-maps" target="_blank">🧭 Cómo llegar</a>`:''}
+    ${n.urlFacebook?`<a href="${n.urlFacebook}" class="btn-link btn-facebook" target="_blank">📘 Facebook</a>`:''}`;
+
+  const jsonLd = {
+    "@context":"https://schema.org","@type":"LocalBusiness",
+    "name":n.nombre||'',"description":seoDescription,"image":ogImage,"logo":n.logo||'',
+    "telephone":n.telefono||'',"email":n.correo||'',"url":canonicalUrl,
+    "address":{"@type":"PostalAddress","streetAddress":n.direccion||'',"addressLocality":n.ubicacion||'',"addressCountry":"MX"},
+    "openingHours":n.horario||'',
+    ...(tieneMapa ? { "geo": { "@type": "GeoCoordinates", "latitude": n.latitud, "longitude": n.longitud } } : {}),
+    ...(n.urlFacebook ? { "sameAs": [n.urlFacebook] } : {})
+  };
+
+  let overrides = '';
+  if (plantilla === 'minimalista') overrides = `body{background:#F4F5F7;color:#1E1E1E}.banner{background:${cp}!important;background-image:none!important}.banner-inner{background:rgba(0,0,0,0.15)}.slogan{color:${cp};font-style:normal}.contact-item{background:#F9F9FA}.contact-item .cv{color:#1E1E1E}.section h2{color:#1E1E1E}footer{background:#EFEFEF}`;
+  else if (plantilla === 'clasico') overrides = `body{background:#F3ECDD;color:#3B2A1A}.banner-inner{background:linear-gradient(135deg,rgba(59,42,26,0.35),rgba(59,42,26,0.55))}.slogan{color:${ca}}.contact-item{background:#FBF3E3}footer{background:#2A1D12}`;
+
+  const footerHTML = `<footer><p class="footer-nombre" style="color:${ca}">⚡ ${n.nombre||''}</p><p class="footer-slogan">${n.slogan||'Gracias por visitarnos'}</p></footer>`;
+
+  return `<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=yes">
+<title>${seoTitle}</title>
+<meta name="description" content="${seoDescription}">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<meta name="google-site-verification" content="${GOOGLE_VERIFICATION}">
+<meta name="theme-color" content="${cp}">
+<meta name="author" content="${n.nombre||''}">
+<link rel="canonical" href="${canonicalUrl}">
+<meta name="keywords" content="${n.nombre||''}, ${n.ubicacion||''}, ${n.horario||''}">
+<meta property="og:type" content="business.business">
+<meta property="og:title" content="${n.nombre||''}">
+<meta property="og:description" content="${seoDescription}">
+${ogImage?`<meta property="og:image" content="${ogImage}">`:''}
+<meta property="og:url" content="${canonicalUrl}">
+<meta property="og:site_name" content="${n.nombre||''}">
+<meta property="og:locale" content="es_MX">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="${n.nombre||''}">
+<meta name="twitter:description" content="${seoDescription}">
+${ogImage?`<meta name="twitter:image" content="${ogImage}">`:''}
+<script type="application/ld+json">${JSON.stringify(jsonLd)}<\/script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+body{font-family:${fuente};color:#E0E0E0;background:#0A0E17;line-height:1.6;padding:0;margin:0}
+.banner{width:100%;background:linear-gradient(135deg,${cp} 0%,${cs} 100%);${n.banner?`background-image:url('${n.banner}');background-size:cover;background-position:center;background-repeat:no-repeat;`:''}}
+.banner-inner{display:flex;align-items:center;gap:16px;padding:20px 16px;padding-top:calc(20px + env(safe-area-inset-top));background:linear-gradient(135deg,rgba(0,0,0,0.45),rgba(0,0,0,0.65));min-height:160px}
+.banner-logo{width:80px;height:80px;border-radius:50%;object-fit:cover;border:3px solid ${ca};flex-shrink:0;box-shadow:0 0 25px ${ca};background:#fff}
+.banner-text h1{color:#fff;font-size:22px;font-weight:800;text-shadow:0 0 20px rgba(255,255,255,0.5);line-height:1.2}
+.banner-text p{color:rgba(255,255,255,0.95);font-size:13px;margin-top:6px;font-weight:600}
+.slogan{padding:20px 16px 0;font-size:15px;font-style:italic;color:${ca};font-weight:600;text-align:center}
+.desc{padding:10px 16px 0;font-size:14px;color:#AAA;text-align:center;line-height:1.7}
+.section{padding:24px 16px 0}
+.section h2{font-size:18px;margin-bottom:14px;color:#E0E0E0;font-weight:700}
+.gallery{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;padding:20px 8px 0}
+.gallery-item{border-radius:12px;overflow:hidden;background:#0D1117;border:1px solid ${cp}}
+.gallery-item img{width:100%;height:160px;object-fit:cover;cursor:pointer;display:block}
+.gallery-info{padding:10px 12px 12px}
+.gallery-titulo{font-size:13px;font-weight:700;color:#E0E0E0}
+.gallery-desc{font-size:12px;color:#AAA;line-height:1.5;margin-top:3px}
+.vermas-btn{background:none;border:none;color:${ca};font-weight:700;font-size:12px;cursor:pointer;padding:0}
+.externo-card{background:#0D1117;border-radius:12px;padding:20px;text-align:center;border:2px solid ${ca}}
+.externo-card h2{font-size:16px;margin-bottom:12px}
+.externo-btn{display:inline-block;padding:14px 30px;color:#fff;border-radius:12px;font-weight:700;text-decoration:none}
+.contact-grid{display:grid;grid-template-columns:1fr;gap:10px;padding:20px 16px 0}
+.contact-item{background:#0D1117;border-radius:10px;padding:14px;border-left:4px solid ${ca}}
+.contact-item .cl{font-size:11px;text-transform:uppercase;color:#888;font-weight:700;letter-spacing:.5px}
+.contact-item .cv{font-size:15px;color:#E0E0E0;margin-top:3px;word-break:break-word;font-weight:600}
+.map-card{border-radius:14px;overflow:hidden;border:2px solid ${cp}}
+.map-card iframe{width:100%;height:280px;border:0;display:block}
+.direccion{margin-top:12px;font-size:14px;color:#AAA;text-align:center}
+.video-card{position:relative;padding-bottom:56.25%;height:0;border-radius:14px;overflow:hidden;border:2px solid ${cp};background:#000}
+.video-card iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+.btns-group{display:flex;flex-direction:column;gap:10px;padding:24px 16px 0}
+.btn-link{text-align:center;padding:16px 18px;border-radius:12px;font-weight:700;font-size:16px;text-decoration:none;display:flex;align-items:center;justify-content:center;min-height:52px}
+.btn-whatsapp{background:#25D366;color:#fff}
+.btn-call{background:${cp};color:#fff}
+.btn-maps{background:#4285F4;color:#fff}
+.btn-facebook{background:#1877F2;color:#fff}
+.qr-section{padding:30px 16px 24px;text-align:center}
+.qr-img{width:160px;height:160px;border-radius:12px;border:4px solid ${ca};padding:8px;cursor:pointer;background:#fff}
+.qr-caption{font-size:13px;color:#888;margin-top:12px}
+.qr-caption span{font-weight:700;color:${ca};cursor:pointer}
+.popup-msg{position:fixed;left:50%;bottom:-150px;transform:translateX(-50%);background:linear-gradient(135deg,${cp},${cs});color:#fff;padding:16px 44px 16px 22px;border-radius:14px 14px 0 0;font-size:14px;font-weight:600;text-align:center;max-width:92vw;z-index:4000;transition:bottom .5s ease;box-shadow:0 -4px 20px rgba(0,0,0,0.4)}
+.popup-msg.mostrar{bottom:0}
+.popup-cerrar{position:absolute;top:8px;right:12px;background:none;border:none;color:#fff;font-size:20px;cursor:pointer;font-weight:700}
+footer{background:#000;text-align:center;padding:26px 16px;padding-bottom:calc(26px + env(safe-area-inset-bottom));font-size:14px;margin-top:24px}
+footer .footer-nombre{font-weight:700;font-size:14px;margin-bottom:6px}
+footer .footer-slogan{color:#888;font-size:12px}
+.lightbox{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.95);z-index:5000;align-items:center;justify-content:center;flex-direction:column;padding:20px}
+.lightbox.active{display:flex}
+.lightbox img{max-width:100%;max-height:75vh;border-radius:12px;border:3px solid ${ca}}
+.lightbox-cap{color:#fff;font-size:14px;margin-top:16px;text-align:center;max-width:90vw}
+.lightbox-back{margin-top:24px;background:${ca};color:#0A0E17;border:none;padding:14px 30px;border-radius:12px;font-weight:700;cursor:pointer;font-size:15px}
+@media(min-width:640px){.contact-grid{grid-template-columns:1fr 1fr}.btns-group{flex-direction:row;flex-wrap:wrap}.btn-link{flex:1;min-width:140px}}
+${overrides}
+</style></head><body>
+
+<div class="banner"><div class="banner-inner">
+  ${n.logo?`<img class="banner-logo" src="${n.logo}" alt="Logo ${n.nombre||''}">`:''}
+  <div class="banner-text">
+    <h1>${n.nombre||''}</h1>
+    ${n.slogan?`<p>✨ ${n.slogan}</p>`:''}
+  </div>
+</div></div>
+
+${n.slogan?`<p class="slogan">"${n.slogan}"</p>`:''}
+${descLarga?`<p class="desc">${descLarga}</p>`:''}
+${n.mision?`<section class="section"><h2>🎯 Nuestra Misión</h2><p style="color:#AAA">${n.mision}</p></section>`:''}
+${galeriaHTML}
+${videoHTML}
+${urlExternaHTML}
+<div class="contact-grid">
+  ${contactoItems.map(x => `<div class="contact-item"><div class="cl">${x[0]} ${x[1]}</div><div class="cv">${x[2]}</div></div>`).join('')}
+</div>
+${mapaHTML}
+<div class="btns-group">${contactoBotones}</div>
+<section class="qr-section">
+  <img class="qr-img" id="lQrImg" alt="QR" onclick="compartirQR()">
+  <p class="qr-caption"><span onclick="compartirQR()">📱 Escanea para compartir</span></p>
+</section>
+${footerHTML}
+
+<div class="lightbox" id="lLightbox">
+  <img id="lLightboxImg" src="" alt="">
+  <p class="lightbox-cap" id="lLightboxCap"></p>
+  <button class="lightbox-back" onclick="lCloseLightbox()">← Volver</button>
+</div>
+
+<script>
+(function(){
+  var lFotos = ${JSON.stringify(fotos)};
+  window.lOpenLightbox = function(i){
+    var f = lFotos[i]; if(!f) return;
+    document.getElementById('lLightboxImg').src = f.url;
+    var p = (f.descripcion||'').split('&');
+    document.getElementById('lLightboxCap').textContent = p[1] ? p[1].trim() : (p[0].trim() || '📸');
+    document.getElementById('lLightbox').classList.add('active');
+  };
+  window.lCloseLightbox = function(){ document.getElementById('lLightbox').classList.remove('active'); };
+  window.lToggleDescFoto = function(i){
+    var r = document.getElementById('lDescResto'+i);
+    if(r) r.style.display = r.style.display==='none' ? 'inline' : 'none';
+  };
+  document.getElementById('lLightbox').addEventListener('click', function(e){ if(e.target === this) lCloseLightbox(); });
+  var u = window.location.href;
+  var q = document.getElementById('lQrImg');
+  if(q) q.src = 'https://api.qrserver.com/v1/create-qr-code/?size=220x220&data='+encodeURIComponent(u);
+  window.compartirQR = function(){ window.open('https://wa.me/?text='+encodeURIComponent('${(String(n.nombre||'')).replace(/'/g,"\\'")}: '+u),'_blank'); };
+  var msg = '${(n.mensajeEmergente || n.slogan || '').replace(/'/g,"\\'")}';
+  if(msg){
+    var pop = document.createElement('div');
+    pop.className = 'popup-msg';
+    pop.innerHTML = '<span>✨ '+msg+'</span><button class="popup-cerrar">×</button>';
+    document.body.appendChild(pop);
+    function m(){ pop.classList.add('mostrar'); setTimeout(function(){ pop.classList.remove('mostrar'); },3000); }
+    pop.querySelector('.popup-cerrar').onclick = function(){ pop.classList.remove('mostrar'); };
+    setTimeout(m,2000);
+    setInterval(m,15000);
+  }
+})();
+<\/script>
+</body></html>`;
+}
+</script>
+</body>
+</html>
