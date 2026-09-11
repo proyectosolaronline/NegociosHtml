@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Generador de sitemap.xml y robots.txt</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  background: #0A0E17;
+  color: #E0E0E0;
+  padding: 20px;
+  line-height: 1.6;
+}
+.container { max-width: 900px; margin: 0 auto; }
+h1 { color: #00D4FF; font-size: 28px; margin-bottom: 10px; }
+h2 { color: #E0E0E0; font-size: 20px; margin: 24px 0 12px; }
+p { color: #AAA; margin-bottom: 16px; }
+.drop-zone {
+  border: 3px dashed #7B2FF7;
+  border-radius: 16px;
+  padding: 40px 20px;
+  text-align: center;
+  cursor: pointer;
+  background: #0D1117;
+  transition: all 0.3s;
+  margin-bottom: 20px;
+}
+.drop-zone:hover, .drop-zone.dragover {
+  border-color: #00D4FF;
+  background: #131A24;
+}
+.drop-zone-icon { font-size: 60px; margin-bottom: 10px; }
+.drop-zone-text { font-size: 16px; color: #E0E0E0; font-weight: 600; }
+.drop-zone-sub { font-size: 13px; color: #888; margin-top: 8px; }
+.config {
+  background: #0D1117;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 20px;
+  border-left: 4px solid #00D4FF;
+}
+.config label {
+  display: block;
+  font-size: 13px;
+  color: #888;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+.config input {
+  width: 100%;
+  padding: 12px;
+  background: #0A0E17;
+  border: 1px solid #333;
+  border-radius: 8px;
+  color: #E0E0E0;
+  font-size: 14px;
+  margin-bottom: 12px;
+}
+.config input:focus {
+  outline: none;
+  border-color: #00D4FF;
+}
+.preview {
+  background: #0D1117;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 20px;
+  border-left: 4px solid #7B2FF7;
+  max-height: 300px;
+  overflow-y: auto;
+}
+.preview-item {
+  padding: 10px;
+  border-bottom: 1px solid #1a1a1a;
+  font-size: 13px;
+}
+.preview-item:last-child { border-bottom: none; }
+.preview-item .titulo { color: #00D4FF; font-weight: 700; }
+.preview-item .url { color: #888; font-size: 12px; }
+.btn {
+  padding: 15px 25px;
+  border: none;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s;
+  margin-right: 10px;
+  margin-bottom: 10px;
+}
+.btn-primary {
+  background: linear-gradient(135deg, #7B2FF7, #FF00E5);
+  color: #fff;
+}
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(123, 47, 247, 0.4);
+}
+.btn-secondary {
+  background: #0D1117;
+  color: #00D4FF;
+  border: 2px solid #00D4FF;
+}
+.btn-secondary:hover {
+  background: #00D4FF;
+  color: #0A0E17;
+}
+.btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+}
+.info {
+  background: #0D1117;
+  border-radius: 12px;
+  padding: 16px;
+  font-size: 13px;
+  color: #AAA;
+  margin-top: 20px;
+  border-left: 4px solid #00D4FF;
+}
+.info code {
+  background: #1a1a1a;
+  padding: 2px 6px;
+  border-radius: 4px;
+  color: #00D4FF;
+  font-size: 12px;
+}
+</style>
+</head>
+<body>
+<div class="container">
+
+  <h1>🚀 Generador de sitemap.xml y robots.txt</h1>
+  <p>Selecciona la carpeta con tus HTML y genera los archivos automáticamente.</p>
+
+  <div class="config">
+    <label>Dominio base (URL raíz)</label>
+    <input type="text" id="dominio" value="https://proyectosolaronline.github.io" placeholder="https://tudominio.com">
+    
+    <label>Prioridad por defecto</label>
+    <input type="text" id="prioridad" value="0.8" placeholder="0.8">
+    
+    <label>Frecuencia de cambio</label>
+    <input type="text" id="frecuencia" value="weekly" placeholder="weekly">
+  </div>
+
+  <div class="drop-zone" id="dropZone">
+    <div class="drop-zone-icon">📁</div>
+    <div class="drop-zone-text">Arrastra tu carpeta aquí</div>
+    <div class="drop-zone-sub">o haz clic para seleccionarla</div>
+    <input type="file" id="fileInput" webkitdirectory directory multiple style="display: none;">
+  </div>
+
+  <div id="resultado"></div>
+
+  <div id="botones" style="display: none;">
+    <h2>📥 Descargar archivos</h2>
+    <button class="btn btn-primary" onclick="descargar('sitemap.xml', generarSitemap())">
+      📄 Descargar sitemap.xml
+    </button>
+    <button class="btn btn-primary" onclick="descargar('robots.txt', generarRobots())">
+      🤖 Descargar robots.txt
+    </button>
+    <button class="btn btn-secondary" onclick="copiarSitemap()">
+      📋 Copiar sitemap.xml
+    </button>
+    <button class="btn btn-secondary" onclick="copiarRobots()">
+      📋 Copiar robots.txt
+    </button>
+  </div>
+
+  <div class="info">
+    <strong>💡 Cómo funciona:</strong><br>
+    1. Seleccionas la carpeta con tus HTML<br>
+    2. El generador lee cada archivo y extrae el <code>&lt;title&gt;</code><br>
+    3. Genera el <code>sitemap.xml</code> con todas las URLs<br>
+    4. Genera el <code>robots.txt</code> apuntando al sitemap<br>
+    5. Descargas ambos y los subes a GitHub Pages
+  </div>
+
+</div>
+
+<script>
+let archivosEncontrados = [];
+
+// ============ DRAG & DROP ============
+const dropZone = document.getElementById('dropZone');
+const fileInput = document.getElementById('fileInput');
+
+dropZone.addEventListener('click', () => fileInput.click());
+
+dropZone.addEventListener('dragover', (e) => {
+  e.preventDefault();
+  dropZone.classList.add('dragover');
+});
+
+dropZone.addEventListener('dragleave', () => {
+  dropZone.classList.remove('dragover');
+});
+
+dropZone.addEventListener('drop', async (e) => {
+  e.preventDefault();
+  dropZone.classList.remove('dragover');
+  const items = e.dataTransfer.items;
+  const archivos = [];
+  for (const item of items) {
+    const entry = item.webkitGetAsEntry();
+    if (entry) await recorrerCarpeta(entry, archivos);
+  }
+  procesarArchivos(archivos);
+});
+
+fileInput.addEventListener('change', (e) => {
+  procesarArchivos(Array.from(e.target.files));
+});
+
+// ============ RECORRER CARPETA ============
+async function recorrerCarpeta(entry, archivos) {
+  if (entry.isFile) {
+    const file = await new Promise(res => entry.file(res));
+    archivos.push(file);
+  } else if (entry.isDirectory) {
+    const reader = entry.createReader();
+    const entries = await new Promise(res => reader.readEntries(res));
+    for (const e of entries) {
+      await recorrerCarpeta(e, archivos);
+    }
+  }
+}
+
+// ============ PROCESAR HTML ============
+async function procesarArchivos(archivos) {
+  archivosEncontrados = [];
+  const htmls = archivos.filter(f => f.name.toLowerCase().endsWith('.html'));
+  
+  if (htmls.length === 0) {
+    document.getElementById('resultado').innerHTML = 
+      '<div class="info" style="border-left-color:#FF4444">⚠️ No se encontraron archivos .html en la carpeta.</div>';
+    return;
+  }
+
+  for (const archivo of htmls) {
+    try {
+      const texto = await archivo.text();
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(texto, 'text/html');
+      
+      const titulo = doc.querySelector('title')?.textContent?.trim() || archivo.name;
+      const descripcion = doc.querySelector('meta[name="description"]')?.getAttribute('content')?.trim() || '';
+      const canonical = doc.querySelector('link[rel="canonical"]')?.getAttribute('href')?.trim() || '';
+      const robots = doc.querySelector('meta[name="robots"]')?.getAttribute('content')?.trim() || '';
+      
+      // Detectar la ruta relativa
+      const rutaRelativa = archivo.webkitRelativePath || archivo.name;
+      const partes = rutaRelativa.split('/');
+      // La última parte es el archivo, la penúltima es la carpeta de la página
+      const carpeta = partes.length > 1 ? partes[partes.length - 2] : '';
+      
+      // Si tiene canonical, usarlo. Si no, construir la URL
+      let url = canonical;
+      if (!url) {
+        const dominio = document.getElementById('dominio').value.replace(/\/$/, '');
+        url = carpeta ? `${dominio}/${carpeta}/` : `${dominio}/${archivo.name.replace('.html', '')}/`;
+      }
+      
+      archivosEncontrados.push({
+        archivo: archivo.name,
+        carpeta: carpeta,
+        titulo: titulo,
+        descripcion: descripcion,
+        url: url,
+        robots: robots
+      });
+      
+    } catch (err) {
+      console.error('Error procesando:', archivo.name, err);
+    }
+  }
+
+  mostrarResultado();
+}
+
+// ============ MOSTRAR RESULTADO ============
+function mostrarResultado() {
+  const total = archivosEncontrados.length;
+  
+  let html = `
+    <h2>✅ ${total} página${total !== 1 ? 's' : ''} encontrada${total !== 1 ? 's' : ''}</h2>
+    <div class="preview">
+  `;
+  
+  archivosEncontrados.forEach((a, i) => {
+    html += `
+      <div class="preview-item">
+        <div class="titulo">${i + 1}. ${a.titulo}</div>
+        <div class="url">${a.url}</div>
+        ${a.descripcion ? `<div style="font-size:11px;color:#666;margin-top:4px">${a.descripcion}</div>` : ''}
+      </div>
+    `;
+  });
+  
+  html += '</div>';
+  document.getElementById('resultado').innerHTML = html;
+  document.getElementById('botones').style.display = 'block';
+}
+
+// ============ GENERAR SITEMAP ============
+function generarSitemap() {
+  const dominio = document.getElementById('dominio').value.replace(/\/$/, '');
+  const prioridadDefault = document.getElementById('prioridad').value || '0.8';
+  const frecuencia = document.getElementById('frecuencia').value || 'weekly';
+  const hoy = new Date().toISOString().split('T')[0];
+  
+  let xml = '<?xml version="1.0" encoding="UTF-8"?>\n';
+  xml += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n';
+  
+  // Ordenar: la principal primero, luego las demás
+  const ordenados = [...archivosEncontrados].sort((a, b) => {
+    const aEsPrincipal = !a.carpeta || a.carpeta === 'tu-negocio-online';
+    const bEsPrincipal = !b.carpeta || b.carpeta === 'tu-negocio-online';
+    if (aEsPrincipal && !bEsPrincipal) return -1;
+    if (!aEsPrincipal && bEsPrincipal) return 1;
+    return 0;
+  });
+  
+  ordenados.forEach(a => {
+    const prioridad = (!a.carpeta || a.carpeta === 'tu-negocio-online') ? '1.0' : prioridadDefault;
+    
+    xml += '  <url>\n';
+    xml += `    <loc>${a.url}</loc>\n`;
+    xml += `    <lastmod>${hoy}</lastmod>\n`;
+    xml += `    <changefreq>${frecuencia}</changefreq>\n`;
+    xml += `    <priority>${prioridad}</priority>\n`;
+    xml += '  </url>\n';
+  });
+  
+  xml += '</urlset>';
+  return xml;
+}
+
+// ============ GENERAR ROBOTS ============
+function generarRobots() {
+  const dominio = document.getElementById('dominio').value.replace(/\/$/, '');
+  return `User-agent: *
+Allow: /
+
+Sitemap: ${dominio}/sitemap.xml
+`;
+}
+
+// ============ DESCARGAR ============
+function descargar(nombre, contenido) {
+  const blob = new Blob([contenido], { type: 'text/plain;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = nombre;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+// ============ COPIAR ============
+function copiarSitemap() {
+  navigator.clipboard.writeText(generarSitemap()).then(() => {
+    alert('✅ sitemap.xml copiado al portapapeles');
+  });
+}
+
+function copiarRobots() {
+  navigator.clipboard.writeText(generarRobots()).then(() => {
+    alert('✅ robots.txt copiado al portapapeles');
+  });
+}
+
+// Actualizar preview si cambia el dominio
+document.getElementById('dominio').addEventListener('input', () => {
+  if (archivosEncontrados.length > 0) {
+    const dominio = document.getElementById('dominio').value.replace(/\/$/, '');
+    archivosEncontrados.forEach(a => {
+      if (!a.url.startsWith('http')) {
+        a.url = a.carpeta ? `${dominio}/${a.carpeta}/` : `${dominio}/`;
+      }
+    });
+    mostrarResultado();
+  }
+});
+</script>
+</body>
+</html>
