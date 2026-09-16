@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Chela Pronto 🍻</title>
+  <style>
+    body { font-family: sans-serif; background:#111; color:#fff; padding:20px; max-width:500px; margin:auto; }
+    h1 { text-align:center; }
+    .prod { background:#222; padding:15px; margin:10px 0; border-radius:10px; display:flex; justify-content:space-between; align-items:center; }
+    input[type=number] { width:60px; padding:8px; border-radius:6px; border:none; text-align:center; }
+    .dato { width:100%; padding:10px; margin:6px 0; border-radius:8px; border:none; box-sizing:border-box; }
+    button { background:#f5a623; border:none; padding:14px; width:100%; border-radius:10px; font-weight:bold; font-size:16px; margin-top:15px; }
+  </style>
+</head>
+<body>
+  <h1>🍻 Chela Pronto</h1>
+  <p style="text-align:center;">Cerveza fría a tu puerta</p>
+
+  <div class="prod">
+    <div><b>Caguama</b><br><small>Mínimo 2</small></div>
+    <input type="number" id="caguama" min="0" value="0">
+  </div>
+
+  <div class="prod">
+    <div><b>Bazuka</b><br><small>Mínimo 2</small></div>
+    <input type="number" id="bazuka" min="0" value="0">
+  </div>
+
+  <div class="prod">
+    <div><b>Six Pack</b><br><small>Mínimo 1</small></div>
+    <input type="number" id="six" min="0" value="0">
+  </div>
+
+  <div class="prod">
+    <div><b>8 Pack</b><br><small>Mínimo 1</small></div>
+    <input type="number" id="ocho" min="0" value="0">
+  </div>
+
+  <h3>Datos de entrega</h3>
+  <input class="dato" type="text" id="nombre" placeholder="Tu nombre">
+  <input class="dato" type="text" id="direccion" placeholder="Dirección">
+  <input class="dato" type="tel" id="telefono" placeholder="WhatsApp">
+
+  <button onclick="enviarPedido()">Pedir 🍺</button>
+
+  <script>
+    var WHATSAPP = "52TUNUMERO";
+
+    function enviarPedido() {
+      var caguama = +document.getElementById('caguama').value;
+      var bazuka  = +document.getElementById('bazuka').value;
+      var six     = +document.getElementById('six').value;
+      var ocho    = +document.getElementById('ocho').value;
+      var nombre  = document.getElementById('nombre').value;
+      var dir     = document.getElementById('direccion').value;
+      var tel     = document.getElementById('telefono').value;
+
+      if (caguama > 0 && caguama < 2) { alert('Caguama mínimo 2'); return; }
+      if (bazuka > 0 && bazuka < 2)   { alert('Bazuka mínimo 2'); return; }
+      if (caguama + bazuka + six + ocho === 0) { alert('Elige al menos un producto'); return; }
+
+      var texto = '🍻 Pedido Chela Pronto\n\n';
+      if (caguama) texto += 'Caguama: ' + caguama + '\n';
+      if (bazuka)  texto += 'Bazuka: ' + bazuka + '\n';
+      if (six)     texto += 'Six Pack: ' + six + '\n';
+      if (ocho)    texto += '8 Pack: ' + ocho + '\n';
+      texto += '\n👤 ' + nombre + '\n📍 ' + dir + '\n📱 ' + tel;
+
+      window.open('https://wa.me/' + WHATSAPP + '?text=' + encodeURIComponent(texto), '_blank');
+    }
+  </script>
+</body>
+</html>
