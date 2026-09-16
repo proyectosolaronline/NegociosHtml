@@ -1,1 +1,251 @@
 
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Chela Pronto 🍻</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <style>
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body { font-family: -apple-system, sans-serif; background:#0d0d0d; color:#fff; margin:0; padding:0; }
+    .pantalla { display:none; padding:20px; max-width:600px; margin:auto; }
+    .pantalla.activa { display:block; }
+
+    #pantalla1 { text-align:center; padding-top:30px; }
+    #pantalla1 h1 { font-size:30px; margin-bottom:8px; }
+    #pantalla1 p { opacity:0.85; font-size:15px; line-height:1.4; }
+
+    #map { height:320px; width:100%; border-radius:15px; margin:20px 0; background:#333; }
+
+    .btn-principal { background:#f5a623; color:#000; border:none; padding:16px; width:100%; border-radius:12px; font-weight:bold; font-size:17px; cursor:pointer; }
+    .btn-principal:disabled { background:#333; color:#777; }
+
+    #headerFijo {
+      position:sticky; top:0; background:#0d0d0d; z-index:100;
+      padding:14px 0; border-bottom:2px solid #f5a623; margin-bottom:15px;
+    }
+    #headerFijo h2 { margin:0; font-size:15px; opacity:0.7; }
+    #headerFijo .tot { font-size:28px; font-weight:bold; color:#f5a623; }
+
+    .grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    .card {
+      background:#1a1a1a; border-radius:15px; padding:15px;
+      display:flex; flex-direction:column; justify-content:space-between;
+      border:1px solid #222; transition:0.2s;
+    }
+    .card.activo { border-color:#f5a623; background:#1f1a0d; }
+    .card h3 { margin:0 0 4px 0; font-size:16px; }
+    .card small { opacity:0.6; font-size:11px; display:block; margin-bottom:8px; min-height:28px; }
+    .card .precio { color:#f5a623; font-weight:bold; font-size:18px; }
+    .contador { display:flex; align-items:center; justify-content:space-between; margin-top:12px; background:#000; border-radius:10px; padding:4px; }
+    .contador button { width:32px; height:32px; border-radius:8px; border:none; background:#f5a623; color:#000; font-size:18px; font-weight:bold; cursor:pointer; }
+    .contador button:disabled { background:#333; color:#666; }
+    .contador span { font-weight:bold; font-size:16px; }
+
+    .btn-pedir { background:#f5a623; color:#000; border:none; padding:16px; width:100%; border-radius:12px; font-weight:bold; font-size:17px; margin-top:20px; cursor:pointer; }
+
+    #formEntrega { display:none; margin-top:20px; background:#1a1a1a; padding:18px; border-radius:15px; }
+    .dato { width:100%; padding:12px; margin:6px 0; border-radius:10px; border:1px solid #333; background:#000; color:#fff; box-sizing:border-box; font-size:16px; }
+  </style>
+</head>
+<body>
+
+  <div id="pantalla1" class="pantalla activa">
+    <h1>🍻 Chela Pronto</h1>
+    <p>Para que Chela Pronto llegue <b>pronto</b> a tu domicilio,<br>activa tu ubicación en el mapa. 📍</p>
+
+    <div id="map"></div>
+
+    <button class="btn-principal" id="btnConfirmar" disabled>📍 Toca el mapa para ubicarte</button>
+  </div>
+
+  <div id="pantalla2" class="pantalla">
+    <div id="headerFijo">
+      <h2>Solicitando pedido 🍺</h2>
+      <div class="tot">Total: <span id="total">$0</span></div>
+    </div>
+
+    <div class="grid">
+      <div class="card" id="card-six">
+        <div>
+          <h3>Six Pack</h3>
+          <small>Cerveza fría, lista para llevar</small>
+          <div class="precio">$120</div>
+        </div>
+        <div class="contador">
+          <button onclick="cambiar('six',-1)" id="menos-six" disabled>−</button>
+          <span id="six">0</span>
+          <button onclick="cambiar('six',1)">+</button>
+        </div>
+      </div>
+
+      <div class="card" id="card-ocho">
+        <div>
+          <h3>8 Pack</h3>
+          <small>Ocho cervezas bien frías</small>
+          <div class="precio">$150</div>
+        </div>
+        <div class="contador">
+          <button onclick="cambiar('ocho',-1)" id="menos-ocho" disabled>−</button>
+          <span id="ocho">0</span>
+          <button onclick="cambiar('ocho',1)">+</button>
+        </div>
+      </div>
+
+      <div class="card" id="card-caguama">
+        <div>
+          <h3>Caguama</h3>
+          <small>Litrote bien frío</small>
+          <div class="precio">$45</div>
+        </div>
+        <div class="contador">
+          <button onclick="cambiar('caguama',-1)" id="menos-caguama" disabled>−</button>
+          <span id="caguama">0</span>
+          <button onclick="cambiar('caguama',1)">+</button>
+        </div>
+      </div>
+
+      <div class="card" id="card-bazuka">
+        <div>
+          <h3>Bazuka</h3>
+          <small>Caguama de 1.2L</small>
+          <div class="precio">$65</div>
+        </div>
+        <div class="contador">
+          <button onclick="cambiar('bazuka',-1)" id="menos-bazuka" disabled>−</button>
+          <span id="bazuka">0</span>
+          <button onclick="cambiar('bazuka',1)">+</button>
+        </div>
+      </div>
+    </div>
+
+    <button class="btn-pedir" onclick="mostrarFormulario()">Pedir 🍺</button>
+
+    <div id="formEntrega">
+      <h3>Datos de entrega</h3>
+      <input class="dato" type="text" id="nombre" placeholder="Tu nombre">
+      <input class="dato" type="text" id="direccion" placeholder="Calle y número (referencia)">
+      <input class="dato" type="tel" id="telefono" placeholder="WhatsApp">
+      <button class="btn-pedir" onclick="enviarPedido()">Confirmar pedido 🍻</button>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    var WHATSAPP = "52TUNUMERO";
+    var PRECIOS = { six: 120, ocho: 150, caguama: 45, bazuka: 65 };
+    var MINIMOS = { six: 1, ocho: 1, caguama: 2, bazuka: 2 };
+    var NOMBRES = { six: 'Six Pack', ocho: '8 Pack', caguama: 'Caguama', bazuka: 'Bazuka' };
+    var cantidades = { six:0, ocho:0, caguama:0, bazuka:0 };
+    var mapa, marcador, ubicacionElegida = "";
+
+    // === MAPA ===
+    function initMapa() {
+      if (typeof L === 'undefined') {
+        document.getElementById('map').innerHTML =
+          '<div style="padding:20px;text-align:center;color:#f5a623;">⚠️ No cargó el mapa. Revisa tu conexión a internet.</div>';
+        return;
+      }
+
+      mapa = L.map('map').setView([19.4326, -99.1332], 13);
+
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '© OpenStreetMap'
+      }).addTo(mapa);
+
+      setTimeout(function(){ mapa.invalidateSize(); }, 400);
+
+      mapa.on('click', function(e) {
+        var lat = e.latlng.lat, lon = e.latlng.lng;
+        ubicacionElegida = "https://maps.google.com/?q=" + lat + "," + lon;
+        if (marcador) mapa.removeLayer(marcador);
+        marcador = L.marker([lat, lon]).addTo(mapa);
+        var btn = document.getElementById('btnConfirmar');
+        btn.disabled = false;
+        btn.innerText = '✅ Esta es mi ubicación';
+      });
+
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          function(pos) {
+            mapa.setView([pos.coords.latitude, pos.coords.longitude], 16);
+          },
+          function() {},
+          { enableHighAccuracy: true, timeout: 8000 }
+        );
+      }
+    }
+
+    // === BOTÓN CONFIRMAR ===
+    document.getElementById('btnConfirmar').onclick = function() {
+      if (!ubicacionElegida) {
+        alert('Toca el mapa para marcar tu ubicación');
+        return;
+      }
+      document.getElementById('pantalla1').classList.remove('activa');
+      document.getElementById('pantalla2').classList.add('activa');
+      window.scrollTo(0,0);
+    };
+
+    // === PRODUCTOS ===
+    function cambiar(prod, delta) {
+      var nuevo = cantidades[prod] + delta;
+      if (nuevo < 0) nuevo = 0;
+      cantidades[prod] = nuevo;
+      document.getElementById(prod).innerText = nuevo;
+      document.getElementById('menos-' + prod).disabled = (nuevo === 0);
+      document.getElementById('card-' + prod).classList.toggle('activo', nuevo > 0);
+      actualizarTotal();
+    }
+
+    function actualizarTotal() {
+      var total = 0;
+      for (var p in cantidades) total += cantidades[p] * PRECIOS[p];
+      document.getElementById('total').innerText = '$' + total;
+    }
+
+    function mostrarFormulario() {
+      var total = 0;
+      for (var p in cantidades) total += cantidades[p] * PRECIOS[p];
+      if (total === 0) { alert('Elige al menos un producto'); return; }
+      for (var p in cantidades) {
+        if (cantidades[p] > 0 && cantidades[p] < MINIMOS[p]) {
+          alert(NOMBRES[p] + ' mínimo ' + MINIMOS[p]);
+          return;
+        }
+      }
+      document.getElementById('formEntrega').style.display = 'block';
+      document.getElementById('formEntrega').scrollIntoView({ behavior:'smooth' });
+    }
+
+    function enviarPedido() {
+      var total = 0;
+      for (var p in cantidades) total += cantidades[p] * PRECIOS[p];
+
+      var nombre = document.getElementById('nombre').value;
+      var dir    = document.getElementById('direccion').value;
+      var tel    = document.getElementById('telefono').value;
+
+      if (!nombre || !dir || !tel) { alert('Llena tus datos de entrega'); return; }
+
+      var texto = '🍻 Pedido Chela Pronto\n\n';
+      if (cantidades.six)     texto += 'Six Pack: ' + cantidades.six + ' ($' + (cantidades.six*PRECIOS.six) + ')\n';
+      if (cantidades.ocho)    texto += '8 Pack: ' + cantidades.ocho + ' ($' + (cantidades.ocho*PRECIOS.ocho) + ')\n';
+      if (cantidades.caguama) texto += 'Caguama: ' + cantidades.caguama + ' ($' + (cantidades.caguama*PRECIOS.caguama) + ')\n';
+      if (cantidades.bazuka)  texto += 'Bazuka: ' + cantidades.bazuka + ' ($' + (cantidades.bazuka*PRECIOS.bazuka) + ')\n';
+      texto += '\n💰 Total: $' + total;
+      texto += '\n\n👤 ' + nombre + '\n📍 ' + dir + '\n📱 ' + tel;
+      if (ubicacionElegida) texto += '\n🗺️ ' + ubicacionElegida;
+
+      window.open('https://wa.me/' + WHATSAPP + '?text=' + encodeURIComponent(texto), '_blank');
+    }
+
+    // === INICIO ===
+    window.addEventListener('load', function() {
+      setTimeout(initMapa, 300);
+    });
+  </script>
+</body>
+</html>
