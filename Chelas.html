@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Chela Pronto 🍻</title>
+  <style>
+    body { font-family: sans-serif; background:#111; color:#fff; padding:20px; max-width:500px; margin:auto; }
+    h1 { text-align:center; }
+    .prod { background:#222; padding:15px; margin:10px 0; border-radius:10px; display:flex; justify-content:space-between; align-items:center; gap:10px; }
+    .info { flex:1; }
+    .info b { font-size:16px; }
+    .info small { opacity:0.6; font-size:12px; display:block; }
+    .info .precio { color:#f5a623; font-weight:bold; margin-top:4px; display:block; }
+    .contador { display:flex; align-items:center; gap:6px; }
+    .contador button { width:34px; height:34px; border-radius:50%; border:none; background:#f5a623; color:#000; font-size:20px; font-weight:bold; cursor:pointer; }
+    .contador span { min-width:24px; text-align:center; font-weight:bold; }
+    .dato { width:100%; padding:10px; margin:6px 0; border-radius:8px; border:none; box-sizing:border-box; }
+    .total { background:#1a3a1a; padding:14px; border-radius:10px; text-align:center; font-size:18px; margin:15px 0; }
+    .total b { color:#f5a623; font-size:24px; }
+    .btn-pedir { background:#f5a623; border:none; padding:14px; width:100%; border-radius:10px; font-weight:bold; font-size:16px; }
+    .ubi { background:#1a3a1a; padding:12px; border-radius:8px; margin-bottom:12px; font-size:14px; text-align:center; }
+  </style>
+</head>
+<body>
+
+  <!-- Modal de ubicación -->
+  <div id="modal" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.95);display:flex;align-items:center;justify-content:center;z-index:999;padding:20px;box-sizing:border-box;">
+    <div style="background:#222;padding:25px;border-radius:15px;max-width:400px;text-align:center;">
+      <h2>🍻 Chela Pronto</h2>
+      <p>Nuestro servicio es profesional.<br><br>
+      <b>Activa tu ubicación</b> para llevarte pronto tu chela. 🚀</p>
+      <button onclick="pedirUbicacion()" style="background:#f5a623;border:none;padding:14px;width:100%;border-radius:10px;font-weight:bold;font-size:16px;margin-top:15px;">📍 Activar ubicación</button>
+      <p style="font-size:12px;opacity:0.6;margin-top:10px;">Solo la usamos para la entrega</p>
+    </div>
+  </div>
+
+  <h1>🍻 Chela Pronto</h1>
+  <p style="text-align:center;">Cerveza fría a tu puerta</p>
+
+  <div class="ubi" id="ubiBox">📍 Ubicación: pendiente...</div>
+
+  <!-- PRODUCTOS -->
+  <div class="prod">
+    <div class="info">
+      <b>Six Pack</b>
+      <small>Cerveza fría, lista para llevar</small>
+      <span class="precio">$120</span>
+    </div>
+    <div class="contador">
+      <button onclick="cambiar('six',-1)">−</button>
+      <span id="six">0</span>
+      <button onclick="cambiar('six',1)">+</button>
+    </div>
+  </div>
+
+  <div class="prod">
+    <div class="info">
+      <b>8 Pack</b>
+      <small>Ocho cervezas bien frías</small>
+      <span class="precio">$150</span>
+    </div>
+    <div class="contador">
+      <button onclick="cambiar('ocho',-1)">−</button>
+      <span id="ocho">0</span>
+      <button onclick="cambiar('ocho',1)">+</button>
+    </div>
+  </div>
+
+  <div class="prod">
+    <div class="info">
+      <b>Caguama</b>
+      <small>Litrote bien frío</small>
+      <span class="precio">$45</span>
+    </div>
+    <div class="contador">
+      <button onclick="cambiar('caguama',-1)">−</button>
+      <span id="caguama">0</span>
+      <button onclick="cambiar('caguama',1)">+</button>
+    </div>
+  </div>
+
+  <div class="prod">
+    <div class="info">
+      <b>Bazuka</b>
+      <small>Caguama de 1.2L</small>
+      <span class="precio">$65</span>
+    </div>
+    <div class="contador">
+      <button onclick="cambiar('bazuka',-1)">−</button>
+      <span id="bazuka">0</span>
+      <button onclick="cambiar('bazuka',1)">+</button>
+    </div>
+  </div>
+
+  <div class="total">Total: <b id="total">$0</b></div>
+
+  <h3>Datos de entrega</h3>
+  <input class="dato" type="text" id="nombre" placeholder="Tu nombre">
+  <input class="dato" type="text" id="direccion" placeholder="Calle y número (referencia)">
+  <input class="dato" type="tel" id="telefono" placeholder="WhatsApp">
+
+  <button class="btn-pedir" onclick="enviarPedido()">Pedir 🍺</button>
+
+  <script>
+    var WHATSAPP = "52TUNUMERO";
+    var ubicacion = "";
+
+    // Precios (cámbialos aquí)
+    var PRECIOS = {
+      six: 120,
+      ocho: 150,
+      caguama: 45,
+      bazuka: 65
+    };
+
+    // Mínimos
+    var MINIMOS = {
+      six: 1,
+      ocho: 1,
+      caguama: 2,
+      bazuka: 2
+    };
+
+    var cantidades = { six:0, ocho:0, caguama:0, bazuka:0 };
+
+    function cambiar(prod, delta) {
+      var nuevo = cantidades[prod] + delta;
+      if (nuevo < 0) nuevo = 0;
+      cantidades[prod] = nuevo;
+      document.getElementById(prod).innerText = nuevo;
+      actualizarTotal();
+    }
+
+    function actualizarTotal() {
+      var total = 0;
+      for (var p in cantidades) {
+        total += cantidades[p] * PRECIOS[p];
+      }
+      document.getElementById('total').innerText = '$' + total;
+    }
+
+    function pedirUbicacion() {
+      if (!navigator.geolocation) { cerrarModal(); return; }
+      navigator.geolocation.getCurrentPosition(
+        function(pos) {
+          ubicacion = "https://maps.google.com/?q=" + pos.coords.latitude + "," + pos.coords.longitude;
+          document.getElementById('ubiBox').innerHTML = '📍 Ubicación: <b>activada ✓</b>';
+          cerrarModal();
+        },
+        function() {
+          document.getElementById('ubiBox').innerHTML = '📍 Ubicación: no activada';
+          cerrarModal();
+        },
+        { enableHighAccuracy: true, timeout: 10000 }
+      );
+    }
+
+    function cerrarModal() {
+      document.getElementById('modal').style.display = 'none';
+    }
+
+    function enviarPedido() {
+      var total = 0;
+      for (var p in cantidades) total += cantidades[p] * PRECIOS[p];
+
+      if (total === 0) { alert('Elige al menos un producto'); return; }
+
+      // Validar mínimos
+      for (var p in cantidades) {
+        if (cantidades[p] > 0 && cantidades[p] < MINIMOS[p]) {
+          alert(p.charAt(0).toUpperCase() + p.slice(1) + ' mínimo ' + MINIMOS[p]);
+          return;
+        }
+      }
+
+      var nombre = document.getElementById('nombre').value;
+      var dir    = document.getElementById('direccion').value;
+      var tel    = document.getElementById('telefono').value;
+
+      var texto = '🍻 Pedido Chela Pronto\n\n';
+      if (cantidades.six)     texto += 'Six Pack: ' + cantidades.six + ' ($' + (cantidades.six*PRECIOS.six) + ')\n';
+      if (cantidades.ocho)    texto += '8 Pack: ' + cantidades.ocho + ' ($' + (cantidades.ocho*PRECIOS.ocho) + ')\n';
+      if (cantidades.caguama) texto += 'Caguama: ' + cantidades.caguama + ' ($' + (cantidades.caguama*PRECIOS.caguama) + ')\n';
+      if (cantidades.bazuka)  texto += 'Bazuka: ' + cantidades.bazuka + ' ($' + (cantidades.bazuka*PRECIOS.bazuka) + ')\n';
+      texto += '\n💰 Total: $' + total;
+      texto += '\n\n👤 ' + nombre + '\n📍 ' + dir + '\n📱 ' + tel;
+      if (ubicacion) texto += '\n🗺️ ' + ubicacion;
+
+      window.open('https://wa.me/' + WHATSAPP + '?text=' + encodeURIComponent(texto), '_blank');
+    }
+  </script>
+</body>
+</html>
