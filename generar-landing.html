@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Generando Landing...</title>
+<meta name="robots" content="noindex, nofollow">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:#000;color:#00FF41;font-family:'Courier New',monospace}
+#matrixCanvas{position:fixed;inset:0;z-index:0;opacity:0.35}
+#previewFrame{position:fixed;inset:0;width:100%;height:100%;border:none;background:#fff;z-index:5;opacity:0;transition:opacity .8s ease}
+#previewFrame.visible{opacity:1}
+.topbar{position:fixed;top:0;left:0;right:0;z-index:100;padding:10px 12px;padding-top:calc(10px + env(safe-area-inset-top));background:linear-gradient(180deg,rgba(0,0,0,0.95) 0%,rgba(0,0,0,0) 100%);display:flex;justify-content:space-between;align-items:center;gap:8px;pointer-events:none;transition:opacity .5s;opacity:0}
+.topbar > *{pointer-events:auto}
+.topbar.visible{opacity:1}
+.topbar.hidden{opacity:0;pointer-events:none}
+.badge{background:rgba(0,0,0,0.85);backdrop-filter:blur(10px);color:#00FF41;padding:6px 14px;border-radius:4px;font-size:11px;font-weight:700;border:1px solid #00FF41;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:50vw;text-shadow:0 0 8px #00FF41}
+.actions{display:flex;gap:6px}
+.btn{padding:9px 14px;border:1px solid #00FF41;border-radius:4px;cursor:pointer;font-weight:700;font-size:12px;min-height:38px;display:inline-flex;align-items:center;justify-content:center;gap:5px;transition:all .2s;background:rgba(0,0,0,0.85);color:#00FF41;text-shadow:0 0 6px #00FF41}
+.btn:active{transform:scale(0.96)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn:hover{background:#00FF41;color:#000;text-shadow:none}
+.btn-success{background:rgba(0,0,0,0.85);color:#00FF41;border-color:#00FF41}
+.btn-success:hover{background:#00FF41;color:#000}
+.btn-danger{color:#FF0040;border-color:#FF0040;text-shadow:0 0 6px #FF0040}
+.btn-danger:hover{background:#FF0040;color:#000;text-shadow:none}
+.bottombar{position:fixed;bottom:0;left:0;right:0;z-index:100;padding:10px 12px;padding-bottom:calc(10px + env(safe-area-inset-bottom));background:linear-gradient(0deg,rgba(0,0,0,0.95) 0%,rgba(0,0,0,0) 100%);display:flex;gap:6px;justify-content:center;overflow-x:auto;scrollbar-width:none;transition:opacity .5s;opacity:0}
+.bottombar::-webkit-scrollbar{display:none}
+.bottombar.visible{opacity:1}
+.bottombar.hidden{opacity:0;pointer-events:none}
+.plantilla-btn{background:rgba(0,0,0,0.85);border:1px solid #00FF41;color:#00FF41;padding:9px 16px;border-radius:4px;font-size:12px;font-weight:700;white-space:nowrap;cursor:pointer;transition:all .2s;text-shadow:0 0 6px #00FF41}
+.plantilla-btn.activa{background:#00FF41;color:#000;text-shadow:none;box-shadow:0 0 20px rgba(0,255,65,0.7)}
+.fab-toggle{position:fixed;bottom:calc(72px + env(safe-area-inset-bottom));right:16px;width:44px;height:44px;border-radius:50%;background:rgba(0,0,0,0.85);color:#00FF41;border:1px solid #00FF41;font-size:20px;cursor:pointer;z-index:101;display:flex;align-items:center;justify-content:center;transition:transform .2s,opacity .5s;opacity:0;text-shadow:0 0 8px #00FF41}
+.fab-toggle.visible{opacity:1}
+.fab-toggle:active{transform:scale(0.9)}
+.builder{position:fixed;inset:0;z-index:9999;display:flex;flex-direction:column;transition:opacity .6s ease,transform .6s ease;background:transparent}
+.builder.fade-out{opacity:0;transform:scale(1.05);pointer-events:none}
+.builder-header{text-align:center;padding:14px 20px 6px;padding-top:calc(14px + env(safe-area-inset-top));z-index:2;position:relative}
+.builder-title{font-size:14px;font-weight:800;color:#00FF41;margin-bottom:3px;text-shadow:0 0 12px #00FF41;letter-spacing:1px}
+.builder-subtitle{font-size:10.5px;color:#00FF41;opacity:0.85;font-weight:500;min-height:14px;letter-spacing:0.5px;text-shadow:0 0 6px #00FF41}
+.builder-screen{flex:1;position:relative;padding:6px 10px;z-index:2;overflow:hidden;display:flex;align-items:flex-start;justify-content:center}
+.screen-frame{width:100%;max-width:420px;height:100%;background:#FFFFFF;border:none;border-radius:8px;overflow-y:auto;position:relative;scrollbar-width:thin;scrollbar-color:#BBB #FFF;transition:transform .6s ease;transform:scale(1);transform-origin:top center;scroll-behavior:smooth;box-shadow:0 0 30px rgba(0,0,0,0.6)}
+.screen-frame::-webkit-scrollbar{width:4px}
+.screen-frame::-webkit-scrollbar-track{background:#FFF}
+.screen-frame::-webkit-scrollbar-thumb{background:#BBB;border-radius:2px}
+.screen-frame.glitch{animation:glitchFrame .4s ease}
+@keyframes glitchFrame{0%,100%{transform:translateX(0) scale(1)}20%{transform:translateX(-4px) scale(1)}40%{transform:translateX(4px) scale(1)}60%{transform:translateX(-2px) scale(1)}80%{transform:translateX(2px) scale(1)}}
+.b-banner{position:relative;width:100%;height:96px;background-size:cover;background-position:center;background-color:#E8E8E8;z-index:1;opacity:0;transition:opacity .4s,transform .4s;transform:scale(0.85);border-radius:8px 8px 0 0;overflow:hidden}
+.b-banner.show{opacity:1;transform:scale(1)}
+.b-desc{padding:6px 14px 0;font-size:10.5px;color:#666;text-align:center;line-height:1.5;opacity:0;transition:opacity .4s;position:relative;z-index:1}
+.b-desc.show{opacity:1}
+.b-mision{padding:10px 14px 0;opacity:0;transition:opacity .4s;position:relative;z-index:1}
+.b-mision.show{opacity:1}
+.b-mision h4{font-size:10px;font-weight:700;color:#7B2FF7;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px}
+.b-mision p{font-size:10px;color:#555;line-height:1.45}
+.b-galeria{display:grid;grid-template-columns:repeat(2,1fr);gap:6px;padding:12px 12px 0;position:relative;z-index:1}
+.b-foto{height:56px;border-radius:6px;background-size:cover;background-position:center;background-color:#EEEEEE;border:1px solid #DDDDDD;opacity:0;transform:scale(0.6) rotate(-10deg);transition:opacity .4s,transform .4s}
+.b-foto.show{opacity:1;transform:scale(1) rotate(0deg)}
+.b-video{margin:12px 12px 0;border-radius:6px;overflow:hidden;background:#000;border:1px solid #DDDDDD;opacity:0;transform:scale(0.9);transition:opacity .4s,transform .4s;position:relative;z-index:1;padding-bottom:56.25%}
+.b-video.show{opacity:1;transform:scale(1)}
+.b-externo{margin:12px 12px 0;padding:10px;background:#F5F5F7;border-radius:6px;border:1px solid #DDDDDD;text-align:center;opacity:0;transform:translateY(10px);transition:opacity .4s,transform .4s;position:relative;z-index:1}
+.b-externo.show{opacity:1;transform:translateY(0)}
+.b-externo .b-ext-name{font-size:10px;color:#222;font-weight:700;margin-bottom:6px}
+.b-externo .b-ext-btn{display:inline-block;padding:6px 14px;background:#7B2FF7;color:#fff;border-radius:4px;font-size:9px;font-weight:700;text-decoration:none;cursor:pointer;transition:transform .15s}
+.b-externo .b-ext-btn:active{transform:scale(0.95)}
+.b-mapa{margin:12px 12px 0;border-radius:6px;overflow:hidden;border:1px solid #DDDDDD;opacity:0;transform:scale(0.9);transition:opacity .4s,transform .4s;height:80px;background:#F5F5F7;display:flex;align-items:center;justify-content:center;font-size:24px;color:#7B2FF7;position:relative;z-index:1}
+.b-mapa.show{opacity:1;transform:scale(1)}
+.b-contactos{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:12px 12px 0;position:relative;z-index:1}
+.b-contacto{background:#F5F5F7;border-radius:6px;padding:7px 8px;border-left:3px solid #7B2FF7;opacity:0;transform:translateX(-10px);transition:opacity .4s,transform .4s}
+.b-contacto.show{opacity:1;transform:translateX(0)}
+.b-contacto .bc-label{font-size:7.5px;color:#7B2FF7;text-transform:uppercase;font-weight:700;letter-spacing:.3px;opacity:0.85}
+.b-contacto .bc-valor{font-size:9.5px;color:#222;margin-top:2px;font-weight:600;word-break:break-word}
+.b-botones{display:flex;flex-direction:column;gap:6px;padding:12px 12px 10px;position:relative;z-index:1}
+.b-btn{padding:9px;border-radius:6px;text-align:center;font-size:10.5px;font-weight:700;color:#fff;opacity:0;transform:translateY(10px);transition:opacity .4s,transform .4s;min-height:32px;display:flex;align-items:center;justify-content:center}
+.b-btn.show{opacity:1;transform:translateY(0)}
+.b-btn-wa{background:#25D366}
+.b-btn-call{background:#7B2FF7}
+.b-btn-maps{background:#4285F4}
+.b-btn-fb{background:#1877F2}
+.b-qr{text-align:center;padding:10px 12px 16px;opacity:0;transition:opacity .4s;position:relative;z-index:1}
+.b-qr.show{opacity:1}
+.b-qr .b-qr-box{width:60px;height:60px;margin:0 auto;border-radius:6px;border:2px solid #DDDDDD;background:#fff;display:flex;align-items:center;justify-content:center;font-size:26px}
+.b-qr .b-qr-label{font-size:9px;color:#7B2FF7;margin-top:5px}
+.builder-folder{padding:6px 12px 10px;z-index:2;position:relative;padding-bottom:calc(10px + env(safe-area-inset-bottom))}
+.folder-label{font-size:9px;color:#00FF41;text-transform:uppercase;letter-spacing:2px;text-align:center;margin-bottom:6px;opacity:0.7;text-shadow:0 0 6px #00FF41}
+.folder-row{display:flex;gap:8px;justify-content:center;overflow-x:auto;padding:4px 0;scrollbar-width:none}
+.folder-row::-webkit-scrollbar{display:none}
+.folder-item{flex-shrink:0;width:56px;height:56px;border:2px solid #00FF41;border-radius:6px;background:rgba(0,0,0,0.85);display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:22px;color:#00FF41;box-shadow:0 0 12px rgba(0,255,65,0.4);position:relative;transition:all .2s;text-shadow:0 0 8px #00FF41}
+.folder-item .fi-label{font-size:7px;color:#00FF41;text-transform:uppercase;font-weight:700;margin-top:2px;opacity:0.75}
+.folder-item.activo{border-color:#00FF41;box-shadow:0 0 25px #00FF41,inset 0 0 15px rgba(0,255,65,0.3);background:#00FF41;color:#000;text-shadow:none;transform:scale(1.08)}
+.folder-item.activo .fi-label{color:#000}
+.builder-progress{padding:8px 30px 20px;padding-bottom:calc(20px + env(safe-area-inset-bottom));text-align:center;z-index:2;position:relative}
+.progress-bar{height:4px;background:rgba(0,255,65,0.15);border:1px solid #00FF41;border-radius:2px;overflow:hidden;margin-bottom:8px}
+.progress-fill{height:100%;width:0%;background:#00FF41;border-radius:2px;transition:width .4s ease;box-shadow:0 0 15px #00FF41}
+.progress-text{font-size:10.5px;color:#00FF41;font-weight:700;letter-spacing:.5px;text-shadow:0 0 6px #00FF41}
+.progress-icon{display:inline-block;margin-right:5px;animation:pulseIcon 1.2s ease-in-out infinite}
+@keyframes pulseIcon{0%,100%{opacity:.5;transform:scale(1)}50%{opacity:1;transform:scale(1.15)}}
+.hand-cursor{position:fixed;z-index:10000;pointer-events:none;font-size:28px;filter:drop-shadow(0 0 12px #00FF41);transition:left .9s cubic-bezier(0.4,0,0.2,1),top .9s cubic-bezier(0.4,0,0.2,1),opacity .3s,transform .2s;opacity:0;transform:scale(0.8)}
+.hand-cursor.visible{opacity:1;transform:scale(1)}
+.hand-cursor.grabbing .hand-emoji{display:none}
+.hand-cursor.grabbing .hand-grab{display:inline}
+.hand-cursor .hand-grab{display:none}
+.flying-element{position:fixed;z-index:9999;width:56px;height:56px;border:2px solid #00FF41;border-radius:6px;background:rgba(0,0,0,0.95);display:flex;align-items:center;justify-content:center;font-size:26px;color:#00FF41;box-shadow:0 0 25px #00FF41,0 0 50px rgba(0,255,65,0.5);text-shadow:0 0 10px #00FF41;pointer-events:none;transition:left .9s cubic-bezier(0.4,0,0.2,1),top .9s cubic-bezier(0.4,0,0.2,1),transform .3s,opacity .3s}
+.toast{position:fixed;bottom:100px;left:50%;transform:translateX(-50%);padding:12px 22px;border-radius:4px;color:#00FF41;font-weight:700;font-size:12px;z-index:10000;background:rgba(0,0,0,0.95);border:2px solid #00FF41;box-shadow:0 0 25px rgba(0,255,65,0.6);max-width:90vw;text-align:center;animation:slideUp .3s ease}
+@keyframes slideUp{from{opacity:0;transform:translate(-50%,20px)}to{opacity:1;transform:translate(-50%,0)}}
+.done-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.95);z-index:10500;display:none;align-items:center;justify-content:center;flex-direction:column;padding:30px;text-align:center;backdrop-filter:blur(4px)}
+.done-overlay.show{display:flex;animation:donePop .5s ease}
+@keyframes donePop{from{opacity:0;transform:scale(0.9)}to{opacity:1;transform:scale(1)}}
+.done-icon{font-size:72px;margin-bottom:16px;animation:doneIcon 1.2s ease infinite}
+@keyframes doneIcon{0%,100%{transform:scale(1);filter:drop-shadow(0 0 20px #00FF41)}50%{transform:scale(1.1);filter:drop-shadow(0 0 40px #00FF41)}}
+.done-title{font-size:22px;font-weight:800;color:#00FF41;margin-bottom:8px;letter-spacing:2px;text-shadow:0 0 15px #00FF41}
+.done-sub{font-size:13px;color:#00FF41;opacity:0.75;letter-spacing:0.5px}
+.link-modal{position:fixed;inset:0;background:rgba(0,0,0,0.95);backdrop-filter:blur(8px);z-index:11000;display:none;align-items:center;justify-content:center;padding:20px}
+.link-modal.show{display:flex}
+.link-modal-inner{background:#000;border:2px solid #00FF41;border-radius:8px;padding:24px;max-width:480px;width:100%;box-shadow:0 0 60px rgba(0,255,65,0.5);animation:popIn .3s ease}
+@keyframes popIn{from{opacity:0;transform:scale(0.9)}to{opacity:1;transform:scale(1)}}
+.link-modal-inner h2{color:#00FF41;font-size:17px;margin-bottom:8px;text-align:center;text-shadow:0 0 10px #00FF41;letter-spacing:1px}
+.link-modal-inner p{color:#00FF41;opacity:0.7;font-size:12px;text-align:center;margin-bottom:18px}
+.link-modal-inner .link-box{background:#0A0E17;border:2px solid #00FF41;border-radius:6px;padding:12px;font-size:11px;color:#00FF41;word-break:break-all;margin-bottom:14px;text-align:center;line-height:1.5;text-shadow:0 0 5px #00FF41}
+.link-modal-inner .link-actions{display:flex;flex-direction:column;gap:8px}
+.link-modal-inner .link-actions a,.link-modal-inner .link-actions button{padding:12px;border-radius:6px;font-weight:700;font-size:13px;text-decoration:none;border:1px solid #00FF41;cursor:pointer;text-align:center;min-height:44px;display:flex;align-items:center;justify-content:center;gap:6px;background:rgba(0,0,0,0.85);color:#00FF41;text-shadow:0 0 6px #00FF41;transition:all .2s}
+.link-modal-inner .link-actions a:hover,.link-modal-inner .link-actions button:hover{background:#00FF41;color:#000;text-shadow:none}
+.link-modal-inner .btn-cerrar-modal{background:transparent;color:#888;border-color:#444;text-shadow:none}
+.seo-modal{position:fixed;inset:0;background:rgba(0,0,0,0.95);backdrop-filter:blur(8px);z-index:11000;display:none;align-items:center;justify-content:center;padding:20px;overflow-y:auto}
+.seo-modal.show{display:flex}
+.seo-modal-inner{background:#000;border:2px solid #00FF41;border-radius:8px;padding:24px;max-width:520px;width:100%;box-shadow:0 0 60px rgba(0,255,65,0.5);animation:popIn .3s ease;margin:auto}
+.seo-modal-inner h2{color:#00FF41;font-size:17px;margin-bottom:6px;text-align:center;text-shadow:0 0 10px #00FF41;letter-spacing:1px}
+.seo-modal-inner .seo-sub{color:#00FF41;opacity:0.7;font-size:12px;text-align:center;margin-bottom:16px;word-break:break-all}
+.seo-block{margin-bottom:16px}
+.seo-block h3{color:#00FF41;font-size:12px;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;text-shadow:0 0 6px #00FF41}
+.seo-block textarea{width:100%;min-height:90px;background:#0A0E17;border:2px solid #00FF41;border-radius:6px;padding:10px;font-size:11px;color:#00FF41;font-family:'Courier New',monospace;resize:vertical}
+.seo-block-actions{display:flex;gap:8px;margin-top:8px}
+.seo-block-actions button{flex:1;padding:10px;border-radius:6px;font-weight:700;font-size:12px;border:1px solid #00FF41;cursor:pointer;background:rgba(0,0,0,0.85);color:#00FF41;text-shadow:0 0 6px #00FF41;transition:all .2s}
+.seo-block-actions button:hover{background:#00FF41;color:#000;text-shadow:none}
+.seo-modal-footer{display:flex;flex-direction:column;gap:8px;margin-top:6px;padding-top:14px;border-top:1px solid rgba(0,255,65,0.3)}
+.seo-modal-footer button{padding:12px;border-radius:6px;font-weight:700;font-size:13px;border:1px solid #00FF41;cursor:pointer;background:rgba(0,0,0,0.85);color:#00FF41;text-shadow:0 0 6px #00FF41;transition:all .2s}
+.seo-modal-footer button:hover{background:#00FF41;color:#000;text-shadow:none}
+.seo-modal-footer .btn-cerrar-modal{background:transparent;color:#888;border-color:#444;text-shadow:none}
+.seo-modal-footer .btn-publicar-seo{background:#00FF41;color:#000;text-shadow:none}
+.seo-modal-footer .btn-publicar-seo:disabled{opacity:.5;cursor:not-allowed}
+@media (max-width:480px){
+  .badge{font-size:10px;padding:5px 10px}
+  .btn{padding:8px 10px;font-size:11px;min-height:36px}
+  .plantilla-btn{padding:8px 12px;font-size:11px}
+  .fab-toggle{width:40px;height:40px;font-size:18px;bottom:calc(64px + env(safe-area-inset-bottom))}
+  .builder-title{font-size:13px}
+  .builder-subtitle{font-size:10px}
+  .folder-item{width:48px;height:48px;font-size:18px}
+  .flying-element{width:48px;height:48px;font-size:22px}
+  .hand-cursor{font-size:24px}
+}
+</style>
+</head>
+<body>
+
+<canvas id="matrixCanvas"></canvas>
+
+<div class="builder" id="builder">
+  <div class="builder-header">
+    <div class="builder-title">🤖 I.A._construyendo_landing.exe</div>
+    <div class="builder-subtitle" id="builderSubtitle">> Inicializando sistema...</div>
+  </div>
+
+  <div class="builder-screen">
+    <div class="screen-frame" id="screenFrame">
+      <div class="b-banner" id="bBanner"></div>
+      <p class="b-desc" id="bDesc"></p>
+      <div class="b-mision" id="bMision"><h4>🎯 Nuestra Misión</h4><p id="bMisionTxt"></p></div>
+      <div class="b-galeria" id="bGaleria"></div>
+      <div class="b-video" id="bVideo"></div>
+      <div class="b-externo" id="bExterno">
+        <div class="b-ext-name" id="bExtName">Enlace externo</div>
+        <a class="b-ext-btn" id="bExtBtn" href="#" target="_blank" rel="noopener">🌐 Visitar</a>
+      </div>
+      <div class="b-mapa" id="bMapa">🗺️</div>
+      <div class="b-contactos" id="bContactos"></div>
+      <div class="b-botones" id="bBotones">
+        <div class="b-btn b-btn-wa" id="bBtnWa">💬 WhatsApp</div>
+        <div class="b-btn b-btn-call" id="bBtnCall">📞 Llamar</div>
+        <div class="b-btn b-btn-maps" id="bBtnMaps">🧭 Cómo llegar</div>
+        <div class="b-btn b-btn-fb" id="bBtnFb">📘 Facebook</div>
+      </div>
+      <div class="b-qr" id="bQr"><div class="b-qr-box">📱</div><div class="b-qr-label">Escanea para compartir</div></div>
+    </div>
+  </div>
+
+  <div class="builder-folder">
+    <div class="folder-label">> 📁 carpeta_recursos_sheet</div>
+    <div class="folder-row" id="folderRow"></div>
+  </div>
+
+  <div class="builder-progress">
+    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="progress-text"><span class="progress-icon">⚙️</span><span id="progressText">> Preparando...</span></div>
+  </div>
+</div>
+
+<div class="hand-cursor" id="handCursor">
+  <span class="hand-emoji">👆</span>
+  <span class="hand-grab">✋</span>
+</div>
+
+<div class="done-overlay" id="doneOverlay">
+  <div class="done-icon">✅</div>
+  <div class="done-title">> PÁGINA_LISTA</div>
+  <div class="done-sub">Tu landing está funcional</div>
+</div>
+
+<iframe id="previewFrame" sandbox="allow-scripts allow-popups allow-forms allow-modals allow-same-origin"></iframe>
+
+<div class="topbar" id="topbar">
+  <span class="badge" id="previewBadge">👁️ Vista Previa</span>
+  <div class="actions">
+    <button class="btn" onclick="procesarSitemapRobots()" aria-label="Sitemap y robots">🗺️ SEO</button>
+    <button class="btn" id="btnDescargar">⬇️ Descargar</button>
+    <button class="btn btn-success" id="btnPublicar">🚀 Publicar</button>
+    <button class="btn btn-danger" id="btnCerrar" aria-label="Cerrar">✖</button>
+  </div>
+</div>
+
+<div class="bottombar" id="bottombar">
+  <button class="plantilla-btn" data-plantilla="futurista" onclick="cambiarPlantilla('futurista')">⚡ Futurista</button>
+  <button class="plantilla-btn" data-plantilla="minimalista" onclick="cambiarPlantilla('minimalista')">◻️ Minimalista</button>
+  <button class="plantilla-btn" data-plantilla="clasico" onclick="cambiarPlantilla('clasico')">🏛️ Clásico</button>
+</div>
+
+<button class="fab-toggle" id="fabToggle" onclick="toggleBarras()" aria-label="Mostrar u ocultar barras">👁️</button>
+
+<div class="link-modal" id="linkModal">
+  <div class="link-modal-inner">
+    <h2>✅ PUBLICADO_EN_GITHUB</h2>
+    <p id="linkModalSub">Tu landing ya está en línea</p>
+    <div class="link-box" id="linkBox">https://...</div>
+    <div class="link-actions">
+      <a href="#" target="_blank" rel="noopener" id="linkAbrir">🌐 Abrir landing</a>
+      <button id="linkCopiar">📋 Copiar link</button>
+      <a href="#" target="_blank" rel="noopener" id="linkCompartir">💬 Compartir WhatsApp</a>
+      <button class="btn-cerrar-modal" id="linkCerrar">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<div class="seo-modal" id="seoModal">
+  <div class="seo-modal-inner">
+    <h2>🗺️ SEO: Sitemap &amp; Robots</h2>
+    <p class="seo-sub" id="seoModalSub">Generado para tu landing</p>
+    <div class="seo-block">
+      <h3>📄 sitemap.xml</h3>
+      <textarea id="seoSitemapTxt" readonly></textarea>
+      <div class="seo-block-actions">
+        <button type="button" id="btnDescargarSitemap">⬇️ Descargar</button>
+        <button type="button" id="btnCopiarSitemap">📋 Copiar</button>
+      </div>
+    </div>
+    <div class="seo-block">
+      <h3>🤖 robots.txt</h3>
+      <textarea id="seoRobotsTxt" readonly></textarea>
+      <div class="seo-block-actions">
+        <button type="button" id="btnDescargarRobots">⬇️ Descargar</button>
+        <button type="button" id="btnCopiarRobots">📋 Copiar</button>
+      </div>
+    </div>
+    <div class="seo-modal-footer">
+      <button type="button" class="btn-publicar-seo" id="btnPublicarSeo">🚀 Publicar sitemap + robots en GitHub</button>
+      <button type="button" class="btn-cerrar-modal" id="btnCerrarSeoModal">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<iframe name="hiddenSaveFrame" style="display:none"></iframe>
+<form id="hiddenSaveForm" method="POST" target="hiddenSaveFrame" style="display:none">
+  <input type="hidden" name="action" id="hf_action">
+  <input type="hidden" name="id" id="hf_id">
+  <input type="hidden" name="datos" id="hf_datos">
+</form>
+
+<script>
+/* ============================================================
+   CONFIG
+   ============================================================ */
+const GITHUB_PUBLISH_URL = 'https://script.google.com/macros/s/AKfycbwh4EBEepNZrWVibk7L4jq3KZHx9ly_tFsF7OjFDInt6GS-gjdiQcWVrd83tzLNp-aKSw/exec';
+const GITHUB_USER = 'proyectosolaronline';
+const GITHUB_PAGES_BASE = 'https://' + GITHUB_USER + '.github.io';
+
+let negocioActual = null;
+let currentPreviewHTML = '';
+let currentPreviewNombre = '';
+let currentPreviewSlug = '';
+let plantillaActual = 'futurista';
+let barrasVisibles = true;
+let urlPublicada = '';
+
+/* ============================================================
+   MATRIX
+   ============================================================ */
+(function iniciarMatrix() {
+  const canvas = document.getElementById('matrixCanvas');
+  const ctx = canvas.getContext('2d');
+  let w, h, columnas, drops;
+  const caracteres = '01アイウエオカキクケコサシスセソタチツテトナニヌネノ0123456789ABCDEF';
+  const fontSize = 14;
+  function resize() {
+    w = canvas.width = window.innerWidth;
+    h = canvas.height = window.innerHeight;
+    columnas = Math.floor(w / fontSize);
+    drops = new Array(columnas).fill(1);
+  }
+  resize();
+  window.addEventListener('resize', resize);
+  function draw() {
+    ctx.fillStyle = 'rgba(0,0,0,0.06)';
+    ctx.fillRect(0, 0, w, h);
+    ctx.fillStyle = '#00FF41';
+    ctx.font = fontSize + 'px monospace';
+    for (let i = 0; i < drops.length; i++) {
+      const texto = caracteres.charAt(Math.floor(Math.random() * caracteres.length));
+      ctx.fillText(texto, i * fontSize, drops[i] * fontSize);
+      if (drops[i] * fontSize > h && Math.random() > 0.975) drops[i] = 0;
+      drops[i]++;
+    }
+  }
+  setInterval(draw, 50);
+})();
