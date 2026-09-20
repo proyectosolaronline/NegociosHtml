@@ -322,3 +322,296 @@ let urlPublicada = '';
   }
   setInterval(draw, 50);
 })();
+
+
+/* ============================================================
+   HELPERS
+   ============================================================ */
+function esModoDelivery(n) {
+  return /&delivery\b/i.test(String((n && n.nombre) || ''));
+}
+function nombreVisible(nombre) {
+  return String(nombre || 'Negocio').split('&')[0].trim() || 'Negocio';
+}
+function parsearUrlExterna(raw) {
+  const valor = (raw || '').trim();
+  if (!valor) return null;
+  const m = valor.match(/^(.+?)\s*(?:=>|::|\||&)\s*(https?:\/\/\S+)$/);
+  let nombre = 'Enlace externo', url = '';
+  if (m) { nombre = m[1].trim() || 'Enlace externo'; url = m[2].trim(); } else { url = valor; }
+  if (url && !url.startsWith('http://') && !url.startsWith('https://')) url = 'https://' + url;
+  if (url && (url.startsWith('http://') || url.startsWith('https://'))) return { nombre, url };
+  return null;
+}
+function parsearVideo(raw) {
+  const link = (raw || '').trim();
+  if (!link) return null;
+  if (link.includes('/d/')) { const fid = link.match(/\/d\/([a-zA-Z0-9_-]+)/); if (fid) return 'https://drive.google.com/file/d/' + fid[1] + '/preview'; }
+  if (link.includes('youtube.com') || link.includes('youtu.be')) { const m = link.match(/(?:v=|youtu\.be\/|\/shorts\/|\/embed\/)([a-zA-Z0-9_-]{11})/); if (m && m[1]) return 'https://www.youtube.com/embed/' + m[1] + '?rel=0'; }
+  return link;
+}
+function nombreCarpeta(nombre) {
+  return String(nombreVisible(nombre)).normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/ñ/gi, 'n').replace(/[^a-zA-Z0-9\s-]/g, '').trim().replace(/\s+/g, '-');
+}
+function esUrlImagen(v) { return /^https?:\/\//.test(v) || /^data:image\//.test(v); }
+function escHTML(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function escJS(s){ return String(s == null ? '' : s).replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/</g, '\\x3C').replace(/[\n\r]/g, ' '); }
+function esperar(ms) { return new Promise(r => setTimeout(r, ms)); }
+function setProgress(p, t) { document.getElementById('progressFill').style.width = p + '%'; document.getElementById('progressText').textContent = t; }
+function mostrarToast(m) {
+  document.querySelectorAll('.toast').forEach(x => x.remove());
+  const e = document.createElement('div');
+  e.className = 'toast'; e.textContent = m; document.body.appendChild(e);
+  setTimeout(() => { e.style.opacity = '0'; setTimeout(() => e.remove(), 300); }, 3200);
+}
+
+/* ============================================================
+   SEO: SITEMAP + ROBOTS
+   ============================================================ */
+function construirSitemapXML(nombreCarp) {
+  if (!nombreCarp) nombreCarp = 'landing';
+  const url = GITHUB_PAGES_BASE + '/' + encodeURIComponent(nombreCarp) + '/';
+  return '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n<url><loc>' + url + '</loc><lastmod>' + new Date().toISOString().split('T')[0] + '</lastmod><changefreq>weekly</changefreq><priority>1.0</priority></url>\n</urlset>';
+}
+function construirRobotsTxt(nombreCarp) {
+  if (!nombreCarp) nombreCarp = 'landing';
+  return 'User-agent: *\nAllow: /\n\nSitemap: ' + GITHUB_PAGES_BASE + '/' + encodeURIComponent(nombreCarp) + '/sitemap.xml\n';
+}
+function descargarTexto(contenido, nombreArchivo, tipoMime) {
+  const bl = new Blob([contenido], { type: (tipoMime || 'text/plain') + ';charset=utf-8' });
+  const u = URL.createObjectURL(bl);
+  const a = document.createElement('a'); a.href = u; a.download = nombreArchivo; a.click();
+  setTimeout(() => URL.revokeObjectURL(u), 3000);
+}
+async function copiarTexto(texto, etiqueta) {
+  try { await navigator.clipboard.writeText(texto); mostrarToast('📋 ' + etiqueta + ' copiado'); }
+  catch (e) { mostrarToast('⚠️ No se pudo copiar ' + etiqueta); }
+}
+function procesarSitemapRobots() {
+  if (!negocioActual) { mostrarToast('⚠️ Aún no hay datos'); return; }
+  const carp = currentPreviewSlug || nombreCarpeta(negocioActual.nombre);
+  currentPreviewSlug = carp;
+  document.getElementById('seoSitemapTxt').value = construirSitemapXML(carp);
+  document.getElementById('seoRobotsTxt').value = construirRobotsTxt(carp);
+  document.getElementById('seoModalSub').textContent = 'Landing de "' + nombreVisible(negocioActual.nombre) + '" — ' + GITHUB_PAGES_BASE + '/' + encodeURIComponent(carp) + '/';
+  document.getElementById('seoModal').classList.add('show');
+}
+document.getElementById('btnDescargarSitemap').onclick = () => { descargarTexto(document.getElementById('seoSitemapTxt').value, 'sitemap.xml', 'application/xml'); mostrarToast('✅ sitemap.xml descargado'); };
+document.getElementById('btnDescargarRobots').onclick = () => { descargarTexto(document.getElementById('seoRobotsTxt').value, 'robots.txt', 'text/plain'); mostrarToast('✅ robots.txt descargado'); };
+document.getElementById('btnCopiarSitemap').onclick = () => copiarTexto(document.getElementById('seoSitemapTxt').value, 'sitemap.xml');
+document.getElementById('btnCopiarRobots').onclick = () => copiarTexto(document.getElementById('seoRobotsTxt').value, 'robots.txt');
+document.getElementById('btnCerrarSeoModal').onclick = () => document.getElementById('seoModal').classList.remove('show');
+document.getElementById('seoModal').addEventListener('click', e => { if (e.target === e.currentTarget) document.getElementById('seoModal').classList.remove('show'); });
+document.getElementById('btnPublicarSeo').onclick = () => {
+  if (!negocioActual) { mostrarToast('⚠️ Aún no hay datos'); return; }
+  const carp = currentPreviewSlug || nombreCarpeta(negocioActual.nombre);
+  const bt = document.getElementById('btnPublicarSeo');
+  bt.disabled = true; bt.textContent = '> Publicando SEO...';
+  const dt = { slug: carp, nombreNegocio: nombreVisible(negocioActual.nombre), sitemap: document.getElementById('seoSitemapTxt').value, nombreSitemap: 'sitemap.xml', robots: document.getElementById('seoRobotsTxt').value, nombreRobots: 'robots.txt' };
+  function om(e) {
+    if (e.data && typeof e.data === 'object' && 'success' in e.data) {
+      window.removeEventListener('message', om);
+      bt.disabled = false; bt.textContent = '🚀 Publicar sitemap + robots en GitHub';
+      mostrarToast(e.data.success ? '🚀 SEO publicado en GitHub' : '❌ Error: ' + (e.data.error || 'desconocido'));
+    }
+  }
+  window.addEventListener('message', om);
+  document.getElementById('hf_action').value = 'publicarSEO';
+  document.getElementById('hf_id').value = '';
+  document.getElementById('hf_datos').value = JSON.stringify(dt);
+  const fm = document.getElementById('hiddenSaveForm');
+  fm.action = GITHUB_PUBLISH_URL;
+  fm.submit();
+  setTimeout(() => { window.removeEventListener('message', om); bt.disabled = false; bt.textContent = '🚀 Publicar sitemap + robots en GitHub'; }, 30000);
+};
+
+/* ============================================================
+   BOOT
+   ============================================================ */
+document.addEventListener('DOMContentLoaded', () => {
+  let datos = null;
+  try { const raw = localStorage.getItem('landingData'); if (raw) datos = JSON.parse(raw); }
+  catch(e) { console.error(e); }
+  if (!datos || !datos.nombre) { document.getElementById('builderSubtitle').textContent = '> ❌ No se recibieron datos.'; return; }
+  if (!datos.logo || !datos.banner) { document.getElementById('builderSubtitle').textContent = '> ❌ Faltan logo y banner.'; return; }
+  negocioActual = datos;
+  const esDelivery = esModoDelivery(datos);
+  document.getElementById('previewBadge').textContent = '👁️ ' + nombreVisible(datos.nombre) + (esDelivery ? ' 🛒' : '');
+  plantillaActual = datos.plantillaLanding || 'futurista';
+  iniciarConstruccion(datos);
+});
+
+/* ============================================================
+   CONSTRUCCIÓN ANIMADA
+   ============================================================ */
+async function iniciarConstruccion(n) {
+  const esDelivery = esModoDelivery(n);
+  const elementos = [];
+  elementos.push({ icono: '🖼️', label: 'banner', target: 'bBanner',
+    aplicar: () => { const b = document.getElementById('bBanner'); if (esUrlImagen(n.banner)) b.style.backgroundImage = 'url("' + n.banner.replace(/"/g, '%22') + '")'; b.classList.add('show'); return b; },
+    msg: 'Colocando banner...' });
+  const dp = (n.descripcion || '').split('&'); const dc = dp[0].trim() || ''; const dl = dp[1] ? dp[1].trim() : dc;
+  if (dl) elementos.push({ icono: '📝', label: 'desc', target: 'bDesc',
+    aplicar: () => { const d = document.getElementById('bDesc'); d.textContent = dl.substring(0, 90) + (dl.length > 90 ? '...' : ''); d.classList.add('show'); return d; },
+    msg: 'Insertando descripción...' });
+  if (n.mision) elementos.push({ icono: '🎯', label: 'misión', target: 'bMision',
+    aplicar: () => { document.getElementById('bMisionTxt').textContent = n.mision.substring(0, 80) + (n.mision.length > 80 ? '...' : ''); const m = document.getElementById('bMision'); m.classList.add('show'); return m; },
+    msg: 'Añadiendo misión...' });
+  const fotos = (n.fotos || []).filter(f => f && f.url).slice(0, 4);
+  fotos.forEach((f, i) => {
+    elementos.push({ icono: '📸', label: esDelivery ? ('prod' + (i + 1)) : ('foto' + (i + 1)), target: 'bGaleria',
+      aplicar: () => { const g = document.getElementById('bGaleria'); const el = document.createElement('div'); el.className = 'b-foto'; if (esUrlImagen(f.url)) el.style.backgroundImage = 'url("' + f.url.replace(/"/g, '%22') + '")'; g.appendChild(el); void el.offsetWidth; el.classList.add('show'); return el; },
+      msg: esDelivery ? ('Colocando producto ' + (i + 1) + '...') : ('Colocando foto ' + (i + 1) + '...') });
+  });
+  if (esDelivery) elementos.push({ icono: '🛒', label: 'pedido', target: 'bBotones',
+    aplicar: () => { const cont = document.getElementById('bBotones'); const btn = document.createElement('div'); btn.className = 'b-btn'; btn.style.background = 'linear-gradient(135deg,#25D366,#00B84A)'; btn.textContent = '🛒 Activar ubicación / Pedido'; cont.insertBefore(btn, cont.firstChild); void btn.offsetWidth; btn.classList.add('show'); return btn; },
+    msg: 'Activando pedidos...' });
+  const videoEmbed = parsearVideo(n.video);
+  if (videoEmbed && !esDelivery) elementos.push({ icono: '🎬', label: 'video', target: 'bVideo',
+    aplicar: () => { const v = document.getElementById('bVideo'); v.innerHTML = '<iframe src="' + videoEmbed + '" allowfullscreen loading="lazy" style="position:absolute;inset:0;width:100%;height:100%;border:0;"></iframe>'; v.classList.add('show'); return v; },
+    msg: 'Insertando video...' });
+  const ext = parsearUrlExterna(n.Urlexterna || n.urlexterna);
+  if (ext) elementos.push({ icono: '🔗', label: 'externo', target: 'bExterno',
+    aplicar: () => { const cont = document.getElementById('bExterno'); document.getElementById('bExtName').textContent = '🔗 ' + ext.nombre; const btnEl = document.getElementById('bExtBtn'); btnEl.textContent = '🌐 Visitar ' + ext.nombre; btnEl.setAttribute('href', ext.url); cont.classList.add('show'); return cont; },
+    msg: 'Añadiendo enlace externo...' });
+  if (n.latitud && n.longitud) elementos.push({ icono: '🗺️', label: 'mapa', target: 'bMapa',
+    aplicar: () => { const m = document.getElementById('bMapa'); m.classList.add('show'); return m; },
+    msg: 'Cargando mapa...' });
+  const contactos = [['📞','Teléfono',n.telefono],['💬','WhatsApp',n.whatsapp],['🕐','Horario',n.horario],['✉️','Correo',n.correo]].filter(c => c[2]);
+  contactos.forEach(c => {
+    elementos.push({ icono: c[0], label: c[1], target: 'bContactos',
+      aplicar: () => { const cn = document.getElementById('bContactos'); const el = document.createElement('div'); el.className = 'b-contacto'; el.innerHTML = '<div class="bc-label">' + escHTML(c[0]) + ' ' + escHTML(c[1]) + '</div><div class="bc-valor">' + escHTML(c[2]) + '</div>'; cn.appendChild(el); void el.offsetWidth; el.classList.add('show'); return el; },
+      msg: 'Colocando ' + c[1] + '...' });
+  });
+  elementos.push({ icono: '🔘', label: 'botones', target: 'bBotones',
+    aplicar: () => { const wa = document.getElementById('bBtnWa'); wa.classList.add('show'); setTimeout(() => document.getElementById('bBtnCall').classList.add('show'), 80); if (n.latitud && n.longitud) setTimeout(() => document.getElementById('bBtnMaps').classList.add('show'), 160); if (n.urlFacebook) setTimeout(() => document.getElementById('bBtnFb').classList.add('show'), 240); return wa; },
+    msg: 'Activando botones...' });
+  elementos.push({ icono: '📱', label: 'QR', target: 'bQr',
+    aplicar: () => { const q = document.getElementById('bQr'); q.classList.add('show'); return q; },
+    msg: 'Generando QR...' });
+
+  const folderRow = document.getElementById('folderRow');
+  folderRow.innerHTML = '';
+  elementos.forEach((el, idx) => {
+    const item = document.createElement('div');
+    item.className = 'folder-item'; item.dataset.idx = idx;
+    item.innerHTML = '<span>' + el.icono + '</span><span class="fi-label">' + el.label + '</span>';
+    folderRow.appendChild(item);
+  });
+  const hand = document.getElementById('handCursor');
+  hand.classList.add('visible');
+  for (let i = 0; i < elementos.length; i++) await animarElemento(elementos[i], i, elementos.length, hand, folderRow);
+  hand.classList.remove('visible');
+  setProgress(100, esDelivery ? '> ✅ Página de pedidos lista' : '> ✅ Landing lista');
+  await esperar(600);
+  const screen = document.getElementById('screenFrame');
+  screen.classList.add('glitch'); await esperar(400); screen.classList.remove('glitch');
+  document.getElementById('doneOverlay').classList.add('show');
+  await esperar(1500);
+  document.getElementById('doneOverlay').classList.remove('show');
+  finalizarConstruccion();
+}
+
+async function animarElemento(el, idx, total, hand, folderRow) {
+  const pct = Math.round(((idx + 1) / total) * 100);
+  setProgress(pct, '> ' + el.msg);
+  document.getElementById('builderSubtitle').textContent = '> 📁 Tomando ' + el.label + '...';
+  const screen = document.getElementById('screenFrame');
+  screen.style.transform = 'scale(' + Math.max(1 - (idx * 0.02), 0.7) + ')';
+  const folderItem = document.querySelector('.folder-item[data-idx="' + idx + '"]');
+  if (folderItem) {
+    folderItem.classList.add('activo');
+    folderRow.scrollTo({ left: folderItem.offsetLeft - (folderRow.offsetWidth / 2) + (folderItem.offsetWidth / 2), behavior: 'smooth' });
+    const rect = folderItem.getBoundingClientRect();
+    hand.style.left = (rect.left + rect.width / 2) + 'px'; hand.style.top = (rect.top + rect.height / 2) + 'px';
+  }
+  hand.classList.remove('grabbing'); await esperar(320);
+  hand.classList.add('grabbing'); await esperar(140);
+  const flying = document.createElement('div');
+  flying.className = 'flying-element'; flying.textContent = el.icono;
+  if (folderItem) { const rect = folderItem.getBoundingClientRect(); flying.style.left = (rect.left + rect.width / 2 - 28) + 'px'; flying.style.top = (rect.top + rect.height / 2 - 28) + 'px'; }
+  document.body.appendChild(flying); await esperar(80);
+  const frame = document.getElementById('screenFrame');
+  const containerEl = document.getElementById(el.target);
+  if (containerEl && frame) { const scrollDest = Math.max(0, containerEl.offsetTop - (frame.clientHeight / 2) + ((containerEl.offsetHeight || 40) / 2)); frame.scrollTo({ top: scrollDest, behavior: 'smooth' }); await esperar(400); }
+  const tr = containerEl ? containerEl.getBoundingClientRect() : { left: window.innerWidth / 2, top: window.innerHeight / 2, width: 60, height: 60 };
+  const destX = tr.left + (tr.width / 2) - 28; const destY = tr.top + (tr.height / 2) - 28;
+  hand.style.left = (destX + 28) + 'px'; hand.style.top = (destY + 28) + 'px';
+  flying.style.left = destX + 'px'; flying.style.top = destY + 'px';
+  if (folderItem) folderItem.classList.remove('activo');
+  await esperar(900);
+  const created = el.aplicar(); await esperar(60);
+  let visibleEl = created || document.getElementById(el.target);
+  if (visibleEl && visibleEl.classList && !visibleEl.classList.contains('show')) visibleEl.classList.add('show');
+  flying.style.transform = 'scale(0.4)'; flying.style.opacity = '0';
+  await esperar(200); flying.remove();
+  hand.classList.remove('grabbing'); await esperar(120);
+}
+
+function finalizarConstruccion() {
+  currentPreviewHTML = construirLandingHTML(negocioActual, plantillaActual);
+  currentPreviewSlug = nombreCarpeta(negocioActual.nombre);
+  currentPreviewNombre = currentPreviewSlug + '.html';
+  document.getElementById('previewFrame').srcdoc = currentPreviewHTML;
+  const b = document.getElementById('builder');
+  b.classList.add('fade-out');
+  setTimeout(() => {
+    b.style.display = 'none';
+    document.getElementById('previewFrame').classList.add('visible');
+    document.getElementById('topbar').classList.add('visible');
+    document.getElementById('bottombar').classList.add('visible');
+    document.getElementById('fabToggle').classList.add('visible');
+    actualizarBotonesPlantilla(plantillaActual);
+    setTimeout(() => { if (barrasVisibles) toggleBarras(); }, 3500);
+  }, 700);
+}
+function toggleBarras() {
+  barrasVisibles = !barrasVisibles;
+  const t = document.getElementById('topbar'); const b = document.getElementById('bottombar'); const f = document.getElementById('fabToggle');
+  if (barrasVisibles) { t.classList.remove('hidden'); b.classList.remove('hidden'); f.textContent = '👁️'; }
+  else { t.classList.add('hidden'); b.classList.add('hidden'); f.textContent = '⚙️'; }
+}
+function cambiarPlantilla(p) {
+  plantillaActual = p; if (!negocioActual) return;
+  currentPreviewHTML = construirLandingHTML(negocioActual, p);
+  document.getElementById('previewFrame').srcdoc = currentPreviewHTML;
+  actualizarBotonesPlantilla(p);
+  mostrarToast('🎭 Plantilla: ' + p);
+}
+function actualizarBotonesPlantilla(a) { document.querySelectorAll('.plantilla-btn').forEach(b => b.classList.toggle('activa', b.dataset.plantilla === a)); }
+
+document.getElementById('btnCerrar').onclick = () => { try { localStorage.removeItem('landingData'); } catch(e) {} window.close(); setTimeout(() => { window.location.href = 'about:blank'; }, 200); };
+document.getElementById('btnDescargar').onclick = () => { if (!currentPreviewHTML) return; descargarTexto(currentPreviewHTML, currentPreviewNombre, 'text/html'); mostrarToast('✅ HTML descargado'); };
+document.getElementById('btnPublicar').onclick = () => {
+  if (!currentPreviewHTML || !negocioActual) return;
+  const carp = currentPreviewSlug;
+  const bt = document.getElementById('btnPublicar');
+  bt.disabled = true; bt.textContent = '> Publicando...';
+  const dt = { nombreArchivo: currentPreviewNombre, html: currentPreviewHTML, sitemap: construirSitemapXML(carp), nombreSitemap: 'sitemap.xml', robots: construirRobotsTxt(carp), nombreRobots: 'robots.txt', slug: carp, nombreNegocio: nombreVisible(negocioActual.nombre) };
+  function om(e) {
+    if (e.data && typeof e.data === 'object' && 'success' in e.data) {
+      window.removeEventListener('message', om);
+      bt.disabled = false; bt.textContent = '🚀 Publicar';
+      if (e.data.success) { urlPublicada = (e.data.url || (GITHUB_PAGES_BASE + '/' + encodeURIComponent(carp) + '/')).trim(); mostrarToast('🚀 Publicado'); mostrarModalLink(urlPublicada, nombreVisible(negocioActual.nombre)); }
+      else mostrarToast('❌ Error: ' + (e.data.error || 'desconocido'));
+    }
+  }
+  window.addEventListener('message', om);
+  document.getElementById('hf_action').value = 'publicarGitHub';
+  document.getElementById('hf_id').value = '';
+  document.getElementById('hf_datos').value = JSON.stringify(dt);
+  const fm = document.getElementById('hiddenSaveForm');
+  fm.action = GITHUB_PUBLISH_URL;
+  fm.submit();
+  setTimeout(() => { window.removeEventListener('message', om); bt.disabled = false; bt.textContent = '🚀 Publicar'; }, 30000);
+};
+function mostrarModalLink(u, n) {
+  document.getElementById('linkBox').textContent = u;
+  document.getElementById('linkModalSub').textContent = n ? 'Landing de "' + n + '"' : 'Tu landing está en línea';
+  document.getElementById('linkAbrir').href = u;
+  document.getElementById('linkCompartir').href = 'https://wa.me/?text=' + encodeURIComponent('Mira la landing de ' + (n || 'nuestro negocio') + ': ' + u);
+  document.getElementById('linkModal').classList.add('show');
+}
+document.getElementById('linkCerrar').onclick = () => document.getElementById('linkModal').classList.remove('show');
+document.getElementById('linkCopiar').onclick = async () => { try { await navigator.clipboard.writeText(urlPublicada); mostrarToast('📋 Link copiado'); } catch(e) { mostrarToast('⚠️ No se pudo copiar'); } };
+document.getElementById('linkModal').addEventListener('click', e => { if (e.target === e.currentTarget) document.getElementById('linkModal').classList.remove('show'); });  
