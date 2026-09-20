@@ -615,3 +615,537 @@ function mostrarModalLink(u, n) {
 document.getElementById('linkCerrar').onclick = () => document.getElementById('linkModal').classList.remove('show');
 document.getElementById('linkCopiar').onclick = async () => { try { await navigator.clipboard.writeText(urlPublicada); mostrarToast('📋 Link copiado'); } catch(e) { mostrarToast('⚠️ No se pudo copiar'); } };
 document.getElementById('linkModal').addEventListener('click', e => { if (e.target === e.currentTarget) document.getElementById('linkModal').classList.remove('show'); });  
+
+/* ============================================================
+   CONSTRUCTOR PRINCIPAL
+   ============================================================ */
+function construirLandingHTML(n, plantillaOverride) {
+  if (esModoDelivery(n)) return construirLandingPEDIDOS(n, plantillaOverride);
+  return construirLandingNORMAL(n, plantillaOverride);
+}
+
+/* ============================================================
+   LANDING NORMAL
+   ============================================================ */
+function construirLandingNORMAL(n, plantillaOverride) {
+  const pl = plantillaOverride || n.plantillaLanding || 'futurista';
+  const wd = String(n.whatsapp || '').replace(/\D/g, '');
+  const td = String(n.telefono || '').replace(/\D/g, '');
+  const ft = (n.fotos || []).filter(f => f && f.url);
+  const tm = n.latitud && n.longitud;
+  const cp = n.colorPrimario || '#7B2FF7';
+  const cs = n.colorSecundario || '#FF00E5';
+  const ca = n.colorAcento || '#00D4FF';
+  const fn = n.fuenteLanding || "'Segoe UI',system-ui,sans-serif";
+  const nombreLimpio = nombreVisible(n.nombre);
+  const dp = (n.descripcion || '').split('&');
+  const dc = dp[0].trim() || '';
+  const dl = dp[1] ? dp[1].trim() : dc;
+  const st = ((nombreLimpio || 'Negocio') + (n.slogan ? ' - ' + n.slogan : '')).substring(0, 65);
+  const sd = (dl || dc || (nombreLimpio || 'Negocio') + ' en ' + (n.direccion || n.ubicacion || 'México')).replace(/\s+/g, ' ').substring(0, 158);
+  const carp = nombreCarpeta(n.nombre);
+  const oi = n.banner || n.logo || '';
+  const cu = GITHUB_PAGES_BASE + '/' + encodeURIComponent(carp) + '/';
+
+  const galeriaHTML = ft.length ? '<section class="gallery">' + ft.map((f, i) => {
+    const p = (f.descripcion || '').split('&');
+    const ti = p[0].trim() || '📸 Foto';
+    const dL = p[1] ? p[1].trim() : '';
+    let dC = dL, dR = '';
+    if (dL.length > 90) { let c = dL.lastIndexOf(' ', 90); if (c === -1) c = 90; dC = dL.substring(0, c); dR = dL.substring(c); }
+    return '<div class="gallery-item"><img src="' + escHTML(f.url) + '" alt="' + escHTML(ti) + '" loading="lazy" onclick="lOpenLightbox(' + i + ')"><div class="gallery-info"><div class="gallery-titulo">' + escHTML(ti) + '</div>' + (dL ? '<p class="gallery-desc"><span>' + escHTML(dC) + '</span><span id="lDescResto' + i + '" style="display:none;">' + escHTML(dR) + '</span>' + (dR ? '<button class="vermas-btn" onclick="lToggleDescFoto(' + i + ')">Ver más</button>' : '') + '</p>' : '') + '</div></div>';
+  }).join('') + '</section>' : '';
+
+  let urlExternaHTML = '';
+  const ext = parsearUrlExterna(n.Urlexterna || n.urlexterna);
+  if (ext) urlExternaHTML = '<section class="section"><div class="externo-card"><h2>🔗 ' + escHTML(ext.nombre) + '</h2><a href="' + escHTML(ext.url) + '" target="_blank" rel="noopener" class="externo-btn" style="background:linear-gradient(135deg,' + cp + ',' + cs + ')">🌐 Visitar ' + escHTML(ext.nombre) + '</a></div></section>';
+  const videoEmbedUrl = parsearVideo(n.video);
+  const videoHTML = videoEmbedUrl ? '<section class="section"><div class="video-card"><iframe src="' + escHTML(videoEmbedUrl) + '" allowfullscreen loading="lazy"></iframe></div></section>' : '';
+  const mapaHTML = tm ? '<section class="section"><h2>📍 Encuéntranos</h2><div class="map-card"><iframe loading="lazy" src="https://www.openstreetmap.org/export/embed.html?bbox=' + (parseFloat(n.longitud) - 0.006) + '%2C' + (parseFloat(n.latitud) - 0.006) + '%2C' + (parseFloat(n.longitud) + 0.006) + '%2C' + (parseFloat(n.latitud) + 0.006) + '&layer=mapnik&marker=' + n.latitud + '%2C' + n.longitud + '"></iframe></div><p class="direccion">' + escHTML(n.direccion || n.ubicacion || '') + '</p></section>' : '';
+  const ci = [['📞','Teléfono',n.telefono],['💬','WhatsApp',n.whatsapp],['🕐','Horario',n.horario],['✉️','Correo',n.correo]].filter(x => x[2]);
+  const cb = (wd ? '<a href="https://wa.me/' + wd + '" class="btn-link btn-whatsapp" target="_blank">💬 WhatsApp</a>' : '') +
+    (td ? '<a href="tel:' + td + '" class="btn-link btn-call">📞 Llamar</a>' : '') +
+    (tm ? '<a href="https://www.google.com/maps/dir/?api=1&destination=' + n.latitud + ',' + n.longitud + '" class="btn-link btn-maps" target="_blank">🧭 Cómo llegar</a>' : '') +
+    (n.urlFacebook ? '<a href="' + escHTML(n.urlFacebook) + '" class="btn-link btn-facebook" target="_blank">📘 Facebook</a>' : '');
+  const jl = { "@context":"https://schema.org","@type":"LocalBusiness","name":nombreLimpio,"description":sd,"image":oi,"logo":n.logo||'',"telephone":n.telefono||'',"email":n.correo||'',"url":cu,"address":{"@type":"PostalAddress","streetAddress":n.direccion||'',"addressLocality":n.ubicacion||'',"addressCountry":"MX"},"openingHours":n.horario||'' };
+  if (tm) jl.geo = { "@type":"GeoCoordinates","latitude":n.latitud,"longitude":n.longitud };
+  if (n.urlFacebook) jl.sameAs = [n.urlFacebook];
+  const jlStr = JSON.stringify(jl).replace(/</g, '\\u003c');
+
+  let ov = '';
+  if (pl === 'minimalista') ov = 'body{background:#F4F5F7;color:#1E1E1E}.banner{background:' + cp + '!important;background-image:none!important}.contact-item{background:#F9F9FA}.contact-item .cv{color:#1E1E1E}.section h2{color:#1E1E1E}footer{background:#EFEFEF}';
+  else if (pl === 'clasico') ov = 'body{background:#F3ECDD;color:#3B2A1A}.contact-item{background:#FBF3E3}footer{background:#2A1D12}';
+
+  const fh = '<footer><p class="footer-nombre" style="color:' + ca + '">⚡ ' + escHTML(nombreLimpio) + '</p><p class="footer-slogan">' + escHTML(n.slogan || 'Gracias por visitarnos') + '</p></footer>';
+
+  return `<!DOCTYPE html><html lang="es"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=yes">
+<title>${escHTML(st)}</title>
+<meta name="description" content="${escHTML(sd)}">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<meta name="google-site-verification" content="AQUI_AGREGA_EL_VERIFICADOR_GOOGLE">
+<meta name="theme-color" content="${escHTML(cp)}">
+<meta name="author" content="${escHTML(nombreLimpio)}">
+<link rel="canonical" href="${escHTML(cu)}">
+<meta name="keywords" content="${escHTML(nombreLimpio)}, ${escHTML(n.ubicacion)}">
+<meta property="og:type" content="business.business">
+<meta property="og:title" content="${escHTML(nombreLimpio)}">
+<meta property="og:description" content="${escHTML(sd)}">
+${oi ? '<meta property="og:image" content="' + escHTML(oi) + '">' : ''}
+<meta property="og:url" content="${escHTML(cu)}">
+<meta property="og:site_name" content="${escHTML(nombreLimpio)}">
+<meta property="og:locale" content="es_MX">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="${escHTML(nombreLimpio)}">
+<meta name="twitter:description" content="${escHTML(sd)}">
+${oi ? '<meta name="twitter:image" content="' + escHTML(oi) + '">' : ''}
+<script type="application/ld+json">${jlStr}<\/script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+body{font-family:${fn};color:#E0E0E0;background:#0A0E17;line-height:1.6;padding:0;margin:0}
+#splash{position:fixed;inset:0;z-index:9999;background:linear-gradient(135deg,${cp} 0%,${cs} 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:30px;transition:opacity .7s ease,transform .7s ease}
+#splash.saliendo{opacity:0;transform:scale(1.08);pointer-events:none}
+.splash-logo{width:120px;height:120px;border-radius:50%;object-fit:cover;border:4px solid rgba(255,255,255,0.95);background:#fff}
+.splash-nombre{margin-top:26px;color:#fff;font-size:26px;font-weight:800;text-align:center}
+.splash-slogan{margin-top:10px;color:rgba(255,255,255,0.9);font-size:14.5px;font-weight:500;font-style:italic;text-align:center}
+.splash-loader{margin-top:36px;width:44px;height:44px;border:3px solid rgba(255,255,255,0.25);border-top-color:#fff;border-radius:50%;animation:loaderSpin .9s linear infinite}
+@keyframes loaderSpin{to{transform:rotate(360deg)}}
+.banner{width:100%;min-height:180px;background:linear-gradient(135deg,${cp} 0%,${cs} 100%);${n.banner ? "background-image:url('" + n.banner.replace(/'/g, "%27") + "');background-size:cover;background-position:center;background-repeat:no-repeat;" : ''}}
+.desc{padding:18px 16px 0;font-size:14px;color:#AAA;text-align:center;line-height:1.7}
+.section{padding:24px 16px 0}
+.section h2{font-size:18px;margin-bottom:14px;color:#E0E0E0;font-weight:700}
+.gallery{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;padding:20px 8px 0}
+.gallery-item{border-radius:12px;overflow:hidden;background:#0D1117;border:1px solid ${cp}}
+.gallery-item img{width:100%;height:160px;object-fit:cover;cursor:pointer;display:block}
+.gallery-info{padding:10px 12px 12px}
+.gallery-titulo{font-size:13px;font-weight:700;color:#E0E0E0}
+.gallery-desc{font-size:12px;color:#AAA;line-height:1.5;margin-top:3px}
+.vermas-btn{background:none;border:none;color:${ca};font-weight:700;font-size:12px;cursor:pointer;padding:0}
+.externo-card{background:#0D1117;border-radius:12px;padding:20px;text-align:center;border:2px solid ${ca}}
+.externo-card h2{font-size:16px;margin-bottom:12px}
+.externo-btn{display:inline-block;padding:14px 30px;color:#fff;border-radius:12px;font-weight:700;text-decoration:none}
+.contact-grid{display:grid;grid-template-columns:1fr;gap:10px;padding:20px 16px 0}
+.contact-item{background:#0D1117;border-radius:10px;padding:14px;border-left:4px solid ${ca}}
+.contact-item .cl{font-size:11px;text-transform:uppercase;color:#888;font-weight:700;letter-spacing:.5px}
+.contact-item .cv{font-size:15px;color:#E0E0E0;margin-top:3px;word-break:break-word;font-weight:600}
+.map-card{border-radius:14px;overflow:hidden;border:2px solid ${cp}}
+.map-card iframe{width:100%;height:280px;border:0;display:block}
+.direccion{margin-top:12px;font-size:14px;color:#AAA;text-align:center}
+.video-card{position:relative;padding-bottom:56.25%;height:0;border-radius:14px;overflow:hidden;border:2px solid ${cp};background:#000}
+.video-card iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+.btns-group{display:flex;flex-direction:column;gap:10px;padding:24px 16px 0}
+.btn-link{text-align:center;padding:16px 18px;border-radius:12px;font-weight:700;font-size:16px;text-decoration:none;display:flex;align-items:center;justify-content:center;min-height:52px}
+.btn-whatsapp{background:#25D366;color:#fff}
+.btn-call{background:${cp};color:#fff}
+.btn-maps{background:#4285F4;color:#fff}
+.btn-facebook{background:#1877F2;color:#fff}
+.qr-section{padding:30px 16px 24px;text-align:center}
+.qr-img{width:160px;height:160px;border-radius:12px;border:4px solid ${ca};padding:8px;cursor:pointer;background:#fff}
+.qr-caption{font-size:13px;color:#888;margin-top:12px}
+.qr-caption span{font-weight:700;color:${ca};cursor:pointer}
+.popup-msg{position:fixed;left:50%;bottom:-150px;transform:translateX(-50%);background:linear-gradient(135deg,${cp},${cs});color:#fff;padding:16px 44px 16px 22px;border-radius:14px 14px 0 0;font-size:14px;font-weight:600;text-align:center;max-width:92vw;z-index:4000;transition:bottom .5s ease}
+.popup-msg.mostrar{bottom:0}
+.popup-cerrar{position:absolute;top:8px;right:12px;background:none;border:none;color:#fff;font-size:20px;cursor:pointer;font-weight:700}
+footer{background:#000;text-align:center;padding:26px 16px;font-size:14px;margin-top:24px}
+footer .footer-nombre{font-weight:700;font-size:14px;margin-bottom:6px}
+footer .footer-slogan{color:#888;font-size:12px}
+.promo-final{background:#050709;text-align:center;padding:22px 16px;border-top:1px solid rgba(255,255,255,0.08)}
+.promo-final p{color:#888;font-size:12px;line-height:1.6;max-width:420px;margin:0 auto 12px}
+.promo-final a{display:inline-block;padding:11px 22px;border-radius:10px;background:linear-gradient(135deg,${cp},${cs});color:#fff;font-weight:700;font-size:13px;text-decoration:none}
+.lightbox{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.95);z-index:5000;align-items:center;justify-content:center;flex-direction:column;padding:20px}
+.lightbox.active{display:flex}
+.lightbox img{max-width:100%;max-height:75vh;border-radius:12px;border:3px solid ${ca}}
+.lightbox-cap{color:#fff;font-size:14px;margin-top:16px;text-align:center;max-width:90vw}
+.lightbox-back{margin-top:24px;background:${ca};color:#0A0E17;border:none;padding:14px 30px;border-radius:12px;font-weight:700;cursor:pointer;font-size:15px}
+@media(min-width:640px){.contact-grid{grid-template-columns:1fr 1fr}.btns-group{flex-direction:row;flex-wrap:wrap}.btn-link{flex:1;min-width:140px}}
+${ov}
+</style></head><body>
+<div id="splash">
+  ${n.logo ? '<img class="splash-logo" src="' + escHTML(n.logo) + '" alt="Logo ' + escHTML(nombreLimpio) + '">' : ''}
+  <h1 class="splash-nombre">${escHTML(nombreLimpio)}</h1>
+  ${n.slogan ? '<p class="splash-slogan">' + escHTML(n.slogan) + '</p>' : ''}
+  <div class="splash-loader"></div>
+</div>
+<div class="banner"></div>
+${dl ? '<p class="desc">' + escHTML(dl) + '</p>' : ''}
+${n.mision ? '<section class="section"><h2>🎯 Nuestra Misión</h2><p style="color:#AAA">' + escHTML(n.mision) + '</p></section>' : ''}
+${galeriaHTML}
+${videoHTML}
+${urlExternaHTML}
+<div class="contact-grid">${ci.map(x => '<div class="contact-item"><div class="cl">' + x[0] + ' ' + x[1] + '</div><div class="cv">' + escHTML(x[2]) + '</div></div>').join('')}</div>
+${mapaHTML}
+<div class="btns-group">${cb}</div>
+<section class="qr-section"><img class="qr-img" id="lQrImg" alt="QR" onclick="compartirQR()"><p class="qr-caption"><span onclick="compartirQR()">📱 Escanea para compartir</span></p></section>
+${fh}
+<section class="promo-final"><p>🌐 ¿Quieres una página como esta totalmente <strong>gratis</strong>? Solo pagas la administración de contenido.</p><a href="mailto:prototipowebapp@gmail.com?subject=Quiero%20mi%20p%C3%A1gina%20web%20gratis">📧 Escríbenos a prototipowebapp@gmail.com</a></section>
+<div class="lightbox" id="lLightbox"><img id="lLightboxImg" src="" alt=""><p class="lightbox-cap" id="lLightboxCap"></p><button class="lightbox-back" onclick="lCloseLightbox()">← Volver</button></div>
+<script>
+(function(){
+  var splash = document.getElementById('splash');
+  if(splash){ setTimeout(function(){ splash.classList.add('saliendo'); setTimeout(function(){ splash.style.display='none'; },750); },3000); }
+  var lFotos = ${JSON.stringify(ft)};
+  window.lOpenLightbox = function(i){ var f = lFotos[i]; if(!f) return; document.getElementById('lLightboxImg').src = f.url; var p = (f.descripcion || '').split('&'); document.getElementById('lLightboxCap').textContent = p[1] ? p[1].trim() : (p[0].trim() || '📸'); document.getElementById('lLightbox').classList.add('active'); };
+  window.lCloseLightbox = function(){ document.getElementById('lLightbox').classList.remove('active'); };
+  window.lToggleDescFoto = function(i){ var r = document.getElementById('lDescResto' + i); if(r) r.style.display = r.style.display === 'none' ? 'inline' : 'none'; };
+  document.getElementById('lLightbox').addEventListener('click', function(e){ if(e.target === this) lCloseLightbox(); });
+  var u = window.location.href; var q = document.getElementById('lQrImg');
+  if(q) q.src = 'https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=' + encodeURIComponent(u);
+  window.compartirQR = function(){ window.open('https://wa.me/?text=' + encodeURIComponent('${escJS(nombreLimpio)}: ' + u), '_blank'); };
+  var msg = '${escJS(n.mensajeEmergente || n.slogan || '')}';
+  if(msg){ var pop = document.createElement('div'); pop.className = 'popup-msg'; pop.innerHTML = '<span>✨ ' + msg + '</span><button class="popup-cerrar">×</button>'; document.body.appendChild(pop); function m(){ pop.classList.add('mostrar'); setTimeout(function(){ pop.classList.remove('mostrar'); }, 3000); } pop.querySelector('.popup-cerrar').onclick = function(){ pop.classList.remove('mostrar'); }; setTimeout(m, 2000); setInterval(m, 15000); }
+})();
+<\/script>
+</body></html>`;
+}
+
+/* ============================================================
+   LANDING PEDIDOS (delivery)
+   ============================================================ */
+function construirLandingPEDIDOS(n, plantillaOverride) {
+  const pl = plantillaOverride || n.plantillaLanding || 'futurista';
+  let wd = String(n.whatsapp || '').replace(/\D/g, '');
+  if (wd.length === 10) wd = '52' + wd;
+  const td = String(n.telefono || '').replace(/\D/g, '');
+  const ft = (n.fotos || []).filter(f => f && f.url);
+  const tm = n.latitud && n.longitud;
+  const cp = n.colorPrimario || '#7B2FF7';
+  const cs = n.colorSecundario || '#FF00E5';
+  const ca = n.colorAcento || '#00D4FF';
+  const fn = n.fuenteLanding || "'Segoe UI',system-ui,sans-serif";
+  const nombreLimpio = nombreVisible(n.nombre);
+  const dp = (n.descripcion || '').split('&');
+  const dc = dp[0].trim() || '';
+  const dl = dp[1] ? dp[1].trim() : dc;
+  const st = ((nombreLimpio || 'Negocio') + (n.slogan ? ' - ' + n.slogan : '')).substring(0, 65);
+  const sd = (dl || dc || (nombreLimpio || 'Negocio') + ' en ' + (n.direccion || n.ubicacion || 'México')).replace(/\s+/g, ' ').substring(0, 158);
+  const carp = nombreCarpeta(n.nombre);
+  const oi = n.banner || n.logo || '';
+  const cu = GITHUB_PAGES_BASE + '/' + encodeURIComponent(carp) + '/';
+
+  const productos = ft.map((f, i) => {
+    const partes = (f.descripcion || '').split('&');
+    const nombreProd = partes[0].trim() || ('Producto ' + (i + 1));
+    let precioRaw = partes[1] ? partes[1].trim() : '';
+    if (precioRaw && !/^\$/.test(precioRaw)) precioRaw = '$' + precioRaw;
+    const precioNum = parseFloat(String(precioRaw).replace(/[^0-9.]/g, '')) || 0;
+    return { indice: i, nombre: nombreProd, precioTexto: precioRaw || '—', precio: precioNum, url: f.url };
+  });
+
+  const productosHTML = productos.length ? '<section class="catalogo">' + productos.map(p => (
+    '<div class="prod"><img src="' + escHTML(p.url) + '" alt="' + escHTML(p.nombre) + '" loading="lazy"><div class="prod-info"><div class="prod-nombre">' + escHTML(p.nombre) + '</div><div class="prod-precio">' + escHTML(p.precioTexto) + '</div><div class="prod-cant"><button type="button" class="btn-cant" onclick="pedidoRestar(' + p.indice + ')">−</button><span class="cant-num" id="cant-' + p.indice + '">0</span><button type="button" class="btn-cant" onclick="pedidoSumar(' + p.indice + ')">+</button></div></div></div>'
+  )).join('') + '</section>' : '';
+
+  const ci = [['📞','Teléfono',n.telefono],['💬','WhatsApp',n.whatsapp],['🕐','Horario',n.horario],['✉️','Correo',n.correo]].filter(x => x[2]);
+  const cb = (wd ? '<a href="https://wa.me/' + wd + '" class="btn-link btn-whatsapp" target="_blank">💬 WhatsApp</a>' : '') +
+    (td ? '<a href="tel:' + td + '" class="btn-link btn-call">📞 Llamar</a>' : '') +
+    (tm ? '<a href="https://www.google.com/maps/dir/?api=1&destination=' + n.latitud + ',' + n.longitud + '" class="btn-link btn-maps" target="_blank">🧭 Cómo llegar</a>' : '');
+  const jl = { "@context":"https://schema.org","@type":"LocalBusiness","name":nombreLimpio,"description":sd,"image":oi,"logo":n.logo||'',"telephone":n.telefono||'',"email":n.correo||'',"url":cu,"address":{"@type":"PostalAddress","streetAddress":n.direccion||'',"addressLocality":n.ubicacion||'',"addressCountry":"MX"},"openingHours":n.horario||'' };
+  if (tm) jl.geo = { "@type":"GeoCoordinates","latitude":n.latitud,"longitude":n.longitud };
+  const jlStr = JSON.stringify(jl).replace(/</g, '\\u003c');
+
+  let ov = '';
+  if (pl === 'minimalista') ov = 'body{background:#F4F5F7;color:#1E1E1E}.banner{background:' + cp + '!important;background-image:none!important}.contact-item{background:#F9F9FA}.contact-item .cv{color:#1E1E1E}.section h2{color:#1E1E1E}footer{background:#EFEFEF}';
+  else if (pl === 'clasico') ov = 'body{background:#F3ECDD;color:#3B2A1A}.contact-item{background:#FBF3E3}footer{background:#2A1D12}';
+
+  const fh = '<footer><p class="footer-nombre" style="color:' + ca + '">⚡ ' + escHTML(nombreLimpio) + '</p><p class="footer-slogan">' + escHTML(n.slogan || 'Gracias por visitarnos') + '</p></footer>';
+  const datosNegocioJS = JSON.stringify({ nombre: nombreLimpio, id: n.id || '', whatsapp: wd, productos: productos }).replace(/</g, '\\x3C');
+
+  return `<!DOCTYPE html><html lang="es"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=yes">
+<title>${escHTML(st)}</title>
+<meta name="description" content="${escHTML(sd)}">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<meta name="google-site-verification" content="AQUI_AGREGA_EL_VERIFICADOR_GOOGLE">
+<meta name="theme-color" content="${escHTML(cp)}">
+<meta name="author" content="${escHTML(nombreLimpio)}">
+<link rel="canonical" href="${escHTML(cu)}">
+<meta name="keywords" content="${escHTML(nombreLimpio)}, ${escHTML(n.ubicacion)}">
+<meta property="og:type" content="business.business">
+<meta property="og:title" content="${escHTML(nombreLimpio)}">
+<meta property="og:description" content="${escHTML(sd)}">
+${oi ? '<meta property="og:image" content="' + escHTML(oi) + '">' : ''}
+<meta property="og:url" content="${escHTML(cu)}">
+<meta property="og:site_name" content="${escHTML(nombreLimpio)}">
+<meta property="og:locale" content="es_MX">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="${escHTML(nombreLimpio)}">
+<meta name="twitter:description" content="${escHTML(sd)}">
+${oi ? '<meta name="twitter:image" content="' + escHTML(oi) + '">' : ''}
+<script type="application/ld+json">${jlStr}<\/script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"><\/script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+body{font-family:${fn};color:#E0E0E0;background:#0A0E17;line-height:1.6;padding:0;margin:0;padding-bottom:90px}
+#splash{position:fixed;inset:0;z-index:9999;background:linear-gradient(135deg,${cp} 0%,${cs} 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:30px;transition:opacity .7s ease,transform .7s ease}
+#splash.saliendo{opacity:0;transform:scale(1.08);pointer-events:none}
+.splash-logo{width:120px;height:120px;border-radius:50%;object-fit:cover;border:4px solid rgba(255,255,255,0.95);background:#fff}
+.splash-nombre{margin-top:26px;color:#fff;font-size:26px;font-weight:800;text-align:center}
+.splash-slogan{margin-top:10px;color:rgba(255,255,255,0.9);font-size:14.5px;font-weight:500;font-style:italic;text-align:center}
+.splash-loader{margin-top:36px;width:44px;height:44px;border:3px solid rgba(255,255,255,0.25);border-top-color:#fff;border-radius:50%;animation:loaderSpin .9s linear infinite}
+@keyframes loaderSpin{to{transform:rotate(360deg)}}
+.banner{width:100%;min-height:180px;background:linear-gradient(135deg,${cp} 0%,${cs} 100%);${n.banner ? "background-image:url('" + n.banner.replace(/'/g, "%27") + "');background-size:cover;background-position:center;background-repeat:no-repeat;" : ''}}
+.desc{padding:18px 16px 0;font-size:14px;color:#AAA;text-align:center;line-height:1.7}
+.section{padding:24px 16px 0}
+.section h2{font-size:18px;margin-bottom:14px;color:#E0E0E0;font-weight:700}
+.catalogo{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;padding:20px 12px 0}
+.prod{background:#0D1117;border-radius:12px;overflow:hidden;border:1px solid ${cp}}
+.prod img{width:100%;height:140px;object-fit:cover;display:block}
+.prod-info{padding:10px 12px 12px}
+.prod-nombre{font-size:13px;font-weight:700;color:#E0E0E0}
+.prod-precio{font-size:13px;font-weight:800;color:${ca};margin-top:4px}
+.prod-cant{display:flex;align-items:center;gap:8px;margin-top:8px;justify-content:center}
+.btn-cant{width:32px;height:32px;border-radius:50%;border:2px solid ${cp};background:transparent;color:${ca};font-size:18px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.btn-cant:active{background:${cp};color:#fff}
+.cant-num{min-width:22px;text-align:center;font-weight:800;font-size:15px;color:#fff}
+.btn-unico{position:fixed;bottom:0;left:0;right:0;z-index:5000;background:linear-gradient(135deg,#7B2FF7,#00D4FF);color:#fff;border:none;padding:12px 18px;padding-bottom:calc(12px + env(safe-area-inset-bottom));display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-family:inherit;cursor:pointer;box-shadow:0 -4px 20px rgba(0,0,0,0.4);min-height:70px}
+.btn-unico:active{transform:translateY(2px)}
+.btn-unico .bu-linea1{font-size:13px;font-weight:700;opacity:0.95}
+.btn-unico .bu-linea2{font-size:17px;font-weight:800}
+.btn-unico.estado-enviar{background:linear-gradient(135deg,#25D366,#00B84A)}
+.contact-grid{display:grid;grid-template-columns:1fr;gap:10px;padding:20px 16px 0}
+.contact-item{background:#0D1117;border-radius:10px;padding:14px;border-left:4px solid ${ca}}
+.contact-item .cl{font-size:11px;text-transform:uppercase;color:#888;font-weight:700}
+.contact-item .cv{font-size:15px;color:#E0E0E0;margin-top:3px;word-break:break-word;font-weight:600}
+.map-card{border-radius:14px;overflow:hidden;border:2px solid ${cp}}
+.map-card iframe{width:100%;height:280px;border:0;display:block}
+.direccion{margin-top:12px;font-size:14px;color:#AAA;text-align:center}
+.btns-group{display:flex;flex-direction:column;gap:10px;padding:24px 16px 0}
+.btn-link{text-align:center;padding:16px 18px;border-radius:12px;font-weight:700;font-size:16px;text-decoration:none;display:flex;align-items:center;justify-content:center;min-height:52px}
+.btn-whatsapp{background:#25D366;color:#fff}
+.btn-call{background:${cp};color:#fff}
+.btn-maps{background:#4285F4;color:#fff}
+.qr-section{padding:30px 16px 24px;text-align:center}
+.qr-img{width:160px;height:160px;border-radius:12px;border:4px solid ${ca};padding:8px;cursor:pointer;background:#fff}
+.qr-caption{font-size:13px;color:#888;margin-top:12px}
+.qr-caption span{font-weight:700;color:${ca};cursor:pointer}
+footer{background:#000;text-align:center;padding:26px 16px;font-size:14px;margin-top:24px}
+footer .footer-nombre{font-weight:700;font-size:14px;margin-bottom:6px}
+footer .footer-slogan{color:#888;font-size:12px}
+.promo-final{background:#050709;text-align:center;padding:22px 16px;border-top:1px solid rgba(255,255,255,0.08)}
+.promo-final p{color:#888;font-size:12px;line-height:1.6;max-width:420px;margin:0 auto 12px}
+.promo-final a{display:inline-block;padding:11px 22px;border-radius:10px;background:linear-gradient(135deg,${cp},${cs});color:#fff;font-weight:700;font-size:13px;text-decoration:none}
+.ubi-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:7000;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto;backdrop-filter:blur(4px)}
+.ubi-modal.activo{display:flex}
+.ubi-inner{background:#0D1117;border:2px solid ${cp};border-radius:18px;padding:22px;max-width:520px;width:100%;margin:auto;position:relative}
+.ubi-inner h2{font-size:19px;color:#fff;margin-bottom:6px;text-align:center}
+.ubi-inner .sub{font-size:13px;color:#888;text-align:center;margin-bottom:14px;line-height:1.5}
+.ubi-inner .btn-gps{width:100%;padding:13px;border-radius:12px;border:none;background:linear-gradient(135deg,#00D4FF,#7B2FF7);color:#fff;font-weight:800;font-size:14px;cursor:pointer;margin-bottom:10px}
+.ubi-mapa{width:100%;height:280px;border-radius:12px;border:2px solid ${cp};margin-bottom:8px}
+.ubi-estado{font-size:12px;color:#FFB300;text-align:center;margin-bottom:12px;min-height:16px;padding:6px;border-radius:8px;background:rgba(255,179,0,0.08)}
+.ubi-estado.ok{color:#25D366;font-weight:700;background:rgba(37,211,102,0.1)}
+.ubi-confirmar{width:100%;padding:15px;border-radius:12px;border:none;background:linear-gradient(135deg,#25D366,#00B84A);color:#fff;font-weight:800;font-size:15px;cursor:pointer}
+.ubi-confirmar:disabled{opacity:.5;cursor:not-allowed}
+.ubi-cerrar{position:absolute;top:10px;right:14px;background:none;border:none;color:#888;font-size:26px;cursor:pointer;font-weight:700}
+.modal-pedido-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:6000;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto;backdrop-filter:blur(4px)}
+.modal-pedido-overlay.activo{display:flex}
+.modal-pedido{background:#0D1117;border:2px solid ${cp};border-radius:18px;padding:22px;max-width:480px;width:100%;margin:auto;position:relative}
+.modal-pedido h2{font-size:20px;color:#fff;margin-bottom:4px}
+.modal-pedido .sub{font-size:13px;color:#888;margin-bottom:14px}
+.modal-pedido label{display:block;font-size:13px;font-weight:700;color:#E0E0E0;margin-bottom:6px;margin-top:14px}
+.modal-pedido input{width:100%;padding:12px;border-radius:10px;border:2px solid #2A2A4A;background:#1A1A2E;color:#fff;font-size:15px}
+.modal-pedido input:focus{outline:none;border-color:${ca}}
+.privacidad{font-size:11.5px;color:#888;line-height:1.5;padding:12px;background:rgba(255,255,255,0.03);border-radius:10px;margin-bottom:16px;border-left:3px solid ${ca};margin-top:14px}
+.resumen{background:rgba(37,211,102,0.08);border:1px solid rgba(37,211,102,0.3);border-radius:10px;padding:14px;margin-bottom:14px;font-size:13px;line-height:1.7;color:#E0E0E0}
+.resumen strong{color:#25D366}
+.resumen .total{font-weight:800;color:${ca};font-size:15px;margin-top:8px;padding-top:8px;border-top:1px solid rgba(255,255,255,0.1);display:block}
+.btn-confirmar{width:100%;padding:15px;border-radius:12px;border:none;background:linear-gradient(135deg,#25D366,#00B84A);color:#fff;font-weight:800;font-size:15px;cursor:pointer}
+@media(min-width:640px){.contact-grid{grid-template-columns:1fr 1fr}.btns-group{flex-direction:row;flex-wrap:wrap}.btn-link{flex:1;min-width:140px}}
+${ov}
+</style></head><body>
+<div id="splash">
+  ${n.logo ? '<img class="splash-logo" src="' + escHTML(n.logo) + '" alt="Logo ' + escHTML(nombreLimpio) + '">' : ''}
+  <h1 class="splash-nombre">${escHTML(nombreLimpio)}</h1>
+  ${n.slogan ? '<p class="splash-slogan">' + escHTML(n.slogan) + '</p>' : ''}
+  <div class="splash-loader"></div>
+</div>
+<div class="banner"></div>
+${dl ? '<p class="desc">' + escHTML(dl) + '</p>' : ''}
+${n.mision ? '<section class="section"><h2>🎯 Nuestra Misión</h2><p style="color:#AAA">' + escHTML(n.mision) + '</p></section>' : ''}
+${productos.length ? '<h2 style="padding:24px 16px 0;font-size:18px;color:#E0E0E0;">🛒 Pedir de este catálogo</h2>' : ''}
+${productosHTML}
+<div class="contact-grid">${ci.map(x => '<div class="contact-item"><div class="cl">' + x[0] + ' ' + x[1] + '</div><div class="cv">' + escHTML(x[2]) + '</div></div>').join('')}</div>
+${tm ? '<section class="section"><h2>📍 Encuéntranos</h2><div class="map-card"><iframe loading="lazy" src="https://www.openstreetmap.org/export/embed.html?bbox=' + (parseFloat(n.longitud) - 0.006) + '%2C' + (parseFloat(n.latitud) - 0.006) + '%2C' + (parseFloat(n.longitud) + 0.006) + '%2C' + (parseFloat(n.latitud) + 0.006) + '&layer=mapnik&marker=' + n.latitud + '%2C' + n.longitud + '"></iframe></div><p class="direccion">' + escHTML(n.direccion || n.ubicacion || '') + '</p></section>' : ''}
+<div class="btns-group">${cb}</div>
+<section class="qr-section"><img class="qr-img" id="lQrImg" alt="QR" onclick="compartirQR()"><p class="qr-caption"><span onclick="compartirQR()">📱 Escanea para compartir</span></p></section>
+${fh}
+<section class="promo-final"><p>🌐 ¿Quieres una página como esta totalmente <strong>gratis</strong>? Solo pagas la administración de contenido.</p><a href="mailto:prototipowebapp@gmail.com?subject=Quiero%20mi%20p%C3%A1gina%20web%20gratis">📧 Escríbenos a prototipowebapp@gmail.com</a></section>
+
+<button type="button" class="btn-unico" id="btnUnico" onclick="accionBotonUnico()">
+  <span class="bu-linea1" id="buLinea1">🛒 0 productos — Total: $0</span>
+  <span class="bu-linea2" id="buLinea2">📍 Activar mi ubicación</span>
+</button>
+
+<div class="ubi-modal" id="ubiModal" onclick="if(event.target===this)cerrarUbiModal()">
+  <div class="ubi-inner">
+    <button type="button" class="ubi-cerrar" onclick="cerrarUbiModal()">×</button>
+    <h2>📍 Confirma tu ubicación</h2>
+    <p class="sub">Necesitamos saber dónde entregar tu pedido.</p>
+    <button type="button" class="btn-gps" onclick="ubiUsarGPS()">📡 Usar mi ubicación en tiempo real</button>
+    <div class="ubi-mapa" id="ubiMapa"></div>
+    <div class="ubi-estado" id="ubiEstado">Toca el mapa para marcar tu ubicación exacta</div>
+    <button type="button" class="ubi-confirmar" id="ubiConfirmar" onclick="ubiConfirmarUbicacion()" disabled>✅ Confirmar esta ubicación</button>
+  </div>
+</div>
+
+<div class="modal-pedido-overlay" id="modalPedido" onclick="if(event.target===this)cerrarModalPedido()">
+  <div class="modal-pedido">
+    <button type="button" class="ubi-cerrar" onclick="cerrarModalPedido()">×</button>
+    <h2>🛒 Confirmar pedido</h2>
+    <p class="sub">Solo falta tu nombre para enviar el pedido</p>
+    <label>👤 Tu nombre</label>
+    <input type="text" id="clienteNombre" placeholder="Ej. Juan Pérez" maxlength="60">
+    <p class="privacidad">🔒 Tus datos (nombre, ubicación y datos del pedido) se usan únicamente para este pedido. No se almacenan en este sitio ni se comparten con terceros.</p>
+    <div id="resumenPedido" class="resumen"></div>
+    <button type="button" class="btn-confirmar" onclick="confirmarPedido()">✅ Revisar y enviar por WhatsApp</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  var splash = document.getElementById('splash');
+  if(splash){ setTimeout(function(){ splash.classList.add('saliendo'); setTimeout(function(){ splash.style.display='none'; },750); },3000); }
+  var u = window.location.href;
+  var q = document.getElementById('lQrImg');
+  if(q) q.src = 'https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=' + encodeURIComponent(u);
+  window.compartirQR = function(){ window.open('https://wa.me/?text=' + encodeURIComponent('${escJS(nombreLimpio)}: ' + u), '_blank'); };
+})();
+
+var NEGOCIO = ${datosNegocioJS};
+var carrito = {};
+var ubicacionConfirmada = false;
+var latPedido = null, lngPedido = null;
+var ubiMapa = null, ubiMarcador = null, ubiLat = null, ubiLng = null;
+
+window.pedidoSumar = function(i){ carrito[i] = (carrito[i] || 0) + 1; actualizarCant(i); };
+window.pedidoRestar = function(i){ if(!carrito[i]) return; carrito[i]--; if(carrito[i] <= 0) delete carrito[i]; actualizarCant(i); };
+function actualizarCant(i){ var el = document.getElementById('cant-' + i); if(el) el.textContent = carrito[i] || 0; actualizarBotonUnico(); }
+
+function actualizarBotonUnico(){
+  var total = 0, items = 0;
+  for(var k in carrito){ var p = NEGOCIO.productos[parseInt(k)]; if(!p) continue; items += carrito[k]; total += p.precio * carrito[k]; }
+  var l1 = document.getElementById('buLinea1');
+  var l2 = document.getElementById('buLinea2');
+  var btn = document.getElementById('btnUnico');
+  if(l1) l1.textContent = '🛒 ' + items + (items === 1 ? ' producto' : ' productos') + ' — Total: $' + total;
+  if(l2) l2.textContent = ubicacionConfirmada ? '✅ Enviar pedido por WhatsApp' : '📍 Activar mi ubicación';
+  if(btn){
+    if(ubicacionConfirmada) btn.classList.add('estado-enviar');
+    else btn.classList.remove('estado-enviar');
+  }
+}
+
+window.accionBotonUnico = function(){
+  var total = 0; for(var k in carrito) total += carrito[k];
+  if(total === 0){ alert('🛒 Agrega al menos un producto primero'); return; }
+  if(!ubicacionConfirmada){ abrirUbiModal(); }
+  else { abrirModalPedido(); }
+};
+
+window.abrirUbiModal = function(){
+  document.getElementById('ubiModal').classList.add('activo');
+  setTimeout(function(){ if(!ubiMapa) inicializarUbiMapa(); else ubiMapa.invalidateSize(); }, 200);
+};
+window.cerrarUbiModal = function(){ document.getElementById('ubiModal').classList.remove('activo'); };
+
+function inicializarUbiMapa(){
+  var latIni = 20.5888, lngIni = -100.3899;
+  ubiMapa = L.map('ubiMapa', { center: [latIni, lngIni], zoom: 15 });
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(ubiMapa);
+  ubiMarcador = L.marker([latIni, lngIni], { draggable: true }).addTo(ubiMapa);
+  ubiLat = latIni; ubiLng = lngIni;
+  ubiMarcador.on('dragend', function(){ var p = ubiMarcador.getLatLng(); ubiLat = p.lat; ubiLng = p.lng; ubiEstadoPin(); });
+  ubiMapa.on('click', function(e){ ubiMarcador.setLatLng(e.latlng); ubiLat = e.latlng.lat; ubiLng = e.latlng.lng; ubiEstadoPin(); });
+  ubiUsarGPS();
+}
+
+window.ubiUsarGPS = function(){
+  var el = document.getElementById('ubiEstado');
+  if(!navigator.geolocation){ if(el){ el.textContent = '❌ Tu navegador no soporta GPS. Toca el mapa.'; el.classList.remove('ok'); } return; }
+  if(el){ el.textContent = '⏳ Obteniendo tu ubicación...'; el.classList.remove('ok'); }
+  navigator.geolocation.getCurrentPosition(
+    function(pos){
+      ubiLat = pos.coords.latitude; ubiLng = pos.coords.longitude;
+      if(ubiMapa){ ubiMapa.setView([ubiLat, ubiLng], 17); ubiMarcador.setLatLng([ubiLat, ubiLng]); }
+      ubiEstadoPin();
+    },
+    function(err){
+      var msg = '⚠️ No se pudo obtener tu ubicación. Toca el mapa para marcar.';
+      if(err && err.code === 1) msg = '⚠️ Permiso denegado. Actívalo o toca el mapa.';
+      else if(err && err.code === 2) msg = '⚠️ Ubicación no disponible. Toca el mapa.';
+      else if(err && err.code === 3) msg = '⚠️ Tiempo agotado. Toca el mapa.';
+      if(el){ el.textContent = msg; el.classList.remove('ok'); }
+    },
+    { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+  );
+};
+
+function ubiEstadoPin(){
+  var el = document.getElementById('ubiEstado');
+  var btn = document.getElementById('ubiConfirmar');
+  if(ubiLat && ubiLng){
+    if(el){ el.textContent = '✅ Ubicación marcada: ' + ubiLat.toFixed(5) + ', ' + ubiLng.toFixed(5); el.classList.add('ok'); }
+    if(btn) btn.disabled = false;
+  }
+}
+
+window.ubiConfirmarUbicacion = function(){
+  if(!ubiLat || !ubiLng){ alert('Marca tu ubicación en el mapa'); return; }
+  latPedido = ubiLat; lngPedido = ubiLng;
+  ubicacionConfirmada = true;
+  actualizarBotonUnico();
+  cerrarUbiModal();
+  alert('✅ Ubicación confirmada. Ya puedes enviar tu pedido.');
+};
+
+window.abrirModalPedido = function(){
+  actualizarResumen();
+  var n = document.getElementById('clienteNombre'); if(n) n.value = '';
+  document.getElementById('modalPedido').classList.add('activo');
+};
+window.cerrarModalPedido = function(){ document.getElementById('modalPedido').classList.remove('activo'); };
+
+function actualizarResumen(){
+  var html = '<strong>📦 Tu pedido:</strong><br>';
+  var total = 0;
+  for(var k in carrito){ var p = NEGOCIO.productos[parseInt(k)]; if(!p) continue; var sub = p.precio * carrito[k]; total += sub; html += '• ' + carrito[k] + 'x ' + p.nombre + ' — $' + sub + '<br>'; }
+  html += '<span class="total">💰 Total: $' + total + '</span>';
+  var el = document.getElementById('resumenPedido'); if(el) el.innerHTML = html;
+}
+
+function obtenerClienteId(){
+  var cid = localStorage.getItem('clienteId');
+  if(!cid){ cid = 'CLI-' + Date.now() + '-' + Math.random().toString(36).slice(2,8); localStorage.setItem('clienteId', cid); }
+  return cid;
+}
+
+window.confirmarPedido = function(){
+  var nombre = (document.getElementById('clienteNombre').value || '').trim();
+  if(!nombre){ alert('✍️ Escribe tu nombre'); return; }
+  if(!ubicacionConfirmada || !latPedido || !lngPedido){ alert('📍 Primero confirma tu ubicación'); return; }
+  var items = []; var total = 0;
+  for(var k in carrito){ var p = NEGOCIO.productos[parseInt(k)]; if(!p) continue; var cant = carrito[k]; var sub = p.precio * cant; total += sub; items.push('• ' + cant + 'x ' + p.nombre + ' — $' + sub); }
+  if(items.length === 0){ alert('No hay productos en el pedido'); return; }
+  var clienteId = obtenerClienteId();
+  var ahora = new Date();
+  var fecha = ahora.toLocaleDateString('es-MX') + ' ' + ahora.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
+  var resumen = '📦 Revisa tu pedido:\\n\\n' + items.join('\\n') + '\\n\\n💰 TOTAL: $' + total + '\\n\\n👤 ' + nombre + '\\n📍 Ubicación confirmada\\n\\n¿Enviar por WhatsApp al negocio?';
+  if(!confirm(resumen)) return;
+  var msg = '🛒 NUEVO PEDIDO\\n━━━━━━━━━━━━━━━\\n🏪 ' + NEGOCIO.nombre + '\\n🆔 Negocio ID: ' + (NEGOCIO.id || '-') + '\\n━━━━━━━━━━━━━━━\\n👤 Cliente: ' + nombre + '\\n🔖 Cliente ID: ' + clienteId + '\\n📍 Ubicación: https://maps.google.com/?q=' + latPedido + ',' + lngPedido + '\\n🕐 ' + fecha + '\\n━━━━━━━━━━━━━━━\\n📦 DETALLE:\\n' + items.join('\\n') + '\\n━━━━━━━━━━━━━━━\\n💰 TOTAL: $' + total;
+  window.open('https://wa.me/' + NEGOCIO.whatsapp + '?text=' + encodeURIComponent(msg), '_blank');
+};
+
+actualizarBotonUnico();
+<\/script>
+</body></html>`;
+}
+ 
+console.log('✅ Generador de landing activo');
+</script>
+
+</body>
+</html> 
