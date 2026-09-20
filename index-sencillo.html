@@ -1758,7 +1758,11 @@ function getPlantillaOverridesCSS(plantilla, colorPrimario, colorSecundario, col
   return '';
 }
 
-function construirLandingHTML(n, plantillaOverride) {
+  
+  ///////// deepseek por favor desde aqui hasta el final del html pasame lo modifcado
+
+  
+  function construirLandingHTML(n, plantillaOverride) {
   const plantilla = plantillaOverride || n.plantillaLanding || 'futurista';
   const whatsappDigits = String(n.whatsapp || '').replace(/\D/g, '');
   const telDigits = String(n.telefono || '').replace(/\D/g, '');
