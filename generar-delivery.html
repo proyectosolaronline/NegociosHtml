@@ -884,7 +884,27 @@ ${tm ? ('<div class="ubi-modal" id="mapaNegocioModal" onclick="if(event.target==
   var u = window.location.href;
   var q = document.getElementById('lQrImg');
   if(q) q.src = 'https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=' + encodeURIComponent(u);
-  window.compartirQR = function(){ window.open('https://wa.me/?text=' + encodeURIComponent('${escJS(nombreLimpio)}: ' + u), '_blank'); };
+  window.compartirQR = function(){ window.open('https://wa.me/?text=' +
+  encodeURIComponent('${escJS(nombreLimpio)}: ' + u), 
+  '_blank'); };
+  /* ===== BANNER RESPIRANDO ===== */
+  var banner = document.querySelector('.pantalla .banner');
+  var catalogo = document.querySelector('.pantalla .catalogo');
+  if(banner && catalogo){
+    function calcularAlto(){
+      var yBanner = banner.getBoundingClientRect().top;
+      var yCatalogo = catalogo.getBoundingClientRect().top;
+      var alto = Math.max(80, yCatalogo - yBanner);
+      banner.style.setProperty('--alto-banner', alto + 'px');
+    }
+    setTimeout(calcularAlto, 800);
+    window.addEventListener('resize', calcularAlto);
+    setInterval(function(){
+      banner.classList.add('grande');
+      setTimeout(function(){ banner.classList.remove('grande'); }, 5000);
+    }, 10000);
+  }
+  /* ===== FIN BANNER ===== */
 })();
 
 var NEGOCIO = ${datosNegocioJS};
