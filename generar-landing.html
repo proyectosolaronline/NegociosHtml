@@ -422,6 +422,7 @@ document.getElementById('btnPublicarSeo').onclick = () => {
   setTimeout(() => { window.removeEventListener('message', om); bt.disabled = false; bt.textContent = '🚀 Publicar sitemap + robots en GitHub'; }, 30000);
 };
 
+
 /* ============================================================
    BOOT
    ============================================================ */
@@ -430,13 +431,24 @@ document.addEventListener('DOMContentLoaded', () => {
   try { const raw = localStorage.getItem('landingData'); if (raw) datos = JSON.parse(raw); }
   catch(e) { console.error(e); }
   if (!datos || !datos.nombre) { document.getElementById('builderSubtitle').textContent = '> ❌ No se recibieron datos.'; return; }
+
+  /* ===== DETECTOR &delivery ===== */
+  const nombreRaw = String(datos.nombre || '');
+  if (/&delivery/i.test(nombreRaw)) {
+    datos.nombre = nombreRaw.replace(/&delivery/i, '').trim();
+    datos.modoDelivery = true;
+    try { localStorage.setItem('landingData', JSON.stringify(datos)); } catch(e) {}
+    window.location.replace('generar-delivery.html');
+    return;
+  }
+  /* ===== FIN DETECTOR ===== */
+
   if (!datos.logo || !datos.banner) { document.getElementById('builderSubtitle').textContent = '> ❌ Faltan logo y banner.'; return; }
   negocioActual = datos;
   document.getElementById('previewBadge').textContent = '👁️ ' + nombreVisible(datos.nombre);
   plantillaActual = datos.plantillaLanding || 'futurista';
   iniciarConstruccion(datos);
 });
-
 /* ============================================================
    CONSTRUCCIÓN ANIMADA
    ============================================================ */
