@@ -805,7 +805,13 @@ footer .footer-slogan{color:#888;font-size:12px}
 .popup-cerrar{position:absolute;top:8px;right:12px;background:none;border:none;color:#fff;font-size:20px;cursor:pointer;font-weight:700}
 .popup-btn{display:inline-block;margin-top:8px;padding:8px 18px;background:#fff;color:#111;border-radius:8px;font-weight:800;font-size:13px;text-decoration:none}
 .pantalla .desc{flex:0 0 auto;padding:8px 18px 0;font-size:12.5px;line-height:1.35}
-.pantalla .sec-titulo{flex:0 0 auto;padding:10px 16px 6px;font-size:14px}
+
+.popup-msg{position:fixed;left:50%;bottom:-150px;transform:translateX(-50%);background:linear-gradient(135deg,${cp},${cs});color:#fff;padding:16px 44px 16px 22px;border-radius:14px 14px 0 0;font-size:14px;font-weight:600;text-align:center;max-width:92vw;z-index:4000;transition:bottom .5s ease}
+.popup-msg.mostrar{bottom:0}
+.popup-msg span{display:block}
+.popup-cerrar{position:absolute;top:8px;right:12px;background:none;border:none;color:#fff;font-size:20px;cursor:pointer;font-weight:700}
+.popup-btn{display:inline-block;margin-top:8px;padding:8px 18px;background:#fff;color:#111;border-radius:8px;font-weight:800;font-size:13px;text-decoration:none}
+  .pantalla .sec-titulo{flex:0 0 auto;padding:10px 16px 6px;font-size:14px}
 .pantalla .catalogo{flex:1 1 0;min-height:0;overflow-y:auto;grid-template-rows:repeat(var(--filas,2),minmax(84px,1fr));gap:8px;padding:0 12px}
 .pantalla .prod{aspect-ratio:auto;min-height:0}
 .prod-ph img{object-fit:contain;background:#141A2A}
