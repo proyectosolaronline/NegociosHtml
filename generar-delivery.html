@@ -916,9 +916,28 @@ ${tm ? ('<div class="ubi-modal" id="mapaNegocioModal" onclick="if(event.target==
     }, 10000);
   }
   /* ===== FIN BANNER ===== */
-})();
 
-var NEGOCIO = ${datosNegocioJS};
+  /* ===== MENSAJE EMERGENTE ===== */
+  var msgRaw = '${escJS(n.mensajeEmergente || '')}';
+  if(msgRaw){
+    var partes = msgRaw.split('&');
+    var textoPop = partes[0].trim();
+    var linkPop = partes[1] ? partes[1].trim() : '';
+    var pop = document.createElement('div');
+    pop.className = 'popup-msg';
+    var htmlPop = '';
+    if(textoPop) htmlPop += '<span>✨ ' + textoPop + '</span>';
+    if(linkPop) htmlPop += '<a href="' + linkPop + '" target="_blank" rel="noopener" class="popup-btn">👉 Ver más</a>';
+    htmlPop += '<button class="popup-cerrar">×</button>';
+    pop.innerHTML = htmlPop;
+    document.body.appendChild(pop);
+    function mPop(){ pop.classList.add('mostrar'); setTimeout(function(){ pop.classList.remove('mostrar'); }, 4000); }
+    pop.querySelector('.popup-cerrar').onclick = function(){ pop.classList.remove('mostrar'); };
+    setTimeout(mPop, 2000);
+    setInterval(mPop, 15000);
+  }
+  /* ===== FIN MENSAJE EMERGENTE ===== */
+})();
 var carrito = {};
 var ubicacionConfirmada = false;
 var latPedido = null, lngPedido = null;
