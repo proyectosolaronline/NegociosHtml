@@ -954,11 +954,12 @@ ${tm ? ('<div class="ubi-modal" id="mapaNegocioModal" onclick="if(event.target==
     function calcularAlto(){
       var yBanner = banner.getBoundingClientRect().top;
       var yCatalogo = catalogo.getBoundingClientRect().top;
-      var alto = Math.max(80, yCatalogo - yBanner);
+      var alto = Math.max(80, Math.min(160, yCatalogo - yBanner));
       banner.style.setProperty('--alto-banner', alto + 'px');
     }
     setTimeout(calcularAlto, 800);
     window.addEventListener('resize', calcularAlto);
+    window.addEventListener('scroll', calcularAlto, { passive: true });
     setInterval(function(){
       banner.classList.add('grande');
       setTimeout(function(){ banner.classList.remove('grande'); }, 5000);
