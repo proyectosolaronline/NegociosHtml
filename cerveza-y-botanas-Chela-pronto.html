@@ -413,5 +413,22 @@ window.confirmarPedido = function(){
 };
 
 actualizarBotonUnico();
+
+document.addEventListener('click', function(e){
+  var t = e.target.closest('.prod');
+  if(!t) return;
+  var i = parseInt(t.getAttribute('data-idx'));
+  if(isNaN(i)) return;
+  var p = NEGOCIO.productos[i];
+  if(!p) return;
+  var c = carrito[i] || 0;
+  var r = prompt('¿Cuántos quieres de ' + p.nombre + '?', c || 1);
+  if(r === null) return;
+  var n = parseInt(r, 10);
+  if(isNaN(n) || n < 0) return;
+  if(n === 0) delete carrito[i]; else carrito[i] = n;
+  actualizarCant(i);
+});
+  
 </script>
 </body></html>
