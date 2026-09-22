@@ -707,9 +707,9 @@ function construirLandingPEDIDOS(n, plantillaOverride) {
   const relleno = productos.length < 4 ? 4 - productos.length : (productos.length % 2 ? 1 : 0);
   const placeholdersHTML = Array.from({ length: relleno }).map(() => '<div class="prod prod-ph"><img src="' + phSVG + '" alt="Espacio reservado a nuevos productos" loading="lazy"></div>').join('');
   const filas = Math.max(1, Math.ceil((productos.length + relleno) / 2));
-  const productosHTML = '<section class="catalogo" style="--filas:' + filas + '">' + productos.map(p => (
-    '<div class="prod" onclick="abrirProducto(' + p.indice + ')"><span class="prod-badge" id="badge-' + p.indice + '"></span><img src="' + escHTML(p.url) + '" alt="' + escHTML(p.nombre) + '" loading="lazy"><div class="prod-info"><div class="prod-nombre">' + escHTML(p.nombre) + '</div><div class="prod-precio">' + escHTML(p.precioTexto) + '</div></div></div>'
-  )).join('') + placeholdersHTML + '</section>';
+const productosHTML = '<section class="catalogo" style="--filas:' + filas + '">' + productos.map(p => (
+  '<div class="prod" data-idx="' + p.indice + '"><span class="prod-badge" id="badge-' + p.indice + '"></span><img src="' + escHTML(p.url) + '" alt="' + escHTML(p.nombre) + '" loading="lazy"><div class="prod-info"><div class="prod-nombre">' + escHTML(p.nombre) + '</div><div class="prod-precio">' + escHTML(p.precioTexto) + '</div></div></div>'
+)).join('') + placeholdersHTML + '</section>';
 
   const ci = [['📞','Teléfono',n.telefono],['💬','WhatsApp',n.whatsapp],['🕐','Horario',n.horario],['✉️','Correo',n.correo]].filter(x => x[2]);
   const cb = (wd ? '<a href="https://wa.me/' + wd + '" class="btn-link btn-whatsapp" target="_blank">💬 WhatsApp</a>' : '') +
