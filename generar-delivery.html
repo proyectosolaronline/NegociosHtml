@@ -1141,9 +1141,6 @@ function obtenerClienteId(){
 
 window.confirmarPedido = function(){
   var nombre = (document.getElementById('clienteNombre').value || '').trim();
-
-window.confirmarPedido = function(){
-  var nombre = (document.getElementById('clienteNombre').value || '').trim();
   if(!nombre){ alert('✍️ Escribe tu nombre'); return; }
   if(!ubicacionConfirmada || !latPedido || !lngPedido){ alert('📍 Primero confirma tu ubicación'); return; }
   var items = []; var total = 0;
