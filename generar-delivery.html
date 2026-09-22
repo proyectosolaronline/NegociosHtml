@@ -1149,8 +1149,10 @@ window.confirmarPedido = function(){
   var resumen = '📦 Revisa tu pedido:\\n\\n' + items.join('\\n') + '\\n\\n💰 TOTAL: $' + total + '\\n\\n👤 ' + nombre + '\\n📍 Ubicación confirmada\\n\\n¿Enviar por WhatsApp al negocio?';
   if(!confirm(resumen)) return;
   var msg = '🛒 NUEVO PEDIDO\\n━━━━━━━━━━━━━━━\\n🏪 ' + NEGOCIO.nombre + '\\n🆔 Negocio ID: ' + (NEGOCIO.id || '-') + '\\n━━━━━━━━━━━━━━━\\n👤 Cliente: ' + nombre + '\\n🔖 Cliente ID: ' + clienteId + '\\n📍 Ubicación: https://maps.google.com/?q=' + latPedido + ',' + lngPedido + '\\n🕐 ' + fecha + '\\n━━━━━━━━━━━━━━━\\n📦 DETALLE:\\n' + items.join('\\n') + '\\n━━━━━━━━━━━━━━━\\n💰 TOTAL: $' + total;
-  window.open('https://wa.me/' + NEGOCIO.whatsapp + '?text=' + encodeURIComponent(msg), '_blank');
+    window.open('https://wa.me/' + NEGOCIO.whatsapp + '?text=' + encodeURIComponent(msg), '_blank');
 };
+
+var NEGOCIO = ${datosNegocioJS};
 
 actualizarBotonUnico();
 <\/script>
