@@ -983,9 +983,7 @@ ${tm ? ('<div class="ubi-modal" id="mapaNegocioModal" onclick="if(event.target==
     setTimeout(mPop, 2000);
     setInterval(mPop, 15000);
   }
-})();
-
-var carrito = {};
+})();var carrito = {};
 var ubicacionConfirmada = false;
 var latPedido = null, lngPedido = null;
 var ubiMapa = null, ubiMarcador = null, ubiLat = null, ubiLng = null;
@@ -996,16 +994,21 @@ document.addEventListener('click', function(e){
   if(!t) return;
   var i = parseInt(t.getAttribute('data-idx'));
   if(isNaN(i)) return;
+  if(typeof NEGOCIO === 'undefined' || !NEGOCIO.productos){ alert('Error: catálogo no disponible'); return; }
   var p = NEGOCIO.productos[i];
   if(!p) return;
   var c = carrito[i] || 0;
-  var r = prompt('¿Cuántos quieres de ' + p.nombre + '?', c || 1);
+  var msg = '🛒 ' + p.nombre + '\n💵 ' + p.precioTexto + '\n\n¿Cuántos quieres?';
+  var r = window.prompt(msg, String(c || 1));
   if(r === null) return;
   var n = parseInt(r, 10);
-  if(isNaN(n) || n < 0) return;
-  if(n === 0) delete carrito[i]; else carrito[i] = n;
+  if(isNaN(n) || n < 0){ window.alert('⚠️ Cantidad no válida'); return; }
+  if(n === 0) delete carrito[i];
+  else carrito[i] = n;
   actualizarCant(i);
 });
+
+
 
 window.pedidoSumar = function(i){ carrito[i] = (carrito[i] || 0) + 1; actualizarCant(i); };
 window.pedidoRestar = function(i){ if(!carrito[i]) return; carrito[i]--; if(carrito[i] <= 0) delete carrito[i]; actualizarCant(i); };
