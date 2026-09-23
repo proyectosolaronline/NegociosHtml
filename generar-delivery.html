@@ -585,13 +585,15 @@ function construirLandingPEDIDOS(n, plantillaOverride) {
 
   const phSVG = 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 240"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1A2033"/><stop offset="1" stop-color="#0E1220"/></linearGradient></defs><rect width="300" height="240" fill="url(#g)"/><rect x="10" y="10" width="280" height="220" rx="18" fill="none" stroke="' + cp + '" stroke-width="3" stroke-dasharray="10 8"/><text x="150" y="105" font-size="48" text-anchor="middle">📦</text><text x="150" y="148" font-size="21" font-weight="700" text-anchor="middle" fill="#E0E0E0" font-family="Arial,sans-serif">ESPACIO RESERVADO</text><text x="150" y="175" font-size="17" text-anchor="middle" fill="' + ca + '" font-family="Arial,sans-serif">a nuevos productos</text></svg>');
   const relleno = productos.length < 4 ? 4 - productos.length : (productos.length % 2 ? 1 : 0);
-  const placeholdersHTML = Array.from({ length: relleno }).map(() => '<div class="prod prod-ph"><img src="' + phSVG + '" alt="Espacio reservado a nuevos productos" loading="lazy"></div>').join('');
-  const filas = Math.max(1, Math.ceil((productos.length + relleno) / 2));
   const productosHTML = '<section class="catalogo" style="--filas:' + filas + '">' + productos.map(p => {
-    const nombreTarjeta = p.esVariante ? p.nombre.split('/')[0].trim() : p.nombre;
-    return '<div class="prod" data-idx="' + p.indice + '" onclick="abrirProducto(' + p.indice + ')"><span class="prod-badge" id="badge-' + p.indice + '"></span><img src="' + escHTML(p.url) + '" alt="' + escHTML(nombreTarjeta) + '" loading="lazy"><div class="prod-info"><div class="prod-nombre">' + escHTML(nombreTarjeta) + '</div><div class="prod-precio">' + escHTML(p.precioTexto) + '</div></div></div>';
+    const nombreBase = p.esVariante ? p.nombre.split('/')[0].trim() : p.nombre;
+    const marcas = p.esVariante ? p.nombre.split('/').slice(1).map(function(m){return m.trim();}).filter(function(m){return m.length>0;}) : [];
+    var varsHTML = '';
+    if(marcas.length > 0){
+      varsHTML = '<div class="prod-vars">' + marcas.map(function(m){ return '<span>' + escHTML(m) + '</span>'; }).join('') + '</div>';
+    }
+    return '<div class="prod" data-idx="' + p.indice + '" onclick="abrirProducto(' + p.indice + ')"><span class="prod-badge" id="badge-' + p.indice + '"></span><img src="' + escHTML(p.url) + '" alt="' + escHTML(nombreBase) + '" loading="lazy"><div class="prod-info"><div class="prod-nombre">' + escHTML(nombreBase) + '</div>' + varsHTML + '<div class="prod-precio">' + escHTML(p.precioTexto) + '</div></div></div>';
   }).join('') + placeholdersHTML + '</section>';
-
   const ci = [['📞','Teléfono',n.telefono],['💬','WhatsApp',n.whatsapp],['🕐','Horario',n.horario],['✉️','Correo',n.correo]].filter(x => x[2]);
   const cb = (wd ? '<a href="https://wa.me/' + wd + '" class="mas-btn mas-btn-wa" target="_blank">💬 WhatsApp</a>' : '') +
     (td ? '<a href="tel:' + td + '" class="mas-btn mas-btn-call">📞 Llamar</a>' : '') +
@@ -775,16 +777,20 @@ body{font-family:${fn};font-feature-settings:'cv02','cv03','cv04','cv11','ss01';
 .pantalla .desc{flex:0 0 auto;padding:12px 20px 0;font-size:12.5px;line-height:1.45;color:var(--text-dim);text-align:center;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .pantalla .sec-titulo{flex:0 0 auto;padding:14px 16px 8px;font-size:14px;font-weight:800;letter-spacing:-0.02em;display:flex;align-items:center;gap:8px}
 .pantalla .sec-titulo::before{content:'';width:4px;height:16px;border-radius:2px;background:linear-gradient(var(--brand),var(--accent));box-shadow:0 0 12px rgba(123,47,247,.6)}
-.pantalla .catalogo{flex:1 1 0;min-height:0;overflow-y:auto;display:grid;grid-template-columns:repeat(2,1fr);grid-template-rows:repeat(var(--filas,2),minmax(84px,1fr));gap:8px;padding:0 12px 4px;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.15) transparent}
+.pantalla .catalogo{flex:1 1 0;min-height:0;overflow-y:auto;display:grid;grid-template-columns:repeat(2,1fr);grid-template-rows:repeat(var(--filas,2),minmax(120px,1fr));gap:8px;padding:0 12px 4px;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.15) transparent}
 .pantalla .catalogo::-webkit-scrollbar{width:4px}
 .pantalla .catalogo::-webkit-scrollbar-thumb{background:rgba(255,255,255,.15);border-radius:2px}
-
 .prod{position:relative;min-height:0;border-radius:var(--radius-md);overflow:hidden;background:var(--bg-2);cursor:pointer;border:1px solid var(--border);box-shadow:var(--shadow-1);transition:transform .25s var(--ease), border-color .25s var(--ease), box-shadow .25s var(--ease)}
 .prod:active{transform:scale(.96)}
 .prod img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;transition:transform .5s var(--ease)}
-.prod-info{position:absolute;left:0;right:0;bottom:0;padding:26px 10px 9px;background:linear-gradient(to top,rgba(0,0,0,.88),rgba(0,0,0,.45) 55%,rgba(0,0,0,0));display:flex;align-items:flex-end;justify-content:space-between;gap:6px;z-index:1}
+.prod-info{position:absolute;left:0;right:0;bottom:0;padding:26px 10px 9px;background:linear-gradient(to top,rgba(0,0,0,.92),rgba(0,0,0,.55) 60%,rgba(0,0,0,0));display:flex;flex-direction:column;gap:3px;z-index:1}
 .prod-nombre{font-size:12.5px;font-weight:700;color:#fff;line-height:1.2;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;text-shadow:0 1px 3px rgba(0,0,0,.6)}
-.prod-precio{flex:0 0 auto;font-size:12px;font-weight:800;color:#fff;padding:3px 9px;border-radius:999px;background:linear-gradient(135deg,var(--brand),var(--brand-2));box-shadow:0 2px 8px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.22);white-space:nowrap}
+.prod-vars{display:grid;grid-template-columns:1fr 1fr;gap:2px 8px;margin-top:2px;position:relative;padding:0 2px}
+.prod-vars::before{content:'';position:absolute;left:50%;top:1px;bottom:1px;width:1px;background:rgba(255,255,255,.18);transform:translateX(-50%)}
+.prod-vars span{font-size:9.5px;font-weight:700;color:rgba(255,255,255,.92);line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 1px 2px rgba(0,0,0,.7)}
+.prod-vars span:nth-child(odd){text-align:right;padding-right:8px}
+.prod-vars span:nth-child(even){text-align:left;padding-left:8px}
+.prod-precio{align-self:flex-end;font-size:12px;font-weight:800;color:#fff;padding:3px 9px;border-radius:999px;background:linear-gradient(135deg,var(--brand),var(--brand-2));box-shadow:0 2px 8px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.22);white-space:nowrap;margin-top:2px}
 .prod-badge{display:none;position:absolute;top:8px;right:8px;z-index:2;min-width:24px;height:24px;padding:0 7px;border-radius:12px;background:var(--accent);color:#000;font-size:12px;font-weight:900;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.35)}
 .prod-badge.on{display:flex}
 .prod-ph{cursor:default;box-shadow:none;border:1px dashed rgba(255,255,255,.15);background:#141A2A}
