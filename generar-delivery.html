@@ -1259,7 +1259,6 @@ function obtenerClienteId(){
   if(!cid){ cid = 'CLI-' + Date.now() + '-' + Math.random().toString(36).slice(2,8); localStorage.setItem('clienteId', cid); }
   return cid;
 }
-
 window.confirmarPedido = function(){
   var nombre = (document.getElementById('clienteNombre').value || '').trim();
   if(!nombre){ alert('✍️ Escribe tu nombre'); return; }
@@ -1285,33 +1284,27 @@ window.confirmarPedido = function(){
   var resumen = '📦 Revisa tu pedido:\\n\\n' + items.join('\\n') + '\\n\\n💰 TOTAL: $' + total + '\\n\\n👤 ' + nombre + '\\n📍 Ubicación confirmada\\n\\n¿Enviar por WhatsApp al negocio?';
   if(!confirm(resumen)) return;
 
-   var alertaCob = (window.fueraDeCobertura) 
+  var alertaCob = (window.fueraDeCobertura) 
     ? '🚨 PEDIDO FUERA DE COBERTURA\\n(Cliente fuera del radio de ' + (window.RADIO_COBERTURA_KM || 3) + ' km)\\nEl negocio debe confirmar si lo acepta.\\n\\n' 
     : '';
-  var msg = '🛒 NUEVO PEDIDO\n━━━...
-    window.open('https://wa.me/' + NEGOCIO.whatsapp + '?text=' + encodeURIComponent(msg), '_blank');
+  var msg = alertaCob + '🛒 NUEVO PEDIDO\\n━━━━━━━━━━━━━━━\\n🏪 ' + NEGOCIO.nombre + '\\n🆔 Negocio ID: ' + (NEGOCIO.id || '-') + '\\n━━━━━━━━━━━━━━━\\n👤 Cliente: ' + nombre + '\\n🔖 Cliente ID: ' + clienteId + '\\n📍 Ubicación: https://maps.google.com/?q=' + latPedido + ',' + lngPedido + '\\n🕐 ' + fecha + '\\n━━━━━━━━━━━━━━━\\n📦 DETALLE:\\n' + items.join('\\n') + '\\n━━━━━━━━━━━━━━━\\n💰 TOTAL: $' + total;
+  window.open('https://wa.me/' + NEGOCIO.whatsapp + '?text=' + encodeURIComponent(msg), '_blank');
 };
 
-actualizarBotonUnico(); 
-  
-
+actualizarBotonUnico();
 <\/script>
+
 <script>${varJS}<\/script>
 
 <!-- ============================================================
-     MÓDULO COBERTURA — autocontenido
-     Cambia RADIO_COBERTURA_KM si quieres otro radio
+     MÓDULO COBERTURA + MÍNIMO — autocontenido
      ============================================================ -->
 <div id="cobOverlay" style="display:none;position:fixed;inset:0;z-index:10600;background:rgba(6,6,10,.9);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);align-items:center;justify-content:center;padding:20px">
   <div id="cobCaja" style="background:linear-gradient(180deg,#1a1c26 0%,#0f1117 100%);border:3px solid #FF0040;border-radius:26px;padding:26px 22px 22px;width:100%;max-width:400px;text-align:center;position:relative;overflow:hidden">
     <div id="cobIcono" style="font-size:64px;line-height:1;margin-bottom:10px">🚨</div>
     <div id="cobTitulo" style="font-size:13px;font-weight:900;letter-spacing:3px;color:#FF0040;text-transform:uppercase;margin-bottom:6px">¡ATENCIÓN!</div>
-    <div style="font-size:21px;font-weight:800;color:#fff;margin-bottom:14px;letter-spacing:-0.025em">Estás fuera de cobertura</div>
-    <div style="font-size:14px;line-height:1.6;color:#C9D1DC;margin-bottom:20px">
-      Nuestro servicio llega hasta <strong id="cobRadio" style="color:#FFD60A">3 km</strong> del negocio.<br>
-      Tu pedido <strong style="color:#FFD60A">puede no ser aceptado</strong>.<br>
-      El negocio se comunicará contigo para confirmar.
-    </div>
+    <div id="cobSubtitulo" style="font-size:21px;font-weight:800;color:#fff;margin-bottom:14px;letter-spacing:-0.025em"></div>
+    <div id="cobTexto" style="font-size:14px;line-height:1.6;color:#C9D1DC;margin-bottom:20px"></div>
     <button type="button" id="cobAceptar" style="width:100%;padding:15px;border-radius:14px;border:none;background:linear-gradient(135deg,#FF0040,#FF6B00);color:#fff;font-weight:900;font-size:15px;font-family:inherit;cursor:pointer;box-shadow:0 8px 26px rgba(255,0,64,.5),inset 0 1px 0 rgba(255,255,255,.3)">✓ Entendido, continuar</button>
   </div>
 </div>
@@ -1330,16 +1323,21 @@ actualizarBotonUnico();
 
 <script>
 (function(){
-  // 🔧 CAMBIA AQUÍ EL RADIO (en kilómetros)
   var RADIO_COBERTURA_KM = 3;
+  var RADIO_MINIMO_KM    = 1;
+  var MINIMO_COMPRA      = 95;
 
-  // Variable global que el resto del sistema leerá
   window.fueraDeCobertura = false;
+  window.RADIO_COBERTURA_KM = RADIO_COBERTURA_KM;
+  window.RADIO_MINIMO_KM = RADIO_MINIMO_KM;
+  window.MINIMO_COMPRA = MINIMO_COMPRA;
 
   var overlay = document.getElementById('cobOverlay');
-  var btnOk = document.getElementById('cobAceptar');
-  var radioTxt = document.getElementById('cobRadio');
-  if (radioTxt) radioTxt.textContent = RADIO_COBERTURA_KM + ' km';
+  var btnOk   = document.getElementById('cobAceptar');
+  var icono   = document.getElementById('cobIcono');
+  var titulo  = document.getElementById('cobTitulo');
+  var sub     = document.getElementById('cobSubtitulo');
+  var texto   = document.getElementById('cobTexto');
 
   function calcularDistanciaKm(lat1, lng1, lat2, lng2){
     var R = 6371;
@@ -1352,32 +1350,52 @@ actualizarBotonUnico();
     return R * c;
   }
 
+  function mostrarMensaje(tipo){
+    if(tipo === 'fuera'){
+      icono.textContent = '🚨';
+      titulo.textContent = '¡ATENCIÓN!';
+      sub.textContent = 'Estás fuera de cobertura';
+      texto.innerHTML = 'Nuestro servicio llega hasta <strong style="color:#FFD60A">' + RADIO_COBERTURA_KM + ' km</strong> del negocio.<br>' +
+                        'Tu pedido <strong style="color:#FFD60A">puede no ser aceptado</strong>.<br>' +
+                        'El negocio se comunicará contigo para confirmar.';
+      window.fueraDeCobertura = true;
+    } else {
+      icono.textContent = '📍';
+      titulo.textContent = 'AVISO';
+      sub.textContent = 'Compra mínima $' + MINIMO_COMPRA;
+      texto.innerHTML = 'Estás a más de <strong style="color:#FFD60A">' + RADIO_MINIMO_KM + ' km</strong> del negocio.<br>' +
+                        'Para envío gratis, la compra debe ser mínimo <strong style="color:#FFD60A">$' + MINIMO_COMPRA + '</strong>.<br>' +
+                        'El negocio decidirá si lo acepta.';
+      window.fueraDeCobertura = false;
+    }
+    overlay.style.display = 'flex';
+  }
+
   function verificarCobertura(lat, lng){
     var negLat = (typeof NEGOCIO !== 'undefined' && NEGOCIO.lat) ? NEGOCIO.lat : null;
     var negLng = (typeof NEGOCIO !== 'undefined' && NEGOCIO.lng) ? NEGOCIO.lng : null;
     if(!negLat || !negLng || !lat || !lng) return false;
     var dist = calcularDistanciaKm(negLat, negLng, lat, lng);
-    return dist > RADIO_COBERTURA_KM;
+    if(dist > RADIO_COBERTURA_KM){
+      mostrarMensaje('fuera');
+      return true;
+    }
+    if(dist >= RADIO_MINIMO_KM){
+      mostrarMensaje('minimo');
+      return true;
+    }
+    return false;
   }
 
-  // Escuchar el clic en el botón "Confirmar ubicación"
-  // Corre en paralelo al flujo normal (no lo interrumpe)
   document.addEventListener('click', function(e){
     var target = e.target;
     if(!target) return;
     if(target.id === 'ubiConfirmar' || (target.closest && target.closest('#ubiConfirmar'))){
-      // Esperar a que el flujo normal guarde las coordenadas
       setTimeout(function(){
         var lat = (typeof latPedido !== 'undefined' && latPedido) ? latPedido : null;
         var lng = (typeof lngPedido !== 'undefined' && lngPedido) ? lngPedido : null;
         if(!lat || !lng) return;
-        var fuera = verificarCobertura(lat, lng);
-        if(fuera){
-          window.fueraDeCobertura = true;
-          overlay.style.display = 'flex';
-        } else {
-          window.fueraDeCobertura = false;
-        }
+        verificarCobertura(lat, lng);
       }, 150);
     }
   }, true);
@@ -1387,21 +1405,15 @@ actualizarBotonUnico();
   });
 
   window.verificarCobertura = verificarCobertura;
-  window.RADIO_COBERTURA_KM = RADIO_COBERTURA_KM;
 })();
 </script>
 </body></html>`;
 }
-
-console.log('✅ Generador de landing activo');
+ console.log('✅ Generador de landing activo');
 </script>
 
 </body>
 </html>
-
-
-
-
 
 
 
