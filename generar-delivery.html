@@ -585,6 +585,8 @@ function construirLandingPEDIDOS(n, plantillaOverride) {
 
   const phSVG = 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 240"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1A2033"/><stop offset="1" stop-color="#0E1220"/></linearGradient></defs><rect width="300" height="240" fill="url(#g)"/><rect x="10" y="10" width="280" height="220" rx="18" fill="none" stroke="' + cp + '" stroke-width="3" stroke-dasharray="10 8"/><text x="150" y="105" font-size="48" text-anchor="middle">📦</text><text x="150" y="148" font-size="21" font-weight="700" text-anchor="middle" fill="#E0E0E0" font-family="Arial,sans-serif">ESPACIO RESERVADO</text><text x="150" y="175" font-size="17" text-anchor="middle" fill="' + ca + '" font-family="Arial,sans-serif">a nuevos productos</text></svg>');
   const relleno = productos.length < 4 ? 4 - productos.length : (productos.length % 2 ? 1 : 0);
+  const placeholdersHTML = Array.from({ length: relleno }).map(() => '<div class="prod prod-ph"><img src="' + phSVG + '" alt="Espacio reservado a nuevos productos" loading="lazy"></div>').join('');
+  const filas = Math.max(1, Math.ceil((productos.length + relleno) / 2));
   const productosHTML = '<section class="catalogo" style="--filas:' + filas + '">' + productos.map(p => {
     const nombreBase = p.esVariante ? p.nombre.split('/')[0].trim() : p.nombre;
     const marcas = p.esVariante ? p.nombre.split('/').slice(1).map(function(m){return m.trim();}).filter(function(m){return m.length>0;}) : [];
