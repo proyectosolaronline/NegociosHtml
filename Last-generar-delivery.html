@@ -1259,7 +1259,6 @@ function obtenerClienteId(){
   if(!cid){ cid = 'CLI-' + Date.now() + '-' + Math.random().toString(36).slice(2,8); localStorage.setItem('clienteId', cid); }
   return cid;
 }
-
 window.confirmarPedido = function(){
   var nombre = (document.getElementById('clienteNombre').value || '').trim();
   if(!nombre){ alert('✍️ Escribe tu nombre'); return; }
@@ -1285,23 +1284,17 @@ window.confirmarPedido = function(){
   var resumen = '📦 Revisa tu pedido:\\n\\n' + items.join('\\n') + '\\n\\n💰 TOTAL: $' + total + '\\n\\n👤 ' + nombre + '\\n📍 Ubicación confirmada\\n\\n¿Enviar por WhatsApp al negocio?';
   if(!confirm(resumen)) return;
 
-   var alertaCob = (window.fueraDeCobertura) 
+  var alertaCob = (window.fueraDeCobertura) 
     ? '🚨 PEDIDO FUERA DE COBERTURA\\n(Cliente fuera del radio de ' + (window.RADIO_COBERTURA_KM || 3) + ' km)\\nEl negocio debe confirmar si lo acepta.\\n\\n' 
     : '';
   var msg = alertaCob + '🛒 NUEVO PEDIDO\\n━━━━━━━━━━━━━━━\\n🏪 ' + NEGOCIO.nombre + '\\n🆔 Negocio ID: ' + (NEGOCIO.id || '-') + '\\n━━━━━━━━━━━━━━━\\n👤 Cliente: ' + nombre + '\\n🔖 Cliente ID: ' + clienteId + '\\n📍 Ubicación: https://maps.google.com/?q=' + latPedido + ',' + lngPedido + '\\n🕐 ' + fecha + '\\n━━━━━━━━━━━━━━━\\n📦 DETALLE:\\n' + items.join('\\n') + '\\n━━━━━━━━━━━━━━━\\n💰 TOTAL: $' + total;
   window.open('https://wa.me/' + NEGOCIO.whatsapp + '?text=' + encodeURIComponent(msg), '_blank');
 };
 
-actualizarBotonUnico(); 
-  
-
+actualizarBotonUnico();
 <\/script>
 <script>${varJS}<\/script>
 
-<!-- ============================================================
-     MÓDULO COBERTURA + MÍNIMO — autocontenido
-     Cambia los valores aquí abajo si quieres ajustar reglas
-     ============================================================ -->
 <div id="cobOverlay" style="display:none;position:fixed;inset:0;z-index:10600;background:rgba(6,6,10,.9);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);align-items:center;justify-content:center;padding:20px">
   <div id="cobCaja" style="background:linear-gradient(180deg,#1a1c26 0%,#0f1117 100%);border:3px solid #FF0040;border-radius:26px;padding:26px 22px 22px;width:100%;max-width:400px;text-align:center;position:relative;overflow:hidden">
     <div id="cobIcono" style="font-size:64px;line-height:1;margin-bottom:10px">🚨</div>
@@ -1326,14 +1319,10 @@ actualizarBotonUnico();
 
 <script>
 (function(){
-  // ============================================================
-  // 🔧 REGLAS DEL NEGOCIO — ajusta aquí
-  // ============================================================
-  var RADIO_COBERTURA_KM = 3;    // km máximos de servicio
-  var RADIO_MINIMO_KM    = 1;    // a partir de aquí aplica mínimo de compra
-  var MINIMO_COMPRA      = 95;   // compra mínima cuando aplica
+  var RADIO_COBERTURA_KM = 3;
+  var RADIO_MINIMO_KM    = 1;
+  var MINIMO_COMPRA      = 95;
 
-  // Variables globales que el resto del sistema puede leer
   window.fueraDeCobertura = false;
   window.RADIO_COBERTURA_KM = RADIO_COBERTURA_KM;
   window.RADIO_MINIMO_KM = RADIO_MINIMO_KM;
@@ -1362,17 +1351,13 @@ actualizarBotonUnico();
       icono.textContent = '🚨';
       titulo.textContent = '¡ATENCIÓN!';
       sub.textContent = 'Estás fuera de cobertura';
-      texto.innerHTML = 'Nuestro servicio llega hasta <strong style="color:#FFD60A">' + RADIO_COBERTURA_KM + ' km</strong> del negocio.<br>' +
-                        'Tu pedido <strong style="color:#FFD60A">puede no ser aceptado</strong>.<br>' +
-                        'El negocio se comunicará contigo para confirmar.';
+      texto.innerHTML = 'Nuestro servicio llega hasta <strong style="color:#FFD60A">' + RADIO_COBERTURA_KM + ' km</strong> del negocio.<br>Tu pedido <strong style="color:#FFD60A">puede no ser aceptado</strong>.<br>El negocio se comunicará contigo para confirmar.';
       window.fueraDeCobertura = true;
     } else {
       icono.textContent = '📍';
       titulo.textContent = 'AVISO';
       sub.textContent = 'Compra mínima $' + MINIMO_COMPRA;
-      texto.innerHTML = 'Estás a más de <strong style="color:#FFD60A">' + RADIO_MINIMO_KM + ' km</strong> del negocio.<br>' +
-                        'Para envío gratis, la compra debe ser mínimo <strong style="color:#FFD60A">$' + MINIMO_COMPRA + '</strong>.<br>' +
-                        'El negocio decidirá si lo acepta.';
+      texto.innerHTML = 'Estás a más de <strong style="color:#FFD60A">' + RADIO_MINIMO_KM + ' km</strong> del negocio.<br>Para envío gratis, la compra debe ser mínimo <strong style="color:#FFD60A">$' + MINIMO_COMPRA + '</strong>.<br>El negocio decidirá si lo acepta.';
       window.fueraDeCobertura = false;
     }
     overlay.style.display = 'flex';
@@ -1394,8 +1379,6 @@ actualizarBotonUnico();
     return false;
   }
 
-  // Escuchar el clic en el botón "Confirmar ubicación"
-  // Corre en paralelo al flujo normal (no lo interrumpe)
   document.addEventListener('click', function(e){
     var target = e.target;
     if(!target) return;
@@ -1417,7 +1400,6 @@ actualizarBotonUnico();
 })();
 </script>
 </body></html>`;
-
 }
 
 console.log('✅ Generador de landing activo');
@@ -1425,10 +1407,6 @@ console.log('✅ Generador de landing activo');
 
 </body>
 </html>
-
-
-
-
 
 
 
