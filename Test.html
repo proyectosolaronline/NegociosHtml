@@ -549,8 +549,276 @@ function mostrarModalLink(u, n) {
 document.getElementById('linkCerrar').onclick = () => document.getElementById('linkModal').classList.remove('show');
 document.getElementById('linkCopiar').onclick = async () => { try { await navigator.clipboard.writeText(urlPublicada); mostrarToast('📋 Link copiado'); } catch(e) { mostrarToast('⚠️ No se pudo copiar'); } };
 document.getElementById('linkModal').addEventListener('click', e => { if (e.target === e.currentTarget) document.getElementById('linkModal').classList.remove('show'); });.mas-body{flex:1 1 auto;min-height:0;overflow-y:auto;padding:4px 16px 24px;padding-bottom:calc(24px + env(safe-area-inset-bottom));scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.15) transparent}
+/* ============================================================
+   🟦 FUNCIÓN GENERAL: LANDING DE PEDIDOS
+   Formato Sheet: "descripcion/v1/v2/v3&precio"
+   ============================================================ */
+function construirLandingPEDIDOS(n, plantillaOverride) {
+  const pl = plantillaOverride || n.plantillaLanding || 'futurista';
+  let wd = String(n.whatsapp || '').replace(/\D/g, '');
+  if (wd.length === 10) wd = '52' + wd;
+  const td = String(n.telefono || '').replace(/\D/g, '');
+  const ft = (n.fotos || []).filter(f => f && f.url);
+  const tm = n.latitud && n.longitud;
+  const cp = n.colorPrimario || '#7B2FF7';
+  const cs = n.colorSecundario || '#FF00E5';
+  const ca = n.colorAcento || '#00D4FF';
+  const fn = n.fuenteLanding || "'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif";
+  const nombreLimpio = nombreVisible(n.nombre);
+  const dp = (n.descripcion || '').split('&');
+  const dc = dp[0].trim() || '';
+  const dl = dp[1] ? dp[1].trim() : dc;
+  const st = ((nombreLimpio || 'Negocio') + (n.slogan ? ' - ' + n.slogan : '')).substring(0, 65);
+  const sd = (dl || dc || (nombreLimpio || 'Negocio') + ' en ' + (n.direccion || n.ubicacion || 'México')).replace(/\s+/g, ' ').substring(0, 158);
+  const carp = nombreCarpeta(n.nombre);
+  const oi = n.banner || n.logo || '';
+  const cu = GITHUB_PAGES_BASE + '/' + encodeURIComponent(carp) + '/';
+
+  /* ============================================================
+     🟦 FLUJO 1: PRODUCTOS CON VARIANTES
+     Formato: "descripcion/v1/v2/v3&precio"
+     - Antes de la primera "/" → nombre base
+     - Resto separado por "/" → variantes
+     - Después de "&" → precio
+     ============================================================ */
+  const productos = ft.map((f, i) => {
+    const partes = (f.descripcion || '').split('&');
+    const crudo = (partes[0] || '').trim();
+    const trozos = crudo.split('/').map(x => x.trim()).filter(Boolean);
+    const nombreBase = trozos[0] || ('Producto ' + (i + 1));
+    const variantes  = trozos.slice(1);
+    let precioRaw = partes[1] ? partes[1].trim() : '';
+    if (precioRaw && !/^\$/.test(precioRaw)) precioRaw = '$' + precioRaw;
+    const precioNum = parseFloat(String(precioRaw).replace(/[^0-9.]/g, '')) || 0;
+    return {
+      indice: i,
+      nombre: nombreBase,
+      variantes: variantes,
+      precioTexto: precioRaw || '—',
+      precio: precioNum,
+      url: f.url
+    };
+  });
+  /* 🟦 FIN FLUJO 1 */
+
+  const phSVG = 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 240"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1A2033"/><stop offset="1" stop-color="#0E1220"/></linearGradient></defs><rect width="300" height="240" fill="url(#g)"/><rect x="10" y="10" width="280" height="220" rx="18" fill="none" stroke="' + cp + '" stroke-width="3" stroke-dasharray="10 8"/><text x="150" y="105" font-size="48" text-anchor="middle">📦</text><text x="150" y="148" font-size="21" font-weight="700" text-anchor="middle" fill="#E0E0E0" font-family="Arial,sans-serif">ESPACIO RESERVADO</text><text x="150" y="175" font-size="17" text-anchor="middle" fill="' + ca + '" font-family="Arial,sans-serif">a nuevos productos</text></svg>');
+  const relleno = productos.length < 4 ? 4 - productos.length : (productos.length % 2 ? 1 : 0);
+  const placeholdersHTML = Array.from({ length: relleno }).map(() => '<div class="prod prod-ph"><img src="' + phSVG + '" alt="Espacio reservado a nuevos productos" loading="lazy"></div>').join('');
+  const filas = Math.max(1, Math.ceil((productos.length + relleno) / 2));
+  const productosHTML = '<section class="catalogo" style="--filas:' + filas + '">' + productos.map(p => (
+    '<div class="prod" data-idx="' + p.indice + '" onclick="abrirProducto(' + p.indice + ')"><span class="prod-badge" id="badge-' + p.indice + '"></span><img src="' + escHTML(p.url) + '" alt="' + escHTML(p.nombre) + '" loading="lazy"><div class="prod-info"><div class="prod-nombre">' + escHTML(p.nombre) + '</div><div class="prod-precio">' + escHTML(p.precioTexto) + '</div></div></div>'
+  )).join('') + placeholdersHTML + '</section>';
+
+  const ci = [['📞','Teléfono',n.telefono],['💬','WhatsApp',n.whatsapp],['🕐','Horario',n.horario],['✉️','Correo',n.correo]].filter(x => x[2]);
+  const cb = (wd ? '<a href="https://wa.me/' + wd + '" class="mas-btn mas-btn-wa" target="_blank">💬 WhatsApp</a>' : '') +
+    (td ? '<a href="tel:' + td + '" class="mas-btn mas-btn-call">📞 Llamar</a>' : '') +
+    (tm ? '<button type="button" class="mas-btn mas-btn-maps" onclick="abrirMapaNegocio()">📍 Ver ubicación en mapa</button>' : '') +
+    (n.urlFacebook ? '<a href="' + escHTML(n.urlFacebook) + '" class="mas-btn mas-btn-fb" target="_blank" rel="noopener">📘 Facebook</a>' : '');
+  const negocioMapaEmbed = tm ? 'https://www.openstreetmap.org/export/embed.html?bbox=' + (parseFloat(n.longitud) - 0.006) + '%2C' + (parseFloat(n.latitud) - 0.006) + '%2C' + (parseFloat(n.longitud) + 0.006) + '%2C' + (parseFloat(n.latitud) + 0.006) + '&layer=mapnik&marker=' + n.latitud + '%2C' + n.longitud : '';
+  const negocioMapaDirLink = tm ? 'https://www.google.com/maps/dir/?api=1&destination=' + n.latitud + ',' + n.longitud : '';
+  const jl = { "@context":"https://schema.org","@type":"LocalBusiness","name":nombreLimpio,"description":sd,"image":oi,"logo":n.logo||'',"telephone":n.telefono||'',"email":n.correo||'',"url":cu,"address":{"@type":"PostalAddress","streetAddress":n.direccion||'',"addressLocality":n.ubicacion||'',"addressCountry":"MX"},"openingHours":n.horario||'' };
+  if (tm) jl.geo = { "@type":"GeoCoordinates","latitude":n.latitud,"longitude":n.longitud };
+  const jlStr = JSON.stringify(jl).replace(/</g, '\\u003c');
+
+  let ov = '';
+  if (pl === 'minimalista') ov = 'body{background:#F4F5F7;color:#1E1E1E}.pantalla .banner{background:' + cp + '!important;background-image:none!important}.mas-contact-item{background:#F9F9FA}.mas-contact-item .cv{color:#1E1E1E}.mas-title h3{color:#1E1E1E}.mas-footer .mf-slogan{color:#777}.total-card{background:#fff;border-color:#E2E2E6}.tc-label{color:#333}.tc-items{color:#777}';
+  else if (pl === 'clasico') ov = 'body{background:#F3ECDD;color:#3B2A1A}.mas-contact-item{background:#FBF3E3}.mas-footer .mf-slogan{color:#7A6650}.total-card{background:#FBF3E3;border-color:#D9C7A3}.tc-label{color:#3B2A1A}.tc-items{color:#7A6650}';
+
+  /* ============================================================
+     🟦 FLUJO 11: DATOS DEL NEGOCIO AL JSON
+     Incluye latitud/longitud para verificador de cobertura
+     ============================================================ */
+  const datosNegocioJS = JSON.stringify({
+    nombre: nombreLimpio,
+    id: n.id || '',
+    whatsapp: wd,
+    latitud: n.latitud || null,
+    longitud: n.longitud || null,
+    productos: productos
+  }).replace(/</g, '\\x3C');
+  /* 🟦 FIN FLUJO 11 */
+
+  const contactosPanelHTML = ci.map(x =>
+    '<div class="mas-contact-item"><div class="cl">' + escHTML(x[0]) + ' ' + escHTML(x[1]) + '</div><div class="cv">' + escHTML(x[2]) + '</div></div>'
+  ).join('');
+
+  const mensajeEmergente = n.mensajeEmergente || '';
+  const bannerCSS = n.banner ? "background-image:url('" + String(n.banner).replace(/'/g, "%27") + "');" : '';
+
+  return `<!DOCTYPE html><html lang="es"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=yes">
+<title>${escHTML(st)}</title>
+<meta name="description" content="${escHTML(sd)}">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<meta name="theme-color" content="${escHTML(cp)}">
+<meta name="author" content="${escHTML(nombreLimpio)}">
+<link rel="canonical" href="${escHTML(cu)}">
+<meta property="og:type" content="business.business">
+<meta property="og:title" content="${escHTML(nombreLimpio)}">
+<meta property="og:description" content="${escHTML(sd)}">
+${oi ? '<meta property="og:image" content="' + escHTML(oi) + '">' : ''}
+<meta property="og:url" content="${escHTML(cu)}">
+<meta property="og:site_name" content="${escHTML(nombreLimpio)}">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<script type="application/ld+json">${jlStr}<\/script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"><\/script>
+<style>
+:root{
+  --brand:${cp};
+  --brand-2:${cs};
+  --accent:${ca};
+  --ok:#25D366;
+  --ok-2:#00B84A;
+  --bg:#0A0E17;
+  --bg-2:#141A2A;
+  --surface:rgba(255,255,255,.04);
+  --surface-2:rgba(255,255,255,.07);
+  --border:rgba(255,255,255,.09);
+  --border-strong:rgba(255,255,255,.16);
+  --text:#F5F5F7;
+  --text-dim:#9AA4B2;
+  --text-mute:#6E7684;
+  --radius-md:18px;
+  --shadow-1:0 1px 2px rgba(0,0,0,.4), 0 8px 24px rgba(0,0,0,.28);
+  --shadow-2:0 12px 40px rgba(0,0,0,.55);
+  --ease:cubic-bezier(.2,.8,.2,1);
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{width:100%;overflow-x:hidden;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+body{font-family:${fn};font-feature-settings:'cv02','cv03','cv04','cv11','ss01';color:var(--text);background:var(--bg);line-height:1.5;letter-spacing:-0.01em}
+
+#splash{position:fixed;inset:0;z-index:9999;background:linear-gradient(135deg,var(--brand) 0%,var(--brand-2) 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:30px;transition:opacity .75s var(--ease),transform .75s var(--ease);overflow:hidden}
+#splash::before{content:'';position:absolute;inset:0;background:radial-gradient(600px 300px at 20% 100%, rgba(255,255,255,.18), transparent 70%),radial-gradient(600px 300px at 90% 10%, rgba(0,212,255,.25), transparent 70%);pointer-events:none}
+#splash.saliendo{opacity:0;transform:scale(1.08);pointer-events:none}
+.splash-logo{width:120px;height:120px;border-radius:50%;object-fit:cover;border:4px solid rgba(255,255,255,.95);background:#fff;box-shadow:0 20px 60px rgba(0,0,0,.4);position:relative}
+.splash-nombre{margin-top:26px;color:#fff;font-size:26px;font-weight:800;text-align:center;letter-spacing:-0.03em}
+.splash-slogan{margin-top:10px;color:rgba(255,255,255,.9);font-size:14.5px;font-weight:500;font-style:italic;text-align:center}
+.splash-loader{margin-top:36px;width:44px;height:44px;border:3px solid rgba(255,255,255,.25);border-top-color:#fff;border-radius:50%;animation:loaderSpin .9s linear infinite}
+@keyframes loaderSpin{to{transform:rotate(360deg)}}
+
+.pantalla{height:100vh;height:100dvh;display:flex;flex-direction:column;overflow:hidden;background:radial-gradient(900px 500px at 100% -10%, rgba(123,47,247,.14), transparent 60%),radial-gradient(700px 400px at -10% 110%, rgba(255,0,229,.10), transparent 60%),var(--bg)}
+
+.pantalla .banner{flex:1 1 auto;min-height:140px;max-height:38dvh;height:auto;transition:flex-grow .6s var(--ease),max-height .6s var(--ease);border-radius:0 0 26px 26px;position:relative;z-index:5;background-color:var(--brand);background-size:cover;background-position:center;background-repeat:no-repeat;overflow:hidden;box-shadow:0 8px 24px rgba(0,0,0,.35);${bannerCSS}}
+.pantalla .banner::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg, rgba(10,14,23,0) 40%, rgba(10,14,23,.85) 100%);pointer-events:none}
+.pantalla .desc{flex:0 0 auto;padding:12px 20px 0;font-size:12.5px;line-height:1.45;color:var(--text-dim);text-align:center;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.pantalla .sec-titulo{flex:0 0 auto;padding:14px 16px 8px;font-size:14px;font-weight:800;letter-spacing:-0.02em;display:flex;align-items:center;gap:8px}
+.pantalla .sec-titulo::before{content:'';width:4px;height:16px;border-radius:2px;background:linear-gradient(var(--brand),var(--accent));box-shadow:0 0 12px rgba(123,47,247,.6)}
+.pantalla .catalogo{flex:1 1 0;min-height:0;overflow-y:auto;display:grid;grid-template-columns:repeat(2,1fr);grid-template-rows:repeat(var(--filas,2),minmax(84px,1fr));gap:8px;padding:0 12px 4px;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.15) transparent}
+.pantalla .catalogo::-webkit-scrollbar{width:4px}
+.pantalla .catalogo::-webkit-scrollbar-thumb{background:rgba(255,255,255,.15);border-radius:2px}
+
+.prod{position:relative;min-height:0;border-radius:var(--radius-md);overflow:hidden;background:var(--bg-2);cursor:pointer;border:1px solid var(--border);box-shadow:var(--shadow-1);transition:transform .25s var(--ease), border-color .25s var(--ease), box-shadow .25s var(--ease)}
+.prod:active{transform:scale(.96)}
+.prod img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;transition:transform .5s var(--ease)}
+.prod-info{position:absolute;left:0;right:0;bottom:0;padding:26px 10px 9px;background:linear-gradient(to top,rgba(0,0,0,.88),rgba(0,0,0,.45) 55%,rgba(0,0,0,0));display:flex;align-items:flex-end;justify-content:space-between;gap:6px;z-index:1}
+.prod-nombre{font-size:12.5px;font-weight:700;color:#fff;line-height:1.2;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;text-shadow:0 1px 3px rgba(0,0,0,.6)}
+.prod-precio{flex:0 0 auto;font-size:12px;font-weight:800;color:#fff;padding:3px 9px;border-radius:999px;background:linear-gradient(135deg,var(--brand),var(--brand-2));box-shadow:0 2px 8px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.22);white-space:nowrap}
+.prod-badge{display:none;position:absolute;top:8px;right:8px;z-index:2;min-width:24px;height:24px;padding:0 7px;border-radius:12px;background:var(--accent);color:#000;font-size:12px;font-weight:900;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.35)}
+.prod-badge.on{display:flex}
+.prod-ph{cursor:default;box-shadow:none;border:1px dashed rgba(255,255,255,.15);background:#141A2A}
+.prod-ph:active{transform:none}
+.prod-ph img{object-fit:contain;background:#141A2A}
+
+.pantalla .total-card{flex:0 0 auto;margin:10px 12px 0;padding:10px 16px;border-radius:var(--radius-md);display:flex;align-items:center;justify-content:space-between;gap:10px;background:linear-gradient(135deg, rgba(255,255,255,.06), rgba(255,255,255,.02));border:1px solid var(--border);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);box-shadow:var(--shadow-1)}
+.tc-label{font-size:13px;font-weight:700;color:#C9D1DC}
+.tc-items{font-size:11.5px;color:#8A94A3;margin-top:2px}
+.tc-monto{font-size:24px;font-weight:800;line-height:1;letter-spacing:-0.04em;background:linear-gradient(135deg,var(--accent),var(--brand));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;font-variant-numeric:tabular-nums}
+.pantalla .barra-pedido{flex:0 0 auto;padding:10px 12px 6px}
+.btn-unico{display:flex;align-items:center;justify-content:center;width:100%;min-height:52px;border:none;border-radius:16px;background:linear-gradient(135deg,var(--brand) 0%,var(--brand-2) 100%);color:#fff;font-family:inherit;font-size:15.5px;font-weight:800;letter-spacing:-0.015em;cursor:pointer;padding:14px 20px;box-shadow:0 8px 24px rgba(123,47,247,.45), 0 2px 6px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.28);transition:transform .15s var(--ease), box-shadow .3s var(--ease), background .4s var(--ease)}
+.btn-unico:active{transform:scale(.98)}
+.btn-unico.estado-enviar{background:linear-gradient(135deg,var(--ok),var(--ok-2));box-shadow:0 8px 24px rgba(37,211,102,.45), 0 2px 6px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.28)}
+
+.pantalla .barra-ver-mas{flex:0 0 auto;padding:0 12px 10px;padding-bottom:calc(10px + env(safe-area-inset-bottom));display:flex;justify-content:center;min-height:44px}
+.btn-ver-mas{padding:9px 22px;border:1px solid var(--border-strong);border-radius:999px;background:var(--surface);color:var(--text-dim);font-family:inherit;font-size:12.5px;font-weight:700;letter-spacing:-0.005em;cursor:pointer;display:inline-flex;align-items:center;gap:7px;transition:all .35s var(--ease);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);opacity:0;transform:translateY(8px) scale(.92);pointer-events:none}
+.btn-ver-mas.visible{opacity:1;transform:translateY(0) scale(1);pointer-events:auto}
+.btn-ver-mas:active{transform:scale(.96)}
+.btn-ver-mas .vm-chevron{display:inline-block;transition:transform .3s var(--ease)}
+
+.mas-overlay{position:fixed;inset:0;z-index:5500;background:rgba(6,6,10,.72);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);display:none;opacity:0;transition:opacity .3s var(--ease)}
+.mas-overlay.activo{display:block}
+.mas-overlay.visible{opacity:1}
+.mas-panel{position:fixed;left:0;right:0;bottom:0;z-index:5600;max-height:88dvh;background:linear-gradient(180deg,#16181f 0%,#0d0f14 100%);border-top:1px solid var(--border-strong);border-radius:26px 26px 0 0;box-shadow:0 -12px 40px rgba(0,0,0,.6);transform:translateY(100%);transition:transform .4s var(--ease);display:flex;flex-direction:column;overflow:hidden}
+.mas-panel.activo{transform:translateY(0)}
+.mas-handle{flex:0 0 auto;padding:10px 0 6px;display:flex;justify-content:center;cursor:grab}
+.mas-handle::after{content:'';width:44px;height:4px;border-radius:2px;background:rgba(255,255,255,.18)}
+.mas-close{position:absolute;top:14px;right:16px;background:var(--surface);border:1px solid var(--border);border-radius:50%;width:34px;height:34px;color:var(--text-dim);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s var(--ease);z-index:2}
+.mas-close:active{transform:scale(.9);background:var(--surface-2)}
+.mas-title{flex:0 0 auto;padding:4px 24px 12px;text-align:center}
+.mas-title h3{font-size:17px;font-weight:800;letter-spacing:-0.025em;color:var(--text);margin-bottom:2px}
+.mas-title p{font-size:12px;color:var(--text-dim)}
+.mas-body{flex:1 1 auto;min-height:0;overflow-y:auto;padding:4px 16px 24px;padding-bottom:calc(24px + env(safe-area-inset-bottom));scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.15) transparent}
 .mas-body::-webkit-scrollbar{width:4px}
-.fuera{color:#FF4444!important;background:rgba(255,68,68,.12)!important;border-color:rgba(255,68,68,.35)!important;border-radius:10px;padding:12px;line-height:1.5;text-align:center}
+.mas-body::-webkit-scrollbar-thumb{background:rgba(255,255,255,.15);border-radius:2px}
+.mas-seccion{margin-bottom:18px}
+.mas-seccion h4{font-size:11px;font-weight:700;color:var(--text-dim);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:10px;padding-left:4px}
+.mas-contact-grid{display:grid;grid-template-columns:1fr;gap:8px}
+@media(min-width:520px){.mas-contact-grid{grid-template-columns:1fr 1fr}}
+.mas-contact-item{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:12px 14px;border-left:3px solid var(--accent);display:flex;flex-direction:column;gap:3px}
+.mas-contact-item .cl{font-size:10.5px;font-weight:700;color:var(--text-mute);text-transform:uppercase;letter-spacing:1px}
+.mas-contact-item .cv{font-size:14.5px;font-weight:600;color:var(--text);word-break:break-word;letter-spacing:-0.01em}
+.mas-btns{display:flex;flex-direction:column;gap:8px}
+@media(min-width:520px){.mas-btns{flex-direction:row;flex-wrap:wrap}.mas-btn{flex:1;min-width:140px}}
+.mas-btn{display:flex;align-items:center;justify-content:center;gap:8px;padding:14px 18px;border-radius:14px;font-weight:700;font-size:14.5px;letter-spacing:-0.01em;text-decoration:none;cursor:pointer;border:none;font-family:inherit;transition:transform .15s var(--ease), box-shadow .2s var(--ease);min-height:50px}
+.mas-btn:active{transform:scale(.98)}
+.mas-btn-wa{background:linear-gradient(135deg,#25D366,#00B84A);color:#fff;box-shadow:0 6px 20px rgba(37,211,102,.35), inset 0 1px 0 rgba(255,255,255,.25)}
+.mas-btn-call{background:linear-gradient(135deg,var(--brand),var(--brand-2));color:#fff;box-shadow:0 6px 20px rgba(123,47,247,.35), inset 0 1px 0 rgba(255,255,255,.25)}
+.mas-btn-maps{background:linear-gradient(135deg,#4285F4,#1A73E8);color:#fff;box-shadow:0 6px 20px rgba(66,133,244,.35), inset 0 1px 0 rgba(255,255,255,.25)}
+.mas-btn-fb{background:linear-gradient(135deg,#1877F2,#0C63D4);color:#fff;box-shadow:0 6px 20px rgba(24,119,242,.35), inset 0 1px 0 rgba(255,255,255,.25)}
+.mas-qr{text-align:center;padding:6px 0}
+.mas-qr img{width:160px;height:160px;border-radius:16px;border:3px solid var(--accent);padding:8px;background:#fff;cursor:pointer;box-shadow:0 8px 28px rgba(0,212,255,.25)}
+.mas-qr p{font-size:12.5px;color:var(--text-dim);margin-top:10px;font-weight:500}
+.mas-qr p span{color:var(--accent);font-weight:700;cursor:pointer}
+.mas-footer{text-align:center;padding:16px 0 6px;border-top:1px solid var(--border);margin-top:10px}
+.mas-footer .mf-nombre{font-size:14.5px;font-weight:800;color:var(--accent);letter-spacing:-0.02em;margin-bottom:4px}
+.mas-footer .mf-slogan{font-size:12px;color:var(--text-mute)}
+.promo-final{background:rgba(255,255,255,.02);border:1px solid var(--border);border-radius:16px;text-align:center;padding:18px 16px;margin-top:8px}
+.promo-final p{color:var(--text-dim);font-size:12.5px;line-height:1.6;margin:0 auto 12px;max-width:420px}
+.promo-final strong{color:var(--text)}
+.promo-final a{display:inline-block;padding:11px 22px;border-radius:12px;background:linear-gradient(135deg,var(--brand),var(--brand-2));color:#fff;font-weight:700;font-size:13px;text-decoration:none;letter-spacing:-0.01em;box-shadow:0 6px 18px rgba(123,47,247,.35), inset 0 1px 0 rgba(255,255,255,.25);transition:transform .15s var(--ease)}
+.promo-final a:active{transform:scale(.97)}
+
+/* ============================================================
+   🟦 FLUJO 3: ESTILOS DEL POPUP DE PRODUCTO + VARIANTES
+   ============================================================ */
+.modal-pedido-overlay{display:none;position:fixed;inset:0;background:rgba(6,6,10,.78);backdrop-filter:blur(16px) saturate(140%);-webkit-backdrop-filter:blur(16px) saturate(140%);z-index:6000;align-items:center;justify-content:center;padding:12px;overflow:hidden;animation:fadeIn .25s var(--ease)}
+.modal-pedido-overlay.activo{display:flex}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes modalIn{from{opacity:0;transform:translateY(20px) scale(.96)}to{opacity:1;transform:translateY(0) scale(1)}}
+.mp-inner{background:linear-gradient(180deg,#16181f 0%,#0f1117 100%);border:1px solid var(--border-strong);border-radius:28px;padding:0;max-width:420px;width:100%;max-height:calc(100dvh - 24px);display:flex;flex-direction:column;margin:auto;position:relative;overflow:hidden;box-shadow:var(--shadow-2), 0 0 0 1px rgba(255,255,255,.04);animation:modalIn .35s var(--ease)}
+.mp-foto{position:relative;flex:0 1 auto;min-height:0;background:#0a0e17}
+.mp-foto img{display:block;width:100%;aspect-ratio:4/3;max-height:46dvh;object-fit:cover}
+.mp-foto::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,transparent 60%,rgba(15,17,23,.9) 100%);pointer-events:none}
+.mp-x{position:absolute;top:12px;right:12px;width:38px;height:38px;border-radius:50%;border:1px solid rgba(255,255,255,.15);background:rgba(15,17,23,.7);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);color:#fff;font-size:20px;line-height:1;font-weight:400;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:2;transition:transform .2s var(--ease), background .2s var(--ease)}
+.mp-x:active{transform:scale(.9);background:rgba(255,255,255,.15)}
+.mp-body{padding:16px 18px 18px;flex:0 0 auto}
+.mp-head{display:flex;align-items:center;justify-content:space-between;gap:10px;text-align:left}
+.mp-nombre{font-size:18px;font-weight:800;color:var(--text);line-height:1.2;letter-spacing:-0.025em}
+.mp-precio{flex:0 0 auto;font-size:14px;font-weight:800;color:#fff;padding:5px 12px;border-radius:999px;background:linear-gradient(135deg,var(--brand),var(--brand-2));box-shadow:0 4px 14px rgba(123,47,247,.4), inset 0 1px 0 rgba(255,255,255,.25)}
+.mp-cant{display:flex;align-items:center;justify-content:center;gap:18px;margin:16px 0 6px}
+.btn-cant{width:48px;height:48px;border-radius:16px;border:1px solid var(--border-strong);background:var(--surface);color:var(--text);font-size:22px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s var(--ease);font-family:inherit}
+.btn-cant:active{transform:scale(.94);background:linear-gradient(135deg,var(--brand),var(--brand-2));border-color:transparent;color:#fff;box-shadow:0 6px 18px rgba(123,47,247,.4)}
+.cant-num{font-size:24px;min-width:34px;text-align:center;font-weight:800;color:var(--text);font-variant-numeric:tabular-nums}
+.mp-sub{font-size:13px;color:var(--text-dim);margin-bottom:12px;text-align:center;font-weight:500}
+.btn-confirmar{width:100%;padding:14px;border-radius:14px;border:none;background:linear-gradient(135deg,var(--ok),var(--ok-2));color:#fff;font-weight:800;font-size:15px;font-family:inherit;letter-spacing:-0.015em;cursor:pointer;box-shadow:0 6px 20px rgba(37,211,102,.4), inset 0 1px 0 rgba(255,255,255,.25);transition:transform .15s var(--ease)}
+.btn-confirmar:active{transform:scale(.98)}
+/* 🟦 FIN FLUJO 3 */
+
+.ubi-modal{display:none;position:fixed;inset:0;background:rgba(6,6,10,.78);backdrop-filter:blur(16px) saturate(140%);-webkit-backdrop-filter:blur(16px) saturate(140%);z-index:7000;align-items:center;justify-content:center;padding:12px;overflow-y:auto;animation:fadeIn .25s var(--ease)}
+.ubi-modal.activo{display:flex}
+.ubi-inner{background:linear-gradient(180deg,#16181f 0%,#0f1117 100%);border:1px solid var(--border-strong);border-radius:28px;padding:20px;max-width:520px;width:100%;max-height:calc(100dvh - 24px);overflow-y:auto;margin:auto;position:relative;box-shadow:var(--shadow-2), 0 0 0 1px rgba(255,255,255,.04);animation:modalIn .35s var(--ease)}
+.ubi-inner h2{font-size:19px;color:#fff;margin-bottom:6px;text-align:center;letter-spacing:-0.025em;font-weight:800}
+.ubi-inner .sub{font-size:13px;color:var(--text-dim);text-align:center;margin-bottom:14px;line-height:1.5}
+.btn-gps{width:100%;padding:13px;border-radius:14px;border:none;background:linear-gradient(135deg,var(--accent),var(--brand));color:#fff;font-weight:800;font-size:14px;font-family:inherit;letter-spacing:-0.01em;cursor:pointer;margin-bottom:10px;box-shadow:0 6px 20px rgba(0,212,255,.35), inset 0 1px 0 rgba(255,255,255,.25);transition:transform .15s var(--ease)}
+.btn-gps:active{transform:scale(.98)}
+.ubi-mapa{width:100%;height:clamp(140px,30vh,260px);border-radius:12px;border:2px solid var(--brand);margin-bottom:8px;overflow:hidden;background:#0a0e17}
+.ubi-estado{font-size:12px;color:#FFB300;text-align:center;margin-bottom:12px;min-height:16px;padding:8px 10px;border-radius:8px;background:rgba(255,179,0,.08);border:1px solid rgba(255,179,0,.18);transition:all .3s var(--ease)}
+.ubi-estado.ok{color:#4ADE80;font-weight:700;background:rgba(37,211,102,.1);border-color:rgba(37,211,102,.25)}
+/* 🟦 FLUJO 7: estilos de estados de cobertura */
+.ubi-estado.fuera{color:#FF4444!important;background:rgba(255,68,68,.12)!important;border-color:rgba(255,68,68,.35)!important;border-radius:10px;padding:12px;line-height:1.5;text-align:center}
 .ubi-estado.minimo{color:#FFB300!important;background:rgba(255,179,0,.12)!important;border-color:rgba(255,179,0,.35)!important;border-radius:10px;padding:12px;line-height:1.5;text-align:center}
 .ubi-estado b{font-weight:800}
 .ubi-estado small{font-size:11px;opacity:.85}
@@ -770,7 +1038,6 @@ var NEGOCIO = ${datosNegocioJS};
 
 /* ============================================================
    🟦 FLUJO 4: CARRITO POR VARIANTE + BADGES
-   Clave del carrito: "indiceProducto::variante"
    ============================================================ */
 var carrito = {};
 var varianteActual = null;
@@ -781,9 +1048,9 @@ var prodActual = 0;
 var coberturaActual = null;
 
 /* CONFIG COBERTURA — editable */
-var COMPRA_MINIMA = 95;   // $ para 1–3 km
-var KM_MIN = 1;           // mínimo km
-var KM_MAX = 3;           // máximo km
+var COMPRA_MINIMA = 95;
+var KM_MIN = 1;
+var KM_MAX = 3;
 
 var LAT_NEGOCIO = parseFloat(NEGOCIO.latitud) || null;
 var LNG_NEGOCIO = parseFloat(NEGOCIO.longitud) || null;
@@ -963,7 +1230,6 @@ function inicializarUbiMapa(){
   ubiMapa = L.map('ubiMapa', { center: [latIni, lngIni], zoom: 14 });
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(ubiMapa);
 
-  // 🏪 Marcador del NEGOCIO (fijo)
   if(LAT_NEGOCIO && LNG_NEGOCIO){
     var iconoNegocio = L.divIcon({
       html: '<div style="font-size:26px;line-height:1;filter:drop-shadow(0 2px 6px rgba(0,0,0,.6));">🏪</div>',
@@ -975,7 +1241,6 @@ function inicializarUbiMapa(){
       .addTo(ubiMapa)
       .bindPopup('<b>' + NEGOCIO.nombre + '</b><br>Aquí entregamos');
 
-    // 🎯 Círculo de referencia: radio de cobertura 3 km
     L.circle([LAT_NEGOCIO, LNG_NEGOCIO], {
       radius: KM_MAX * 1000,
       color: '#7B2FF7',
@@ -986,7 +1251,6 @@ function inicializarUbiMapa(){
     }).addTo(ubiMapa);
   }
 
-  // 📍 Marcador del CLIENTE (arrastrable)
   var iconoCliente = L.divIcon({
     html: '<div style="font-size:30px;line-height:1;filter:drop-shadow(0 2px 8px rgba(0,212,255,.8));">📍</div>',
     className: 'marker-cliente',
@@ -1063,7 +1327,6 @@ function verificarCoberturaEnVivo(){
   var d = distanciaKm(LAT_NEGOCIO, LNG_NEGOCIO, ubiLat, ubiLng);
   var total = totalCarrito();
 
-  // 🚫 MÁS DE 3 KM — Fuera de cobertura
   if(d > KM_MAX){
     coberturaActual = {
       distancia:d,
@@ -1077,7 +1340,6 @@ function verificarCoberturaEnVivo(){
     return;
   }
 
-  // ⚠️ ENTRE 1 Y 3 KM — Compra mínima
   if(d >= KM_MIN){
     var falta = COMPRA_MINIMA - total;
     if(falta > 0){
@@ -1102,7 +1364,6 @@ function verificarCoberturaEnVivo(){
     return;
   }
 
-  // ✅ MENOS DE 1 KM — Sin mínimo
   coberturaActual = {
     distancia:d,
     tipo:'sin_minimo',
@@ -1214,7 +1475,6 @@ window.confirmarPedido = function(){
   var ahora = new Date();
   var fecha = ahora.toLocaleDateString('es-MX') + ' ' + ahora.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
 
-  // --- AVISO DE COBERTURA PARA EL MENSAJE ---
   var avisoCobertura = '';
   var distanciaTxt = 'N/D';
   if(coberturaActual && coberturaActual.distancia !== null){
