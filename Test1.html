@@ -547,3 +547,6 @@ document.getElementById('linkCerrar').onclick = () => document.getElementById('l
 document.getElementById('linkCopiar').onclick = async () => { try { await navigator.clipboard.writeText(urlPublicada); mostrarToast('📋 Link copiado'); } catch(e) { mostrarToast('⚠️ No se pudo copiar'); } };
 document.getElementById('linkModal').addEventListener('click', e => { if (e.target === e.currentTarget) document.getElementById('linkModal').classList.remove('show'); });
 
+function construirLandingHTML(n, plantillaOverride) {
+  return construirLandingPEDIDOS(n, plantillaOverride);
+}
