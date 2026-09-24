@@ -771,10 +771,8 @@ body{font-family:${fn};font-feature-settings:'cv02','cv03','cv04','cv11','ss01';
 .splash-slogan{margin-top:10px;color:rgba(255,255,255,.9);font-size:14.5px;font-weight:500;font-style:italic;text-align:center}
 .splash-loader{margin-top:36px;width:44px;height:44px;border:3px solid rgba(255,255,255,.25);border-top-color:#fff;border-radius:50%;animation:loaderSpin .9s linear infinite}
 @keyframes loaderSpin{to{transform:rotate(360deg)}}
-
 .pantalla{height:100vh;height:100dvh;display:flex;flex-direction:column;overflow:hidden;background:radial-gradient(900px 500px at 100% -10%, rgba(123,47,247,.14), transparent 60%),radial-gradient(700px 400px at -10% 110%, rgba(255,0,229,.10), transparent 60%),var(--bg)}
-
-.pantalla .banner{flex:1 1 auto;min-height:140px;max-height:38dvh;height:auto;transition:flex-grow .6s var(--ease),max-height .6s var(--ease);border-radius:0 0 26px 26px;position:relative;z-index:5;background-color:var(--brand);background-size:cover;background-position:center;background-repeat:no-repeat;overflow:hidden;box-shadow:0 8px 24px rgba(0,0,0,.35);${bannerCSS}}
+.pantalla .banner{flex:0 0 auto;height:clamp(120px,22dvh,200px);transition:height .6s var(--ease);border-radius:0 0 26px 26px;position:relative;z-index:5;background-color:var(--brand);background-size:cover;background-position:center;background-repeat:no-repeat;overflow:hidden;box-shadow:0 8px 24px rgba(0,0,0,.35);${bannerCSS}}
 .pantalla .banner::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg, rgba(10,14,23,0) 40%, rgba(10,14,23,.85) 100%);pointer-events:none}
 .pantalla .desc{flex:0 0 auto;padding:12px 20px 0;font-size:12.5px;line-height:1.45;color:var(--text-dim);text-align:center;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .pantalla .sec-titulo{flex:0 0 auto;padding:14px 16px 8px;font-size:14px;font-weight:800;letter-spacing:-0.02em;display:flex;align-items:center;gap:8px}
