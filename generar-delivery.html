@@ -1288,8 +1288,8 @@ window.confirmarPedido = function(){
    var alertaCob = (window.fueraDeCobertura) 
     ? '🚨 PEDIDO FUERA DE COBERTURA\\n(Cliente fuera del radio de ' + (window.RADIO_COBERTURA_KM || 3) + ' km)\\nEl negocio debe confirmar si lo acepta.\\n\\n' 
     : '';
-  var msg = alertaCob + '🛒 NUEVO PEDIDO\\n━━━━━━━━━━━━━━━\\n🏪 ' + NEGOCIO.nombre + '\\n🆔 Negocio ID: ' + (NEGOCIO.id || '-') + '\\n━━━━━━━━━━━━━━━\\n👤 Cliente: ' + nombre + '\\n🔖 Cliente ID: ' + clienteId + '\\n📍 Ubicación: https://maps.google.com/?q=' + latPedido + ',' + lngPedido + '\\n🕐 ' + fecha + '\\n━━━━━━━━━━━━━━━\\n📦 DETALLE:\\n' + items.join('\\n') + '\\n━━━━━━━━━━━━━━━\\n💰 TOTAL: $' + total;
-  window.open('https://wa.me/' + NEGOCIO.whatsapp + '?text=' + encodeURIComponent(msg), '_blank');
+  var msg = '🛒 NUEVO PEDIDO\n━━━...
+    window.open('https://wa.me/' + NEGOCIO.whatsapp + '?text=' + encodeURIComponent(msg), '_blank');
 };
 
 actualizarBotonUnico(); 
