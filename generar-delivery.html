@@ -1076,7 +1076,7 @@ cargarCarritoLocal();
 // para mantener precisión de entrega. Misma clave para todos los negocios (localStorage es
 // por dominio): si esta landing y la pantalla previa de GPS viven en el mismo sitio, se comparte
 // sola; si viven en dominios distintos, se transmite por parámetros ?lat=&lng= en la URL.
-var GPS_VIGENCIA_MS = 6 * 60 * 60 * 1000; // 6 horas
+var GPS_VIGENCIA_MS = 10 * 60 * 1000; // 10 minutos
 function claveGPSPrevio(){ return 'gpsClientePrevio'; }
 function guardarGPSPrevio(lat, lng){
   try{ localStorage.setItem(claveGPSPrevio(), JSON.stringify({ lat: lat, lng: lng, ts: Date.now() })); }catch(e){}
