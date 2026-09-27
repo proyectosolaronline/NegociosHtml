@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Activar ubicación</title>
+<meta name="robots" content="noindex, nofollow">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+  html,body{width:100%;height:100%;background:#0f1115;color:#fff}
+  .wrap{min-height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px 20px;padding-top:calc(28px + env(safe-area-inset-top));padding-bottom:calc(28px + env(safe-area-inset-bottom));text-align:center}
+  .icono{font-size:56px;margin-bottom:14px;filter:drop-shadow(0 0 18px rgba(37,211,102,.6))}
+  h1{font-size:19px;font-weight:800;margin-bottom:8px}
+  p{font-size:13.5px;color:#c8ccd4;line-height:1.6;max-width:340px;margin-bottom:22px}
+  .estado{font-size:12.5px;font-weight:700;min-height:18px;margin-bottom:18px;color:#25D366}
+  .estado.err{color:#FF5470}
+  button{width:100%;max-width:320px;padding:14px;border:none;border-radius:10px;font-size:14.5px;font-weight:800;cursor:pointer;margin-bottom:10px}
+  .btn-gps{background:#25D366;color:#06210f}
+  .btn-gps:disabled{opacity:.6}
+  .btn-continuar{background:transparent;color:#c8ccd4;border:1px solid #444;display:none}
+  .privacidad{font-size:10.5px;color:#777;margin-top:16px;max-width:300px;line-height:1.5}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="icono">📍</div>
+  <h1>Activa tu ubicación</h1>
+  <p>La necesitamos una sola vez para calcular tu entrega con precisión. No volveremos a pedírtela en tus próximos pedidos.</p>
+  <div class="estado" id="estado">Toca el botón para activar tu GPS</div>
+  <button type="button" class="btn-gps" id="btnGps" onclick="pedirGPS()">📡 Activar mi ubicación</button>
+  <button type="button" class="btn-continuar" id="btnContinuar" onclick="continuar()">Continuar al catálogo →</button>
+  <p class="privacidad">🔒 Tu ubicación se usa solo para calcular la ruta de entrega de tus pedidos y no se comparte con terceros.</p>
+</div>
+
+<script>
+// Parámetro opcional ?destino=URL_DE_LA_LANDING — si el negocio destino vive en OTRO dominio,
+// las coordenadas se le pasan por ?lat=&lng= en la propia URL (localStorage no cruza dominios).
+// Si no se recibe "destino", solo se guarda en localStorage y se muestra "Continuar" sin redirigir.
+function paramURL(nombre){
+  var m = new RegExp('[?&]' + nombre + '=([^&]*)').exec(window.location.search);
+  return m ? decodeURIComponent(m[1].replace(/\+/g, ' ')) : null;
+}
+
+var destino = paramURL('destino');
+var lat = null, lng = null;
+
+function guardarGPSPrevio(lat, lng){
+  try{ localStorage.setItem('gpsClientePrevio', JSON.stringify({ lat: lat, lng: lng, ts: Date.now() })); }catch(e){}
+}
+
+window.pedirGPS = function(){
+  var estado = document.getElementById('estado');
+  var btn = document.getElementById('btnGps');
+  if(!navigator.geolocation){
+    estado.textContent = '❌ Tu navegador no soporta GPS.';
+    estado.classList.add('err');
+    return;
+  }
+  btn.disabled = true;
+  estado.classList.remove('err');
+  estado.textContent = '⏳ Obteniendo tu ubicación...';
+  navigator.geolocation.getCurrentPosition(
+    function(pos){
+      lat = pos.coords.latitude; lng = pos.coords.longitude;
+      guardarGPSPrevio(lat, lng);
+      estado.textContent = '✅ Ubicación activada correctamente';
+      btn.style.display = 'none';
+      if(destino){
+        estado.textContent += ' — redirigiendo...';
+        setTimeout(continuar, 700);
+      } else {
+        document.getElementById('btnContinuar').style.display = 'block';
+      }
+    },
+    function(err){
+      btn.disabled = false;
+      var msg = '⚠️ No se pudo obtener tu ubicación. Inténtalo de nuevo.';
+      if(err && err.code === 1) msg = '⚠️ Permiso denegado. Actívalo en los ajustes del navegador e inténtalo de nuevo.';
+      else if(err && err.code === 2) msg = '⚠️ Ubicación no disponible en este momento.';
+      else if(err && err.code === 3) msg = '⚠️ Tardó demasiado. Inténtalo de nuevo.';
+      estado.textContent = msg;
+      estado.classList.add('err');
+    },
+    { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+  );
+};
+
+window.continuar = function(){
+  if(!destino) return;
+  var url = destino;
+  if(lat != null && lng != null){
+    var sep = url.indexOf('?') === -1 ? '?' : '&';
+    url += sep + 'lat=' + encodeURIComponent(lat) + '&lng=' + encodeURIComponent(lng);
+  }
+  window.location.href = url;
+};
+</script>
+</body>
+</html>
