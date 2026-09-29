@@ -625,7 +625,8 @@ function construirLandingPEDIDOS(n, plantillaOverride) {
   if (pl === 'minimalista') ov = 'body{background:#F4F5F7;color:#1E1E1E}.pantalla .banner{background:' + cp + '!important;background-image:none!important}.mas-contact-item{background:#F9F9FA}.mas-contact-item .cv{color:#1E1E1E}.mas-title h3{color:#1E1E1E}.mas-footer .mf-slogan{color:#777}.total-card{background:#fff;border-color:#E2E2E6}.tc-label{color:#333}.tc-items{color:#777}';
   else if (pl === 'clasico') ov = 'body{background:#F3ECDD;color:#3B2A1A}.mas-contact-item{background:#FBF3E3}.mas-footer .mf-slogan{color:#7A6650}.total-card{background:#FBF3E3;border-color:#D9C7A3}.tc-label{color:#3B2A1A}.tc-items{color:#7A6650}';
 
-  const datosNegocioJS = JSON.stringify({ nombre: nombreLimpio, id: n.id || '', whatsapp: wd, productos: productos }).replace(/</g, '\\x3C');
+  // const datosNegocioJS = JSON.stringify({ nombre: nombreLimpio, id: n.id || '', whatsapp: wd, productos: productos }).replace(/</g, '\\x3C');
+  const datosNegocioJS = JSON.stringify({ nombre: nombreLimpio, id: n.id || '', whatsapp: wd, productos: productos, latitud: n.latitud || '', longitud: n.longitud || '' }).replace(/</g, '\\x3c');
 
   const contactosPanelHTML = ci.map(x =>
     '<div class="mas-contact-item"><div class="cl">' + escHTML(x[0]) + ' ' + escHTML(x[1]) + '</div><div class="cv">' + escHTML(x[2]) + '</div></div>'
