@@ -1654,6 +1654,112 @@ function obtenerClienteId(){
 }
 // cambio 7:54 am 28 oct
 
+  // ===== AQUÍ SE ARMA EL PEDIDO FINAL: valida nombre y ubicación, arma el mensaje de WhatsApp/SMS =====
+window.confirmarPedido = function(){
+  var nombre = (document.getElementById('clienteNombre').value || '').trim();
+  if(!nombre){ mostrarAviso('✍️ Escribe tu nombre'); return; }
+  if(!ubicacionConfirmada || !latPedido || !lngPedido){
+    pedidoNombrePendiente = nombre;
+    cerrarModalPedido();
+    setTimeout(abrirUbiModal, 220);
+    return;
+  }
+  var items = []; var itemsData = []; var itemsSMS = []; var total = 0;
+  for(var k in carrito){
+    var idx = parseInt(k);
+    var p = NEGOCIO.productos[idx]; if(!p) continue;
+    var variante = k.slice((idx + '::').length);
+    var cant = carrito[k]; var sub = p.precio * cant; total += sub;
+    items.push('• ' + cant + 'x ' + etiquetaProducto(p, variante) + ' — $' + sub);
+    itemsData.push({ idx: idx, variante: variante, cantidad: cant, nombre: etiquetaProducto(p, variante) });
+    itemsSMS.push(cant + 'x ' + etiquetaProducto(p, variante) + ' $' + sub);
+  }
+  if(items.length === 0){ mostrarAviso('No hay productos en el pedido'); return; }
+  var clienteId = obtenerClienteId();
+  var ahora = new Date();
+  var fecha = ahora.toLocaleDateString('es-MX') + ' ' + ahora.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
+  var resumen = '📦 Tu pedido:\\\\n\\\\n' + items.join('\\\\n') + '\\\\n\\\\n💰 TOTAL: $' + total + '\\\\n\\\\n👤 ' + nombre + '\\\\n📍 Ubicación confirmada';
+  var msg = '🛒 NUEVO PEDIDO\\\\n━━━━━━━━━━━━━━━\\\\n🏪 ' + NEGOCIO.nombre + '\\\\n🆔 Negocio ID: ' + (NEGOCIO.id || '-') + '\\\\n━━━━━━━━━━━━━━━\\\\n👤 Cliente: ' + nombre + '\\\\n🔖 Cliente ID: ' + clienteId + '\\\\n📍 Ubicación: https://maps.google.com/?q=' + latPedido + ',' + lngPedido + '\\\\n🕐 ' + fecha + '\\\\n━━━━━━━━━━━━━━━\\\\n📦 DETALLE:\\\\n' + items.join('\\\\n') + '\\\\n━━━━━━━━━━━━━━━\\\\n💰 TOTAL: $' + total;
+  // Version corta para SMS: sin emojis ni acentos (evita que se parta en muchos mensajes), pero CON el enlace GPS.
+  var msgSMS = quitarAcentosSMS('PEDIDO ' + NEGOCIO.nombre + '\\\\nCliente: ' + nombre + '\\\\nGPS: https://maps.google.com/?q=' + latPedido + ',' + lngPedido + '\\\\n' + itemsSMS.join('\\\\n') + '\\\\nTOTAL: $' + total);
+  // Zona C: si el cliente esta fuera de cobertura, el mensaje se reemplaza por uno corto (no bloquea el envio)
+  try{
+    var latN = parseFloat(NEGOCIO && NEGOCIO.latitud), lngN = parseFloat(NEGOCIO && NEGOCIO.longitud);
+    if(!isNaN(latN) && !isNaN(lngN) && typeof ZONA_KM !== 'undefined'){
+      var rad = function(d){ return d * Math.PI / 180; };
+      var dLa = rad(latPedido - latN), dLo = rad(lngPedido - lngN);
+      var hh = Math.sin(dLa/2)*Math.sin(dLa/2) + Math.cos(rad(latN))*Math.cos(rad(latPedido))*Math.sin(dLo/2)*Math.sin(dLo/2);
+      var kmPedido = 2 * 6371 * Math.asin(Math.sqrt(hh));
+      if(kmPedido >= ZONA_KM.B.maxKm){
+        msg = '🚫 FUERA DE COBERTURA (>' + ZONA_KM.B.maxKm + ' km). Ubicación: https://maps.google.com/?q=' + latPedido + ',' + lngPedido;
+        msgSMS = quitarAcentosSMS('FUERA DE COBERTURA (>' + ZONA_KM.B.maxKm + ' km). GPS: https://maps.google.com/?q=' + latPedido + ',' + lngPedido);
+      }
+    }
+  }catch(e){}
+
+
+  cerrarModalPedido();
+  setTimeout(function(){
+    if(paginaOrigen){
+      mostrarAviso(resumen + '\\\\n\\\\n¿Deseas agregar otro producto o enviar tu pedido actual?', { confirm: true, textoOk: '✅ Enviar pedido actual', textoCancelar: '🛍️ Agregar otro producto' }).then(function(ok){
+        if(!ok) return;
+        guardarHandoff({ msg: msg, msgSMS: msgSMS, itemsData: itemsData, total: total, nombre: nombre });
+        var sepOrig = paginaOrigen.indexOf('?') === -1 ? '?' : '&';
+        window.location.href = paginaOrigen + sepOrig + 'enviarPedido=1&negid=' + encodeURIComponent(NEGOCIO.id || '');
+      });
+      return;
+    }
+    mostrarAviso(resumen + '\\\\n\\\\n¿Cómo deseas enviar tu pedido?', { confirm: true, textoOk: '✅ WhatsApp', textoCancelar: '💬 SMS' }).then(function(esWhatsApp){
+      enviarPedidoPorCanal(esWhatsApp ? 'whatsapp' : 'sms', msg, msgSMS);
+      guardarPedidoHistorial(nombre, itemsData, total);
+      carrito = {};
+      varianteActual = {};
+      borrarCarritoLocal();
+      var cn = document.getElementById('clienteNombre'); if(cn) cn.value = '';
+      actualizarTodosBadges();
+      actualizarBotonUnico();
+      actualizarResumen();
+    });
+  }, 220);
+};
+
+// ----- Formatear texto sin acentos/emojis para que el SMS no se corte -----
+function quitarAcentosSMS(s){
+  return String(s).normalize('NFD').replace(/[\\\\u0300-\\\\u036f]/g, '').replace(/[^\\\\x20-\\\\x7E\\\\n]/g, '');
+}
+// ===== AQUÍ SE ENVÍA EL WHATSAPP (o SMS): abre la app con el mensaje ya armado =====
+function enviarPedidoPorCanal(canal, msg, msgSMS){
+  var numero = String(NEGOCIO.whatsapp || '').replace(/[^0-9+]/g, '');
+  if(canal === 'sms'){
+    window.open('sms:' + numero + '?body=' + encodeURIComponent(msgSMS || msg), '_blank', 'noopener');
+  } else {
+    window.open('https://wa.me/' + numero + '?text=' + encodeURIComponent(msg), '_blank', 'noopener');
+  }
+}
+
+// ----- Si el cliente vuelve de otra página con un pedido pendiente (handoff), lo retoma -----
+(function comprobarRegresoParaEnviar(){
+  var flag = paramURL('enviarPedido');
+  var neg = paramURL('negid');
+  if(flag !== '1' || !neg || !NEGOCIO.id || neg !== String(NEGOCIO.id)) return;
+  var datos = leerHandoff();
+  if(window.history && window.history.replaceState) window.history.replaceState({}, '', window.location.pathname);
+  if(!datos || !datos.msg) return;
+  setTimeout(function(){
+    mostrarAviso('📦 Tienes un pedido listo desde otra página.\\\\n\\\\n¿Cómo deseas enviarlo?', { confirm: true, textoOk: '✅ WhatsApp', textoCancelar: '💬 SMS' }).then(function(esWhatsApp){
+      enviarPedidoPorCanal(esWhatsApp ? 'whatsapp' : 'sms', datos.msg, datos.msgSMS);
+      guardarPedidoHistorial(datos.nombre, datos.itemsData, datos.total);
+      carrito = {};
+      varianteActual = {};
+      borrarCarritoLocal();
+      borrarHandoff();
+      actualizarTodosBadges();
+      actualizarBotonUnico();
+      actualizarResumen();
+    });
+  }, 900);
+})();
+
  // ===== ZONAS POR KM (SOLO ALERTA — no bloquea nada del pedido) =====
 // A) 0 – ${zonaConfig.A.maxKm} km  → sin compra mínima
 // B) ${zonaConfig.B.minKm} – ${zonaConfig.B.maxKm} km → compra mínima $${zonaConfig.B.compraMinima}
