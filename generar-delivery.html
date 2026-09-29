@@ -579,6 +579,66 @@ function parseFotoProducto(descripcion, i, url) {
   return { indice: i, nombre: nombreProd, variantes: variantesFinal, precioTexto: precioRaw || '—', precio: precioNum, url };
 }
 
+ // ===== Pregunta zonas precisas al publicar. Devuelve null si cancela. =====
+function preguntarZonasAlPublicar() {
+  const z = zonaConfig;
+
+  // --- A: límite superior ---
+  const aRaw = prompt(
+    'ZONA A (sin compra mínima)\n\n' +
+    '¿Hasta cuántos km llega la zona A?\n' +
+    'Actual: 0 – ' + z.A.maxKm + ' km',
+    z.A.maxKm
+  );
+  if (aRaw === null) return null;
+  const aMax = parseFloat(aRaw);
+  if (!isFinite(aMax) || aMax <= 0) { mostrarToast('❌ Zona A inválida'); return null; }
+
+  // --- B: límite superior ---
+  const bRaw = prompt(
+    'ZONA B\n\n' +
+    '¿Hasta cuántos km llega la zona B?\n' +
+    '(empieza justo donde termina A: ' + aMax + ' km)\n' +
+    'Actual: ' + z.B.minKm + ' – ' + z.B.maxKm + ' km',
+    z.B.maxKm
+  );
+  if (bRaw === null) return null;
+  const bMax = parseFloat(bRaw);
+  if (!isFinite(bMax) || bMax <= aMax) {
+    mostrarToast('❌ Zona B debe ser mayor que Zona A (' + aMax + ' km)');
+    return null;
+  }
+
+  // --- B: compra mínima ---
+  const minRaw = prompt(
+    'ZONA B — compra mínima\n\n' +
+    '¿Monto mínimo del pedido en zona B?\n' +
+    'Actual: $' + z.B.compraMinima,
+    z.B.compraMinima
+  );
+  if (minRaw === null) return null;
+  const minNum = parseFloat(minRaw);
+  if (!isFinite(minNum) || minNum < 0) {
+    mostrarToast('❌ Compra mínima inválida');
+    return null;
+  }
+
+  // --- Confirmación explícita de rangos ---
+  const ok = confirm(
+    '📋 Resumen de zonas a publicar:\n\n' +
+    '🟢 Zona A: 0 – ' + aMax + ' km   (sin mínimo)\n' +
+    '🟡 Zona B: ' + aMax + ' – ' + bMax + ' km   (mín $' + minNum + ')\n' +
+    '🔴 Zona C: > ' + bMax + ' km   (fuera de cobertura)\n\n' +
+    '¿Publicar con estos rangos?'
+  );
+  if (!ok) return null;
+
+  return {
+    A: { maxKm: aMax },
+    B: { minKm: aMax, maxKm: bMax, compraMinima: minNum },
+    C: { minKm: bMax }
+  };
+} 
 function construirLandingPEDIDOS(n, plantillaOverride) {
   const pl = plantillaOverride || n.plantillaLanding || 'futurista';
   let wd = String(n.whatsapp || '').replace(/\D/g, '');
@@ -1567,124 +1627,17 @@ function obtenerClienteId(){
   return cid;
 }
 // cambio 7:54 am 28 oct
-window.confirmarPedido = function(){
-  var nombre = (document.getElementById('clienteNombre').value || '').trim();
-  if(!nombre){ mostrarAviso('✍️ Escribe tu nombre'); return; }
-  if(!ubicacionConfirmada || !latPedido || !lngPedido){
-    pedidoNombrePendiente = nombre;
-    cerrarModalPedido();
-    setTimeout(abrirUbiModal, 220);
-    return;
-  }
-  var items = []; var itemsData = []; var itemsSMS = []; var total = 0;
-  for(var k in carrito){
-    var idx = parseInt(k);
-    var p = NEGOCIO.productos[idx]; if(!p) continue;
-    var variante = k.slice((idx + '::').length);
-    var cant = carrito[k]; var sub = p.precio * cant; total += sub;
-    items.push('• ' + cant + 'x ' + etiquetaProducto(p, variante) + ' — $' + sub);
-    itemsData.push({ idx: idx, variante: variante, cantidad: cant, nombre: etiquetaProducto(p, variante) });
-    itemsSMS.push(cant + 'x ' + etiquetaProducto(p, variante) + ' $' + sub);
-  }
-  if(items.length === 0){ mostrarAviso('No hay productos en el pedido'); return; }
 
-  // ===== Fuera de zona C (>3 km): mensaje corto, sin romper el flujo =====
-  var _kmCliente = (function(){
-    var nLat = parseFloat(NEGOCIO.latitud), nLng = parseFloat(NEGOCIO.longitud);
-    if (isNaN(nLat) || isNaN(nLng) || latPedido == null || lngPedido == null) return null;
-    var R = 6371, toRad = function(d){ return d * Math.PI / 180; };
-    var dLat = toRad(latPedido - nLat), dLng = toRad(lngPedido - nLng);
-    var s = Math.sin(dLat/2)*Math.sin(dLat/2) +
-            Math.cos(toRad(nLat))*Math.cos(toRad(latPedido))*Math.sin(dLng/2)*Math.sin(dLng/2);
-    return 2 * R * Math.asin(Math.sqrt(s));
-  })();
-  var _fueraDeZona = (_kmCliente != null && _kmCliente >= 3);
-
-  var clienteId = obtenerClienteId();
-  var ahora = new Date();
-  var fecha = ahora.toLocaleDateString('es-MX') + ' ' + ahora.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
-  var resumen = '📦 Tu pedido:\\n\\n' + items.join('\\n') + '\\n\\n💰 TOTAL: $' + total + '\\n\\n👤 ' + nombre + '\\n📍 Ubicación confirmada';
-  var msg = '🛒 NUEVO PEDIDO\\n━━━━━━━━━━━━━━━\\n🏪 ' + NEGOCIO.nombre + '\\n🆔 Negocio ID: ' + (NEGOCIO.id || '-') + '\\n━━━━━━━━━━━━━━━\\n👤 Cliente: ' + nombre + '\\n🔖 Cliente ID: ' + clienteId + '\\n📍 Ubicación: https://maps.google.com/?q=' + latPedido + ',' + lngPedido + '\\n🕐 ' + fecha + '\\n━━━━━━━━━━━━━━━\\n📦 DETALLE:\\n' + items.join('\\n') + '\\n━━━━━━━━━━━━━━━\\n💰 TOTAL: $' + total;
-  // Version corta para SMS: sin emojis ni acentos (evita que se parta en muchos mensajes), pero CON el enlace GPS.
-  var msgSMS = quitarAcentosSMS('PEDIDO ' + NEGOCIO.nombre + '\\nCliente: ' + nombre + '\\nGPS: https://maps.google.com/?q=' + latPedido + ',' + lngPedido + '\\n' + itemsSMS.join('\\n') + '\\nTOTAL: $' + total);
-
-  // Si está fuera de zona (>3 km), se reemplaza solo el texto; el resto del flujo queda igual.
-  if (_fueraDeZona) {
-    msg    = '🚫 FUERA DE COBERTURA (>3 km). Ubicación: https://maps.google.com/?q=' + latPedido + ',' + lngPedido;
-    msgSMS = 'FUERA DE COBERTURA. GPS: https://maps.google.com/?q=' + latPedido + ',' + lngPedido;
-  }
-
-  cerrarModalPedido();
-  setTimeout(function(){
-    if(paginaOrigen){
-      mostrarAviso(resumen + '\\n\\n¿Deseas agregar otro producto o enviar tu pedido actual?', { confirm: true, textoOk: '✅ Enviar pedido actual', textoCancelar: '🛍️ Agregar otro producto' }).then(function(ok){
-        if(!ok) return;
-        guardarHandoff({ msg: msg, msgSMS: msgSMS, itemsData: itemsData, total: total, nombre: nombre });
-        var sepOrig = paginaOrigen.indexOf('?') === -1 ? '?' : '&';
-        window.location.href = paginaOrigen + sepOrig + 'enviarPedido=1&negid=' + encodeURIComponent(NEGOCIO.id || '');
-      });
-      return;
-    }
-    mostrarAviso(resumen + '\\n\\n¿Cómo deseas enviar tu pedido?', { confirm: true, textoOk: '✅ WhatsApp', textoCancelar: '💬 SMS' }).then(function(esWhatsApp){
-      enviarPedidoPorCanal(esWhatsApp ? 'whatsapp' : 'sms', msg, msgSMS);
-      guardarPedidoHistorial(nombre, itemsData, total);
-      carrito = {};
-      varianteActual = {};
-      borrarCarritoLocal();
-      var cn = document.getElementById('clienteNombre'); if(cn) cn.value = '';
-      actualizarTodosBadges();
-      actualizarBotonUnico();
-      actualizarResumen();
-    });
-  }, 220);
-};
-// Envía el mismo mensaje del pedido por WhatsApp o por SMS, según elija el cliente.
-// No cambia ninguna otra lógica (carrito, GPS, etc.), solo el canal de envío.
-// Deja solo caracteres basicos (sin acentos, emojis ni simbolos raros) para que el SMS use codificacion GSM (160 caracteres por mensaje).
-function quitarAcentosSMS(s){
-  return String(s).normalize('NFD').replace(/[\\u0300-\\u036f]/g, '').replace(/[^\\x20-\\x7E\\n]/g, '');
-}
-function enviarPedidoPorCanal(canal, msg, msgSMS){
-  var numero = String(NEGOCIO.whatsapp || '').replace(/[^0-9+]/g, '');
-  if(canal === 'sms'){
-    window.open('sms:' + numero + '?body=' + encodeURIComponent(msgSMS || msg), '_blank', 'noopener');
-  } else {
-    window.open('https://wa.me/' + numero + '?text=' + encodeURIComponent(msg), '_blank', 'noopener');
-  }
-}
-
-(function comprobarRegresoParaEnviar(){
-  var flag = paramURL('enviarPedido');
-  var neg = paramURL('negid');
-  if(flag !== '1' || !neg || !NEGOCIO.id || neg !== String(NEGOCIO.id)) return;
-  var datos = leerHandoff();
-  if(window.history && window.history.replaceState) window.history.replaceState({}, '', window.location.pathname);
-  if(!datos || !datos.msg) return;
-  setTimeout(function(){
-    mostrarAviso('📦 Tienes un pedido listo desde otra página.\\n\\n¿Cómo deseas enviarlo?', { confirm: true, textoOk: '✅ WhatsApp', textoCancelar: '💬 SMS' }).then(function(esWhatsApp){
-      enviarPedidoPorCanal(esWhatsApp ? 'whatsapp' : 'sms', datos.msg, datos.msgSMS);
-      guardarPedidoHistorial(datos.nombre, datos.itemsData, datos.total);
-      carrito = {};
-      varianteActual = {};
-      borrarCarritoLocal();
-      borrarHandoff();
-      actualizarTodosBadges();
-      actualizarBotonUnico();
-      actualizarResumen();
-    });
-  }, 900);
-})();
-
-// ===== ZONAS POR KM (SOLO ALERTA — no bloquea nada del pedido) =====
-// A) <1 km  → sin compra mínima
-// B) 1-3 km → compra mínima
-// C) >3 km  → popup de "Enterado" (fuera de cobertura)
+ // ===== ZONAS POR KM (SOLO ALERTA — no bloquea nada del pedido) =====
+// A) 0 – ${zonaConfig.A.maxKm} km  → sin compra mínima
+// B) ${zonaConfig.B.minKm} – ${zonaConfig.B.maxKm} km → compra mínima $${zonaConfig.B.compraMinima}
+// C) > ${zonaConfig.C.minKm} km → popup de "Enterado" (fuera de cobertura)
 var ZONA_KM = {
-  A: { nombre: 'Zona A (<1 km)',  maxKm: 1,        compraMinima: 0   },
-  B: { nombre: 'Zona B (1-3 km)', maxKm: 3,        compraMinima: 150 },
-  C: { nombre: 'Zona C (>3 km)',  maxKm: Infinity, fuera: true, compraMinima: 0 }
+  A: { nombre: 'Zona A (0-${zonaConfig.A.maxKm} km)',                     maxKm: ${zonaConfig.A.maxKm},        compraMinima: 0 },
+  B: { nombre: 'Zona B (${zonaConfig.B.minKm}-${zonaConfig.B.maxKm} km)', maxKm: ${zonaConfig.B.maxKm},        compraMinima: ${zonaConfig.B.compraMinima} },
+  C: { nombre: 'Zona C (>${zonaConfig.C.minKm} km)',                      maxKm: Infinity,                     fuera: true, compraMinima: 0 }
 };
-var MSG_FUERA_COBERTURA = '🚫 Estás fuera de nuestra zona de cobertura.\\n\\nPuedes seguir viendo el catálogo, pero por ahora no podemos tomar pedidos a esa distancia.';
+var MSG_FUERA_COBERTURA = '🚫 Estás fuera de nuestra zona de cobertura (>${zonaConfig.C.minKm} km).\\n\\nPuedes seguir viendo el catálogo, pero por ahora no podemos tomar pedidos a esa distancia.';
 
 (function monitorZonasKm() {
   var INTERVALO_MS = 1500;
@@ -1731,12 +1684,9 @@ var MSG_FUERA_COBERTURA = '🚫 Estás fuera de nuestra zona de cobertura.\\n\\n
   }
   function avisar(texto) {
     console.log(texto);
-    // En la landing publicada NO existe mostrarToast; usamos mostrarAviso para info ligera.
-    // Si quieres info sin modal, comenta esta línea.
     if (typeof mostrarAviso === 'function') mostrarAviso(texto, { textoOk: '✅ Enterado' });
   }
 
-  // Popup solo "Enterado" para fuera de cobertura (zona C)
   function popupFueraCobertura() {
     if (popupCAbierto) return;
     popupCAbierto = true;
@@ -1765,12 +1715,13 @@ var MSG_FUERA_COBERTURA = '🚫 Estás fuera de nuestra zona de cobertura.\\n\\n
     if (zona.key !== zonaActual) {
       if (zona.key === 'C') {
         popupFueraCobertura();
-      } else if (!primera && zonaActual !== null) {
-        // Aviso ligero al cambiar a A o B (opcional; comenta si no lo quieres)
+      } else if (zonaActual === 'C') {
+        // Volvió a cobertura desde fuera → sí avisar
         if (typeof mostrarAviso === 'function') {
-          mostrarAviso('✅ Estás en ' + zona.nombre + ' (~' + km.toFixed(2) + ' km)', { textoOk: '✅ Enterado' });
+          mostrarAviso('✅ Regresaste a ' + zona.nombre + ' (~' + km.toFixed(2) + ' km)', { textoOk: '✅ Enterado' });
         }
       }
+      // (si ya estaba en A/B y cambia A↔B, no molesta)
       zonaActual = zona.key;
       ultimaAlertaMin = null;
     }
