@@ -1778,15 +1778,13 @@ window.confirmarPedido = function(){
     });
   }, 220);
 };
+// ----- Formatear texto sin acentos/emojis para que el SMS no se corte -----
 
 function quitarAcentosSMS(s){
   return String(s).normalize('NFD').replace(/[\\u0300-\\u036f]/g, '').replace(/[^\\x20-\\x7E\\n]/g, '');
 }
 
-// ----- Formatear texto sin acentos/emojis para que el SMS no se corte -----
-function quitarAcentosSMS(s){
-  return String(s).normalize('NFD').replace(/[\\\\u0300-\\\\u036f]/g, '').replace(/[^\\\\x20-\\\\x7E\\\\n]/g, '');
-}
+
 // ===== AQUÍ SE ENVÍA EL WHATSAPP (o SMS): abre la app con el mensaje ya armado =====
 function enviarPedidoPorCanal(canal, msg, msgSMS){
   var numero = String(NEGOCIO.whatsapp || '').replace(/[^0-9+]/g, '');
