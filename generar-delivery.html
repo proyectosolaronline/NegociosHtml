@@ -1806,8 +1806,8 @@ function enviarPedidoPorCanal(canal, msg, msgSMS){
   if(window.history && window.history.replaceState) window.history.replaceState({}, '', window.location.pathname);
   if(!datos || !datos.msg) return;
   setTimeout(function(){
-    mostrarAviso('📦 Tienes un pedido listo desde otra página.\\\\n\\\\n¿Cómo deseas enviarlo?', { confirm: true, textoOk: '✅ WhatsApp', textoCancelar: '💬 SMS' }).then(function(esWhatsApp){
-      enviarPedidoPorCanal(esWhatsApp ? 'whatsapp' : 'sms', datos.msg, datos.msgSMS);
+  mostrarAviso('📦 Tienes un pedido listo desde otra página.\\n\\n¿Cómo deseas enviarlo?', { confirm: true, textoOk: '✅ WhatsApp', textoCancelar: '💬 SMS' }).then(function(esWhatsApp){
+       enviarPedidoPorCanal(esWhatsApp ? 'whatsapp' : 'sms', datos.msg, datos.msgSMS);
       guardarPedidoHistorial(datos.nombre, datos.itemsData, datos.total);
       carrito = {};
       varianteActual = {};
