@@ -1655,6 +1655,10 @@ function obtenerClienteId(){
 // cambio 7:54 am 28 oct
 
   // ===== AQUÍ SE ARMA EL PEDIDO FINAL: valida nombre y ubicación, arma el mensaje de WhatsApp/SMS =====
+
+  
+  // cambio 7:54 am 28 oct
+
 window.confirmarPedido = function(){
   var nombre = (document.getElementById('clienteNombre').value || '').trim();
   if(!nombre){ mostrarAviso('✍️ Escribe tu nombre'); return; }
@@ -1675,14 +1679,37 @@ window.confirmarPedido = function(){
     itemsSMS.push(cant + 'x ' + etiquetaProducto(p, variante) + ' $' + sub);
   }
   if(items.length === 0){ mostrarAviso('No hay productos en el pedido'); return; }
+
   var clienteId = obtenerClienteId();
   var ahora = new Date();
   var fecha = ahora.toLocaleDateString('es-MX') + ' ' + ahora.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
-  var resumen = '📦 Tu pedido:\\\\n\\\\n' + items.join('\\\\n') + '\\\\n\\\\n💰 TOTAL: $' + total + '\\\\n\\\\n👤 ' + nombre + '\\\\n📍 Ubicación confirmada';
-  var msg = '🛒 NUEVO PEDIDO\\\\n━━━━━━━━━━━━━━━\\\\n🏪 ' + NEGOCIO.nombre + '\\\\n🆔 Negocio ID: ' + (NEGOCIO.id || '-') + '\\\\n━━━━━━━━━━━━━━━\\\\n👤 Cliente: ' + nombre + '\\\\n🔖 Cliente ID: ' + clienteId + '\\\\n📍 Ubicación: https://maps.google.com/?q=' + latPedido + ',' + lngPedido + '\\\\n🕐 ' + fecha + '\\\\n━━━━━━━━━━━━━━━\\\\n📦 DETALLE:\\\\n' + items.join('\\\\n') + '\\\\n━━━━━━━━━━━━━━━\\\\n💰 TOTAL: $' + total;
-  // Version corta para SMS: sin emojis ni acentos (evita que se parta en muchos mensajes), pero CON el enlace GPS.
-  var msgSMS = quitarAcentosSMS('PEDIDO ' + NEGOCIO.nombre + '\\\\nCliente: ' + nombre + '\\\\nGPS: https://maps.google.com/?q=' + latPedido + ',' + lngPedido + '\\\\n' + itemsSMS.join('\\\\n') + '\\\\nTOTAL: $' + total);
-  // Zona C: si el cliente esta fuera de cobertura, el mensaje se reemplaza por uno corto (no bloquea el envio)
+
+  var NL = String.fromCharCode(10);
+
+  var resumen = '📦 Tu pedido:' + NL + NL + items.join(NL) + NL + NL + '💰 TOTAL: $' + total + NL + NL + '👤 ' + nombre + NL + '📍 Ubicación confirmada';
+
+  var msg = '🛒 NUEVO PEDIDO' + NL + '━━━━━━━━━━━━━━━' + NL
+    + '🏪 ' + NEGOCIO.nombre + NL
+    + '🆔 Negocio ID: ' + (NEGOCIO.id || '-') + NL
+    + '━━━━━━━━━━━━━━━' + NL
+    + '👤 Cliente: ' + nombre + NL
+    + '🔖 Cliente ID: ' + clienteId + NL
+    + '📍 Ubicación: https://maps.google.com/?q=' + latPedido + ',' + lngPedido + NL
+    + '🕐 ' + fecha + NL
+    + '━━━━━━━━━━━━━━━' + NL
+    + '📦 DETALLE:' + NL
+    + items.join(NL) + NL
+    + '━━━━━━━━━━━━━━━' + NL
+    + '💰 TOTAL: $' + total;
+
+  var msgSMS = quitarAcentosSMS(
+    'PEDIDO ' + NEGOCIO.nombre + NL
+    + 'Cliente: ' + nombre + NL
+    + 'GPS: https://maps.google.com/?q=' + latPedido + ',' + lngPedido + NL
+    + itemsSMS.join(NL) + NL
+    + 'TOTAL: $' + total
+  );
+
   try{
     var latN = parseFloat(NEGOCIO && NEGOCIO.latitud), lngN = parseFloat(NEGOCIO && NEGOCIO.longitud);
     if(!isNaN(latN) && !isNaN(lngN) && typeof ZONA_KM !== 'undefined'){
@@ -1691,18 +1718,16 @@ window.confirmarPedido = function(){
       var hh = Math.sin(dLa/2)*Math.sin(dLa/2) + Math.cos(rad(latN))*Math.cos(rad(latPedido))*Math.sin(dLo/2)*Math.sin(dLo/2);
       var kmPedido = 2 * 6371 * Math.asin(Math.sqrt(hh));
       if(kmPedido >= ZONA_KM.B.maxKm){
-       
-        msg = '🚫 FUERA DE COBERTURA (>' + ZONA_KM.B.maxKm + ' km)\\n\\n' + msg;
-        msgSMS = quitarAcentosSMS('FUERA DE COBERTURA (>' + ZONA_KM.B.maxKm + ' km)\\n') + msgSMS;
-       }
+        msg    = '🚫 FUERA DE COBERTURA (>' + ZONA_KM.B.maxKm + ' km)' + NL + NL + msg;
+        msgSMS = quitarAcentosSMS('FUERA DE COBERTURA (>' + ZONA_KM.B.maxKm + ' km)' + NL) + msgSMS;
+      }
     }
   }catch(e){}
-
 
   cerrarModalPedido();
   setTimeout(function(){
     if(paginaOrigen){
-      mostrarAviso(resumen + '\\\\n\\\\n¿Deseas agregar otro producto o enviar tu pedido actual?', { confirm: true, textoOk: '✅ Enviar pedido actual', textoCancelar: '🛍️ Agregar otro producto' }).then(function(ok){
+      mostrarAviso(resumen + NL + NL + '¿Deseas agregar otro producto o enviar tu pedido actual?', { confirm: true, textoOk: '✅ Enviar pedido actual', textoCancelar: '🛍️ Agregar otro producto' }).then(function(ok){
         if(!ok) return;
         guardarHandoff({ msg: msg, msgSMS: msgSMS, itemsData: itemsData, total: total, nombre: nombre });
         var sepOrig = paginaOrigen.indexOf('?') === -1 ? '?' : '&';
@@ -1710,7 +1735,7 @@ window.confirmarPedido = function(){
       });
       return;
     }
-    mostrarAviso(resumen + '\\\\n\\\\n¿Cómo deseas enviar tu pedido?', { confirm: true, textoOk: '✅ WhatsApp', textoCancelar: '💬 SMS' }).then(function(esWhatsApp){
+    mostrarAviso(resumen + NL + NL + '¿Cómo deseas enviar tu pedido?', { confirm: true, textoOk: '✅ WhatsApp', textoCancelar: '💬 SMS' }).then(function(esWhatsApp){
       enviarPedidoPorCanal(esWhatsApp ? 'whatsapp' : 'sms', msg, msgSMS);
       guardarPedidoHistorial(nombre, itemsData, total);
       carrito = {};
@@ -1724,11 +1749,13 @@ window.confirmarPedido = function(){
   }, 220);
 };
 
-// ----- Formatear texto sin acentos/emojis para que el SMS no se corte -----
 function quitarAcentosSMS(s){
-  return String(s).normalize('NFD').replace(/[\\\\u0300-\\\\u036f]/g, '').replace(/[^\\\\x20-\\\\x7E\\\\n]/g, '');
+  var out = String(s).normalize('NFD');
+  out = out.replace(/[\u0300-\u036f]/g, '');
+  out = out.replace(/[^\x20-\x7E\n]/g, '');
+  return out;
 }
-// ===== AQUÍ SE ENVÍA EL WHATSAPP (o SMS): abre la app con el mensaje ya armado =====
+
 function enviarPedidoPorCanal(canal, msg, msgSMS){
   var numero = String(NEGOCIO.whatsapp || '').replace(/[^0-9+]/g, '');
   if(canal === 'sms'){
@@ -1738,16 +1765,16 @@ function enviarPedidoPorCanal(canal, msg, msgSMS){
   }
 }
 
-// ----- Si el cliente vuelve de otra página con un pedido pendiente (handoff), lo retoma -----
 (function comprobarRegresoParaEnviar(){
   var flag = paramURL('enviarPedido');
-  var neg = paramURL('negid');
+  var neg  = paramURL('negid');
   if(flag !== '1' || !neg || !NEGOCIO.id || neg !== String(NEGOCIO.id)) return;
   var datos = leerHandoff();
   if(window.history && window.history.replaceState) window.history.replaceState({}, '', window.location.pathname);
   if(!datos || !datos.msg) return;
+  var NL = String.fromCharCode(10);
   setTimeout(function(){
-    mostrarAviso('📦 Tienes un pedido listo desde otra página.\\\\n\\\\n¿Cómo deseas enviarlo?', { confirm: true, textoOk: '✅ WhatsApp', textoCancelar: '💬 SMS' }).then(function(esWhatsApp){
+    mostrarAviso('📦 Tienes un pedido listo desde otra página.' + NL + NL + '¿Cómo deseas enviarlo?', { confirm: true, textoOk: '✅ WhatsApp', textoCancelar: '💬 SMS' }).then(function(esWhatsApp){
       enviarPedidoPorCanal(esWhatsApp ? 'whatsapp' : 'sms', datos.msg, datos.msgSMS);
       guardarPedidoHistorial(datos.nombre, datos.itemsData, datos.total);
       carrito = {};
