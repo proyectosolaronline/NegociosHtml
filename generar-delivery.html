@@ -1565,7 +1565,7 @@ function obtenerClienteId(){
   }
   return cid;
 }
-
+// cambio 7:54 am 28 oct
 window.confirmarPedido = function(){
   var nombre = (document.getElementById('clienteNombre').value || '').trim();
   if(!nombre){ mostrarAviso('✍️ Escribe tu nombre'); return; }
@@ -1586,6 +1586,19 @@ window.confirmarPedido = function(){
     itemsSMS.push(cant + 'x ' + etiquetaProducto(p, variante) + ' $' + sub);
   }
   if(items.length === 0){ mostrarAviso('No hay productos en el pedido'); return; }
+
+  // ===== Fuera de zona C (>3 km): mensaje corto, sin romper el flujo =====
+  var _kmCliente = (function(){
+    var nLat = parseFloat(NEGOCIO.latitud), nLng = parseFloat(NEGOCIO.longitud);
+    if (isNaN(nLat) || isNaN(nLng) || latPedido == null || lngPedido == null) return null;
+    var R = 6371, toRad = function(d){ return d * Math.PI / 180; };
+    var dLat = toRad(latPedido - nLat), dLng = toRad(lngPedido - nLng);
+    var s = Math.sin(dLat/2)*Math.sin(dLat/2) +
+            Math.cos(toRad(nLat))*Math.cos(toRad(latPedido))*Math.sin(dLng/2)*Math.sin(dLng/2);
+    return 2 * R * Math.asin(Math.sqrt(s));
+  })();
+  var _fueraDeZona = (_kmCliente != null && _kmCliente >= 3);
+
   var clienteId = obtenerClienteId();
   var ahora = new Date();
   var fecha = ahora.toLocaleDateString('es-MX') + ' ' + ahora.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
@@ -1594,6 +1607,11 @@ window.confirmarPedido = function(){
   // Version corta para SMS: sin emojis ni acentos (evita que se parta en muchos mensajes), pero CON el enlace GPS.
   var msgSMS = quitarAcentosSMS('PEDIDO ' + NEGOCIO.nombre + '\\nCliente: ' + nombre + '\\nGPS: https://maps.google.com/?q=' + latPedido + ',' + lngPedido + '\\n' + itemsSMS.join('\\n') + '\\nTOTAL: $' + total);
 
+  // Si está fuera de zona (>3 km), se reemplaza solo el texto; el resto del flujo queda igual.
+  if (_fueraDeZona) {
+    msg    = '🚫 FUERA DE COBERTURA (>3 km). Ubicación: https://maps.google.com/?q=' + latPedido + ',' + lngPedido;
+    msgSMS = 'FUERA DE COBERTURA. GPS: https://maps.google.com/?q=' + latPedido + ',' + lngPedido;
+  }
 
   cerrarModalPedido();
   setTimeout(function(){
@@ -1619,7 +1637,6 @@ window.confirmarPedido = function(){
     });
   }, 220);
 };
-
 // Envía el mismo mensaje del pedido por WhatsApp o por SMS, según elija el cliente.
 // No cambia ninguna otra lógica (carrito, GPS, etc.), solo el canal de envío.
 // Deja solo caracteres basicos (sin acentos, emojis ni simbolos raros) para que el SMS use codificacion GSM (160 caracteres por mensaje).
