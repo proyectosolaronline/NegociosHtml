@@ -522,6 +522,20 @@ document.getElementById('btnCerrar').onclick = () => { try { localStorage.remove
 document.getElementById('btnDescargar').onclick = () => { if (!currentPreviewHTML) return; descargarTexto(currentPreviewHTML, currentPreviewNombre, 'text/html'); mostrarToast('✅ HTML descargado'); };
 document.getElementById('btnPublicar').onclick = () => {
   if (!currentPreviewHTML || !negocioActual) return;
+
+  // 👇 1) Preguntar zonas antes de publicar
+  const nuevasZonas = preguntarZonasAlPublicar();
+  if (nuevasZonas === null) {
+    mostrarToast('ℹ️ Publicación cancelada (zonas sin cambios)');
+    return;
+  }
+  zonaConfig = nuevasZonas;
+
+  // 👇 2) Regenerar el HTML con las zonas nuevas
+  currentPreviewHTML = construirLandingHTML(negocioActual, plantillaActual);
+  document.getElementById('previewFrame').srcdoc = currentPreviewHTML;
+
+  // 👇 3) Publicar (igual que antes)
   const carp = currentPreviewSlug;
   const bt = document.getElementById('btnPublicar');
   bt.disabled = true; bt.textContent = '> Publicando...';
@@ -544,7 +558,19 @@ document.getElementById('btnPublicar').onclick = () => {
   fm.submit();
   setTimeout(() => { window.removeEventListener('message', om); bt.disabled = false; bt.textContent = '🚀 Publicar'; }, 30000);
 };
-function mostrarModalLink(u, n) {
+  
+  window.addEventListener('message', om);
+  document.getElementById('hf_action').value = 'publicarGitHub';
+  document.getElementById('hf_id').value = '';
+  document.getElementById('hf_datos').value = JSON.stringify(dt);
+  const fm = document.getElementById('hiddenSaveForm');
+  fm.action = GITHUB_PUBLISH_URL;
+  fm.submit();
+  setTimeout(() => { window.removeEventListener('message', om); bt.disabled = false; bt.textContent = '🚀 Publicar'; }, 30000);
+};
+
+  
+  function mostrarModalLink(u, n) {
   document.getElementById('linkBox').textContent = u;
   document.getElementById('linkModalSub').textContent = n ? 'Landing de "' + n + '"' : 'Tu landing está en línea';
   document.getElementById('linkAbrir').href = u;
