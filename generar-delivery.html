@@ -1691,9 +1691,10 @@ window.confirmarPedido = function(){
       var hh = Math.sin(dLa/2)*Math.sin(dLa/2) + Math.cos(rad(latN))*Math.cos(rad(latPedido))*Math.sin(dLo/2)*Math.sin(dLo/2);
       var kmPedido = 2 * 6371 * Math.asin(Math.sqrt(hh));
       if(kmPedido >= ZONA_KM.B.maxKm){
-        msg = '🚫 FUERA DE COBERTURA (>' + ZONA_KM.B.maxKm + ' km). Ubicación: https://maps.google.com/?q=' + latPedido + ',' + lngPedido;
-        msgSMS = quitarAcentosSMS('FUERA DE COBERTURA (>' + ZONA_KM.B.maxKm + ' km). GPS: https://maps.google.com/?q=' + latPedido + ',' + lngPedido);
-      }
+       
+        msg = '🚫 FUERA DE COBERTURA (>' + ZONA_KM.B.maxKm + ' km)\\n\\n' + msg;
+        msgSMS = quitarAcentosSMS('FUERA DE COBERTURA (>' + ZONA_KM.B.maxKm + ' km)\\n') + msgSMS;
+       }
     }
   }catch(e){}
 
