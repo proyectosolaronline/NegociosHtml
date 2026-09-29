@@ -1657,6 +1657,128 @@ function enviarPedidoPorCanal(canal, msg, msgSMS){
   }, 900);
 })();
 
+// ===== ZONAS POR KM (SOLO ALERTA — no bloquea nada del pedido) =====
+// A) <1 km  → sin compra mínima
+// B) 1-3 km → compra mínima
+// C) >3 km  → popup de "Enterado" (fuera de cobertura)
+var ZONA_KM = {
+  A: { nombre: 'Zona A (<1 km)',  maxKm: 1,        compraMinima: 0   },
+  B: { nombre: 'Zona B (1-3 km)', maxKm: 3,        compraMinima: 150 },
+  C: { nombre: 'Zona C (>3 km)',  maxKm: Infinity, fuera: true, compraMinima: 0 }
+};
+var MSG_FUERA_COBERTURA = '🚫 Estás fuera de nuestra zona de cobertura.\\n\\nPuedes seguir viendo el catálogo, pero por ahora no podemos tomar pedidos a esa distancia.';
+
+(function monitorZonasKm() {
+  var INTERVALO_MS = 1500;
+  var antNeg = { lat: null, lng: null };
+  var antCli = { lat: null, lng: null };
+  var primera = true;
+  var zonaActual = null;
+  var ultimaAlertaMin = null;
+  var popupCAbierto = false;
+
+  function leerNegocio() {
+    var lat = parseFloat(NEGOCIO && NEGOCIO.latitud);
+    var lng = parseFloat(NEGOCIO && NEGOCIO.longitud);
+    return (!isNaN(lat) && !isNaN(lng)) ? { lat: lat, lng: lng } : null;
+  }
+  function leerCliente() {
+    var lat = (typeof latPedido === 'number') ? latPedido : null;
+    var lng = (typeof lngPedido === 'number') ? lngPedido : null;
+    if (lat == null || lng == null) {
+      lat = (typeof ubiLat === 'number') ? ubiLat : null;
+      lng = (typeof ubiLng === 'number') ? ubiLng : null;
+    }
+    return (lat != null && lng != null) ? { lat: lat, lng: lng } : null;
+  }
+  function leerTotalCarrito() {
+    if (!carrito || !NEGOCIO || !NEGOCIO.productos) return 0;
+    var t = 0;
+    for (var k in carrito) {
+      var p = NEGOCIO.productos[parseInt(k)];
+      if (p) t += (p.precio || 0) * carrito[k];
+    }
+    return t;
+  }
+  function distanciaKm(a, b) {
+    var R = 6371, toRad = function(d){ return d * Math.PI / 180; };
+    var dLat = toRad(b.lat - a.lat), dLng = toRad(b.lng - a.lng);
+    var s = Math.sin(dLat/2)*Math.sin(dLat/2) + Math.cos(toRad(a.lat))*Math.cos(toRad(b.lat))*Math.sin(dLng/2)*Math.sin(dLng/2);
+    return 2 * R * Math.asin(Math.sqrt(s));
+  }
+  function zonaPorKm(km) {
+    if (km < ZONA_KM.A.maxKm) return { key:'A', nombre:ZONA_KM.A.nombre, compraMinima:ZONA_KM.A.compraMinima, km:km };
+    if (km < ZONA_KM.B.maxKm) return { key:'B', nombre:ZONA_KM.B.nombre, compraMinima:ZONA_KM.B.compraMinima, km:km };
+    return { key:'C', nombre:ZONA_KM.C.nombre, compraMinima:ZONA_KM.C.compraMinima, fuera:true, km:km };
+  }
+  function avisar(texto) {
+    console.log(texto);
+    // En la landing publicada NO existe mostrarToast; usamos mostrarAviso para info ligera.
+    // Si quieres info sin modal, comenta esta línea.
+    if (typeof mostrarAviso === 'function') mostrarAviso(texto, { textoOk: '✅ Enterado' });
+  }
+
+  // Popup solo "Enterado" para fuera de cobertura (zona C)
+  function popupFueraCobertura() {
+    if (popupCAbierto) return;
+    popupCAbierto = true;
+    if (typeof mostrarAviso === 'function') {
+      mostrarAviso(MSG_FUERA_COBERTURA, { textoOk: '✅ Enterado' })
+        .then(function(){ popupCAbierto = false; });
+    } else {
+      popupCAbierto = false;
+    }
+  }
+
+  function tick() {
+    var nAct = leerNegocio();
+    if (nAct) antNeg = nAct;
+    var cAct = leerCliente();
+    if (cAct) antCli = cAct;
+
+    var neg = nAct || antNeg;
+    var cli = cAct || antCli;
+    if (neg.lat == null || cli.lat == null) { primera = false; return; }
+
+    var km = distanciaKm(neg, cli);
+    var zona = zonaPorKm(km);
+
+    // Cambio de zona
+    if (zona.key !== zonaActual) {
+      if (zona.key === 'C') {
+        popupFueraCobertura();
+      } else if (!primera && zonaActual !== null) {
+        // Aviso ligero al cambiar a A o B (opcional; comenta si no lo quieres)
+        if (typeof mostrarAviso === 'function') {
+          mostrarAviso('✅ Estás en ' + zona.nombre + ' (~' + km.toFixed(2) + ' km)', { textoOk: '✅ Enterado' });
+        }
+      }
+      zonaActual = zona.key;
+      ultimaAlertaMin = null;
+    }
+
+    // Compra mínima SOLO zona B
+    if (zona.key === 'B' && zona.compraMinima > 0) {
+      var total = leerTotalCarrito();
+      if (total > 0 && total < zona.compraMinima) {
+        var firma = 'B|' + total;
+        if (ultimaAlertaMin !== firma) {
+          ultimaAlertaMin = firma;
+          if (typeof mostrarAviso === 'function') {
+            mostrarAviso('🛒 Falta $' + (zona.compraMinima - total) + ' para el mínimo en ' + zona.nombre + ' (mín $' + zona.compraMinima + ')', { textoOk: '✅ Enterado' });
+          }
+        }
+      } else if (total >= zona.compraMinima) {
+        ultimaAlertaMin = null;
+      }
+    }
+
+    if (zona.key !== 'C' && popupCAbierto) popupCAbierto = false;
+    primera = false;
+  }
+
+  setInterval(tick, INTERVALO_MS);
+})();
 actualizarTodosBadges();
 actualizarBotonUnico();
 actualizarResumen();
