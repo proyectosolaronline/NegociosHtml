@@ -268,7 +268,13 @@ let currentPreviewSlug = '';
 let plantillaActual = 'futurista';
 let barrasVisibles = true;
 let urlPublicada = '';
-
+  
+let zonaConfig = {
+  A: { maxKm: 1 },
+  B: { minKm: 1, maxKm: 3, compraMinima: 150 },
+  C: { minKm: 3 }
+};
+  
 (function iniciarMatrix() {
   const canvas = document.getElementById('matrixCanvas');
   const ctx = canvas.getContext('2d');
@@ -549,36 +555,6 @@ document.getElementById('linkCerrar').onclick = () => document.getElementById('l
 document.getElementById('linkCopiar').onclick = async () => { try { await navigator.clipboard.writeText(urlPublicada); mostrarToast('📋 Link copiado'); } catch(e) { mostrarToast('⚠️ No se pudo copiar'); } };
 document.getElementById('linkModal').addEventListener('click', e => { if (e.target === e.currentTarget) document.getElementById('linkModal').classList.remove('show'); });
 
-function construirLandingHTML(n, plantillaOverride) {
-  return construirLandingPEDIDOS(n, plantillaOverride);
-}
-
-function parseFotoProducto(descripcion, i, url) {
-  const raw = descripcion || '';
-  if (raw.indexOf('/') === -1) {
-    const partes = raw.split('&');
-    const nombreProd = partes[0].trim() || ('Producto ' + (i + 1));
-    let precioRaw = partes[1] ? partes[1].trim() : '';
-    if (precioRaw && !/^\$/.test(precioRaw)) precioRaw = '$' + precioRaw;
-    const precioNum = parseFloat(String(precioRaw).replace(/[^0-9.]/g, '')) || 0;
-    return { indice: i, nombre: nombreProd, variantes: [nombreProd], precioTexto: precioRaw || '—', precio: precioNum, url };
-  }
-  let segmentos = raw.split('/').map(s => s.trim()).filter(s => s !== '');
-  if (!segmentos.length) segmentos = ['Producto ' + (i + 1)];
-  const ultimo = segmentos[segmentos.length - 1];
-  const m = ultimo.match(/^(.*?)[\$&]\s*([\d.,]+)$/);
-  let precioRaw = '', precioNum = 0;
-  if (m) {
-    segmentos[segmentos.length - 1] = m[1].trim() || ultimo;
-    precioRaw = '$' + m[2].trim();
-    precioNum = parseFloat(m[2].replace(/,/g, '')) || 0;
-  }
-  const nombreProd = segmentos[0] || ('Producto ' + (i + 1));
-  const variantesReales = segmentos.slice(1);
-  const variantesFinal = variantesReales.length ? variantesReales : [nombreProd];
-  return { indice: i, nombre: nombreProd, variantes: variantesFinal, precioTexto: precioRaw || '—', precio: precioNum, url };
-}
-
  // ===== Pregunta zonas precisas al publicar. Devuelve null si cancela. =====
 function preguntarZonasAlPublicar() {
   const z = zonaConfig;
@@ -638,7 +614,38 @@ function preguntarZonasAlPublicar() {
     B: { minKm: aMax, maxKm: bMax, compraMinima: minNum },
     C: { minKm: bMax }
   };
-} 
+}  
+function construirLandingHTML(n, plantillaOverride) {
+  return construirLandingPEDIDOS(n, plantillaOverride);
+}
+
+function parseFotoProducto(descripcion, i, url) {
+  const raw = descripcion || '';
+  if (raw.indexOf('/') === -1) {
+    const partes = raw.split('&');
+    const nombreProd = partes[0].trim() || ('Producto ' + (i + 1));
+    let precioRaw = partes[1] ? partes[1].trim() : '';
+    if (precioRaw && !/^\$/.test(precioRaw)) precioRaw = '$' + precioRaw;
+    const precioNum = parseFloat(String(precioRaw).replace(/[^0-9.]/g, '')) || 0;
+    return { indice: i, nombre: nombreProd, variantes: [nombreProd], precioTexto: precioRaw || '—', precio: precioNum, url };
+  }
+  let segmentos = raw.split('/').map(s => s.trim()).filter(s => s !== '');
+  if (!segmentos.length) segmentos = ['Producto ' + (i + 1)];
+  const ultimo = segmentos[segmentos.length - 1];
+  const m = ultimo.match(/^(.*?)[\$&]\s*([\d.,]+)$/);
+  let precioRaw = '', precioNum = 0;
+  if (m) {
+    segmentos[segmentos.length - 1] = m[1].trim() || ultimo;
+    precioRaw = '$' + m[2].trim();
+    precioNum = parseFloat(m[2].replace(/,/g, '')) || 0;
+  }
+  const nombreProd = segmentos[0] || ('Producto ' + (i + 1));
+  const variantesReales = segmentos.slice(1);
+  const variantesFinal = variantesReales.length ? variantesReales : [nombreProd];
+  return { indice: i, nombre: nombreProd, variantes: variantesFinal, precioTexto: precioRaw || '—', precio: precioNum, url };
+}
+
+ 
 function construirLandingPEDIDOS(n, plantillaOverride) {
   const pl = plantillaOverride || n.plantillaLanding || 'futurista';
   let wd = String(n.whatsapp || '').replace(/\D/g, '');
