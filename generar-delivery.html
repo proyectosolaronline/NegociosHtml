@@ -584,12 +584,45 @@ function actualizarBotonesPlantilla(a) { document.querySelectorAll('.plantilla-b
 
 document.getElementById('btnCerrar').onclick = () => { try { localStorage.removeItem('landingData'); } catch(e) {} window.close(); setTimeout(() => { window.location.href = 'about:blank'; }, 200); };
 document.getElementById('btnDescargar').onclick = () => { if (!currentPreviewHTML) return; descargarTexto(currentPreviewHTML, currentPreviewNombre, 'text/html'); mostrarToast('✅ HTML descargado'); };
-document.getElementById('btnPublicar').onclick = async () => {
+function pedirZonas() {
+  return new Promise(resolve => {
+    let g = zonaConfig;
+    try { const s = JSON.parse(localStorage.getItem('zonaConfigGuardada')); if (s && s.A && s.B && s.C) g = s; } catch (e) {}
+    const ov = document.createElement('div');
+    ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;font-family:monospace';
+    const campo = 'width:100%;box-sizing:border-box;background:#0A0E17;border:2px solid #00FF41;border-radius:6px;padding:10px;font-size:15px;color:#00FF41;text-align:center;margin:4px 0 12px';
+    const btn = 'flex:1;padding:12px;border-radius:6px;font-weight:700;border:1px solid #00FF41;background:#000;color:#00FF41;cursor:pointer';
+    ov.innerHTML =
+      '<div style="background:#000;border:2px solid #00FF41;border-radius:8px;padding:20px;max-width:380px;width:100%;color:#00FF41;box-shadow:0 0 40px rgba(0,255,65,.5)">' +
+      '<h3 style="text-align:center;margin:0 0 14px">📍 ZONAS Y COMPRA MÍNIMA</h3>' +
+      '<label>🟢 Zona A: hasta (km), sin mínimo</label><input id="zpA" type="number" step="0.1" min="0" style="' + campo + '" value="' + g.A.maxKm + '">' +
+      '<label>🟡 Zona B: hasta (km)</label><input id="zpB" type="number" step="0.1" min="0" style="' + campo + '" value="' + g.B.maxKm + '">' +
+      '<label>💲 Compra mínima en zona B</label><input id="zpM" type="number" step="1" min="0" style="' + campo + '" value="' + g.B.compraMinima + '">' +
+      '<div id="zpErr" style="color:#FF0040;text-align:center;min-height:18px;font-size:12px;margin-bottom:8px"></div>' +
+      '<div style="display:flex;gap:8px"><button id="zpNo" style="' + btn + ';color:#888;border-color:#444">Cancelar</button><button id="zpOk" style="' + btn + '">🚀 Publicar</button></div></div>';
+    document.body.appendChild(ov);
+    const $ = id => ov.querySelector('#' + id);
+    const cerrar = v => { ov.remove(); resolve(v); };
+    $('zpNo').onclick = () => cerrar(null);
+    $('zpOk').onclick = () => {
+      const a = parseFloat($('zpA').value), b = parseFloat($('zpB').value), m = parseFloat($('zpM').value);
+      if (!(a > 0)) { $('zpErr').textContent = '❌ Zona A debe ser mayor a 0'; return; }
+      if (!(b > a)) { $('zpErr').textContent = '❌ Zona B debe ser mayor que A (' + a + ' km)'; return; }
+      if (!(m >= 0)) { $('zpErr').textContent = '❌ Compra mínima inválida'; return; }
+      const z = { A: { maxKm: a }, B: { minKm: a, maxKm: b, compraMinima: m }, C: { minKm: b } };
+      try { localStorage.setItem('zonaConfigGuardada', JSON.stringify(z)); } catch (e) {}
+      cerrar(z);
+    };
+  });
+}
+  document.getElementById('btnPublicar').onclick = async () => {
   if (!currentPreviewHTML || !negocioActual) return;
 
   // 1) Preguntar zonas antes de publicar
-   const nuevasZonas = await abrirModalZonas();
-  if (nuevasZonas === null) {
+   //const nuevasZonas = await abrirModalZonas();
+ 
+    const nuevasZonas = await pedirZonas();
+    if (nuevasZonas === null) {
     mostrarToast('ℹ️ Publicación cancelada (zonas sin cambios)');
     return;
   }
