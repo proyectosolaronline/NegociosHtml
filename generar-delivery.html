@@ -667,7 +667,8 @@ function parseFotoProducto(descripcion, i, url) {
  
 function construirLandingPEDIDOS(n, plantillaOverride) {
   const pl = plantillaOverride || n.plantillaLanding || 'futurista';
-  let wd = String(n.whatsapp || '').replace(/\D/g, '');
+  //let wd = String(n.whatsapp || '').replace(/\D/g, '');
+ let wd = String(n.whatsapp || n.telefono || '').replace(/\D/g, '');
   if (wd.length === 10) wd = '52' + wd;
   const td = String(n.telefono || '').replace(/\D/g, '');
   const ft = (n.fotos || []).filter(f => f && f.url);
@@ -714,7 +715,8 @@ function construirLandingPEDIDOS(n, plantillaOverride) {
   // const datosNegocioJS = JSON.stringify({ nombre: nombreLimpio, id: n.id || '', whatsapp: wd, productos: productos }).replace(/</g, '\\x3C');
   //const datosNegocioJS = JSON.stringify({ nombre: nombreLimpio, id: n.id || '', whatsapp: wd, productos: productos, latitud: n.latitud || '', longitud: n.longitud || '' }).replace(/</g, '\\x3c');
 
-  const correoOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(n.correo || '').trim());
+ //const correoOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(n.correo || '').trim());
+  const correoPedidos = correoOk ? String(n.correo).trim() : '';
   const pcRaw = String(n.pedidoCorreo == null ? '' : n.pedidoCorreo).trim().toLowerCase();
   const correoPedidos = (correoOk && ['true','1','si','sí','yes','on'].indexOf(pcRaw) !== -1) ? String(n.correo).trim() : '';
   const datosNegocioJS = JSON.stringify({ nombre: nombreLimpio, id: n.id || '', whatsapp: wd, productos: productos, latitud: n.latitud || '', longitud: n.longitud || '', correoPedidos: correoPedidos }).replace(/</g, '\\x3c');
@@ -1793,8 +1795,27 @@ function quitarAcentosSMS(s){
   return String(s).normalize('NFD').replace(/[\\u0300-\\u036f]/g, '').replace(/[^\\x20-\\x7E\\n]/g, '');
 }
 
+//function elegirCanal(texto){
+//  var correo = String((NEGOCIO && NEGOCIO.correoPedidos) || '').trim();
+//  if(!correo){
+//    return mostrarAviso(texto, { confirm: true, textoOk: '✅ WhatsApp', textoCancelar: '💬 SMS' }).then(function(ok){ return ok ? 'whatsapp' : 'sms'; });
+//  }
+ // return mostrarAviso(texto, { confirm: true, textoOk: '✅ WhatsApp', textoCancelar: '➡️ Otro canal' }).then(function(ok){
+   // if(ok) return 'whatsapp';
+ //   return mostrarAviso('¿Por cuál otro canal?', { confirm: true, textoOk: '✉️ Correo', textoCancelar: '💬 SMS' }).then(function(c){ return c ? 'correo' : 'sms'; });
+//  });
+//}
+
 function elegirCanal(texto){
+  var wa = String((NEGOCIO && NEGOCIO.whatsapp) || '').trim();
   var correo = String((NEGOCIO && NEGOCIO.correoPedidos) || '').trim();
+  if(!wa && !correo){
+    mostrarAviso('Este negocio no tiene canales de envío');
+    return Promise.resolve(null);
+  }
+  if(!wa){
+    return mostrarAviso(texto, { confirm: true, textoOk: '✉️ Correo', textoCancelar: 'Cancelar' }).then(function(ok){ return ok ? 'correo' : null; });
+  }
   if(!correo){
     return mostrarAviso(texto, { confirm: true, textoOk: '✅ WhatsApp', textoCancelar: '💬 SMS' }).then(function(ok){ return ok ? 'whatsapp' : 'sms'; });
   }
