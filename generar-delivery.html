@@ -138,6 +138,23 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;color:#00FF41;f
   .flying-element{width:48px;height:48px;font-size:22px}
   .hand-cursor{font-size:24px}
 }
+  .zonas-modal{position:fixed;inset:0;background:rgba(0,0,0,0.95);backdrop-filter:blur(8px);z-index:11500;display:none;align-items:center;justify-content:center;padding:20px}
+.zonas-modal.show{display:flex}
+.zonas-modal-inner{background:#000;border:2px solid #00FF41;border-radius:8px;padding:22px;max-width:460px;width:100%;max-height:90vh;overflow-y:auto;box-shadow:0 0 60px rgba(0,255,65,0.5);animation:popIn .3s ease}
+.zonas-modal-inner h2{color:#00FF41;font-size:16px;margin-bottom:4px;text-align:center;text-shadow:0 0 10px #00FF41;letter-spacing:1px}
+.zonas-modal-inner .zonas-sub{color:#00FF41;opacity:0.7;font-size:11.5px;text-align:center;margin-bottom:16px;line-height:1.4}
+.zonas-step{display:none}
+.zonas-step.activo{display:block}
+.zonas-step label{display:block;color:#00FF41;font-size:12.5px;font-weight:700;margin-bottom:6px;text-shadow:0 0 6px #00FF41}
+.zonas-step .zonas-hint{color:#00FF41;opacity:0.6;font-size:10.5px;margin-bottom:10px;line-height:1.4}
+.zonas-step input{width:100%;background:#0A0E17;border:2px solid #00FF41;border-radius:6px;padding:12px;font-size:15px;color:#00FF41;text-align:center;margin-bottom:8px;font-family:'Courier New',monospace;text-shadow:0 0 5px #00FF41}
+.zonas-step input:focus{outline:none;box-shadow:0 0 12px rgba(0,255,65,0.6)}
+.zonas-error{color:#FF0040;font-size:11px;text-align:center;min-height:16px;margin-bottom:6px;text-shadow:0 0 6px #FF0040}
+.zonas-resumen{background:#0A0E17;border:2px solid #00FF41;border-radius:6px;padding:14px;font-size:12px;color:#00FF41;line-height:1.9;margin-bottom:14px;text-shadow:0 0 4px #00FF41}
+.zonas-nav{display:flex;gap:8px}
+.zonas-nav button{flex:1;padding:12px;border-radius:6px;font-weight:700;font-size:13px;border:1px solid #00FF41;cursor:pointer;min-height:44px;background:rgba(0,0,0,0.85);color:#00FF41;text-shadow:0 0 6px #00FF41;transition:all .2s}
+.zonas-nav button:hover{background:#00FF41;color:#000;text-shadow:none}
+.zonas-nav button.zonas-cancelar{background:transparent;color:#888;border-color:#444;text-shadow:none}
 </style>
 </head>
 <body>
@@ -207,7 +224,54 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;color:#00FF41;f
 </div>
 
 <button class="fab-toggle" id="fabToggle" onclick="toggleBarras()" aria-label="Mostrar u ocultar barras">👁️</button>
+<div class="zonas-modal" id="zonasModal">
+  <div class="zonas-modal-inner">
+    <h2>📍 ZONAS_DE_ENTREGA</h2>
+    <p class="zonas-sub">Configura el rango antes de publicar</p>
 
+    <div class="zonas-step activo" id="zonasPaso1">
+      <label>🟢 Zona A — sin compra mínima</label>
+      <p class="zonas-hint">¿Hasta cuántos km llega la zona A?</p>
+      <input type="number" id="zonaInputA" inputmode="decimal" step="0.1" min="0">
+      <div class="zonas-error" id="zonaErrorA"></div>
+      <div class="zonas-nav">
+        <button type="button" class="zonas-cancelar" id="zonaCancelar1">Cancelar</button>
+        <button type="button" id="zonaSiguiente1">Siguiente ➡️</button>
+      </div>
+    </div>
+
+    <div class="zonas-step" id="zonasPaso2">
+      <label>🟡 Zona B — hasta dónde llega</label>
+      <p class="zonas-hint" id="zonaHintB">Empieza justo donde termina la zona A</p>
+      <input type="number" id="zonaInputB" inputmode="decimal" step="0.1" min="0">
+      <div class="zonas-error" id="zonaErrorB"></div>
+      <div class="zonas-nav">
+        <button type="button" class="zonas-cancelar" id="zonaVolver2">⬅️ Atrás</button>
+        <button type="button" id="zonaSiguiente2">Siguiente ➡️</button>
+      </div>
+    </div>
+
+    <div class="zonas-step" id="zonasPaso3">
+      <label>🟡 Zona B — compra mínima</label>
+      <p class="zonas-hint">¿Monto mínimo del pedido en zona B?</p>
+      <input type="number" id="zonaInputMin" inputmode="decimal" step="1" min="0">
+      <div class="zonas-error" id="zonaErrorMin"></div>
+      <div class="zonas-nav">
+        <button type="button" class="zonas-cancelar" id="zonaVolver3">⬅️ Atrás</button>
+        <button type="button" id="zonaSiguiente3">Siguiente ➡️</button>
+      </div>
+    </div>
+
+    <div class="zonas-step" id="zonasPaso4">
+      <p class="zonas-sub" style="margin-bottom:10px">📋 Resumen de zonas a publicar</p>
+      <div class="zonas-resumen" id="zonaResumenTexto"></div>
+      <div class="zonas-nav">
+        <button type="button" class="zonas-cancelar" id="zonaVolver4">⬅️ Atrás</button>
+        <button type="button" id="zonaConfirmarPublicar">🚀 Publicar</button>
+      </div>
+    </div>
+  </div>
+</div>
 <div class="link-modal" id="linkModal">
   <div class="link-modal-inner">
     <h2>✅ PUBLICADO_EN_GITHUB</h2>
@@ -525,115 +589,54 @@ document.getElementById('btnPublicar').onclick = () => {
   if (!currentPreviewHTML || !negocioActual) return;
 
   // 1) Preguntar zonas antes de publicar
-  const nuevasZonas = preguntarZonasAlPublicar();
-  if (nuevasZonas === null) {
-    mostrarToast('ℹ️ Publicación cancelada (zonas sin cambios)');
-    return;
-  }
-  zonaConfig = nuevasZonas;
+  <div class="zonas-modal" id="zonasModal">
+  <div class="zonas-modal-inner">
+    <h2>📍 ZONAS_DE_ENTREGA</h2>
+    <p class="zonas-sub">Configura el rango antes de publicar</p>
 
-  // 2) Regenerar el HTML con las zonas nuevas
-  currentPreviewHTML = construirLandingHTML(negocioActual, plantillaActual);
-  document.getElementById('previewFrame').srcdoc = currentPreviewHTML;
+    <div class="zonas-step activo" id="zonasPaso1">
+      <label>🟢 Zona A — sin compra mínima</label>
+      <p class="zonas-hint">¿Hasta cuántos km llega la zona A?</p>
+      <input type="number" id="zonaInputA" inputmode="decimal" step="0.1" min="0">
+      <div class="zonas-error" id="zonaErrorA"></div>
+      <div class="zonas-nav">
+        <button type="button" class="zonas-cancelar" id="zonaCancelar1">Cancelar</button>
+        <button type="button" id="zonaSiguiente1">Siguiente ➡️</button>
+      </div>
+    </div>
 
-  // 3) Publicar
-  const carp = currentPreviewSlug;
-  const bt = document.getElementById('btnPublicar');
-  bt.disabled = true; bt.textContent = '> Publicando...';
-  const dt = { nombreArchivo: currentPreviewNombre, html: currentPreviewHTML, sitemap: construirSitemapXML(carp), nombreSitemap: 'sitemap.xml', robots: construirRobotsTxt(carp), nombreRobots: 'robots.txt', slug: carp, nombreNegocio: nombreVisible(negocioActual.nombre) };
+    <div class="zonas-step" id="zonasPaso2">
+      <label>🟡 Zona B — hasta dónde llega</label>
+      <p class="zonas-hint" id="zonaHintB">Empieza justo donde termina la zona A</p>
+      <input type="number" id="zonaInputB" inputmode="decimal" step="0.1" min="0">
+      <div class="zonas-error" id="zonaErrorB"></div>
+      <div class="zonas-nav">
+        <button type="button" class="zonas-cancelar" id="zonaVolver2">⬅️ Atrás</button>
+        <button type="button" id="zonaSiguiente2">Siguiente ➡️</button>
+      </div>
+    </div>
 
-  function om(e) {
-    if (e.origin !== 'https://script.google.com') return;
-    if (e.data && typeof e.data === 'object' && 'success' in e.data) {
-      window.removeEventListener('message', om);
-      bt.disabled = false; bt.textContent = '🚀 Publicar';
-      if (e.data.success) {
-        urlPublicada = (e.data.url || (GITHUB_PAGES_BASE + '/' + encodeURIComponent(carp) + '/')).trim();
-        mostrarToast('🚀 Publicado');
-        mostrarModalLink(urlPublicada, nombreVisible(negocioActual.nombre));
-      } else {
-        mostrarToast('❌ Error: ' + (e.data.error || 'desconocido'));
-      }
-    }
-  }
+    <div class="zonas-step" id="zonasPaso3">
+      <label>🟡 Zona B — compra mínima</label>
+      <p class="zonas-hint">¿Monto mínimo del pedido en zona B?</p>
+      <input type="number" id="zonaInputMin" inputmode="decimal" step="1" min="0">
+      <div class="zonas-error" id="zonaErrorMin"></div>
+      <div class="zonas-nav">
+        <button type="button" class="zonas-cancelar" id="zonaVolver3">⬅️ Atrás</button>
+        <button type="button" id="zonaSiguiente3">Siguiente ➡️</button>
+      </div>
+    </div>
 
-  window.addEventListener('message', om);
-  document.getElementById('hf_action').value = 'publicarGitHub';
-  document.getElementById('hf_id').value = '';
-  document.getElementById('hf_datos').value = JSON.stringify(dt);
-  const fm = document.getElementById('hiddenSaveForm');
-  fm.action = GITHUB_PUBLISH_URL;
-  fm.submit();
-  setTimeout(() => { window.removeEventListener('message', om); bt.disabled = false; bt.textContent = '🚀 Publicar'; }, 30000);
-};
-
-function mostrarModalLink(u, n) {
-  document.getElementById('linkBox').textContent = u;
-  document.getElementById('linkModalSub').textContent = n ? 'Landing de "' + n + '"' : 'Tu landing está en línea';
-  document.getElementById('linkAbrir').href = u;
-  document.getElementById('linkCompartir').href = 'https://wa.me/?text=' + encodeURIComponent('Mira la landing de ' + (n || 'nuestro negocio') + ': ' + u);
-  document.getElementById('linkModal').classList.add('show');
-}
- // ===== Pregunta zonas precisas al publicar. Devuelve null si cancela. =====
-function preguntarZonasAlPublicar() {
-  const z = zonaConfig;
-
-  // --- A: límite superior ---
-  const aRaw = prompt(
-    'ZONA A (sin compra mínima)\n\n' +
-    '¿Hasta cuántos km llega la zona A?\n' +
-    'Actual: 0 – ' + z.A.maxKm + ' km',
-    z.A.maxKm
-  );
-  if (aRaw === null) return null;
-  const aMax = parseFloat(aRaw);
-  if (!isFinite(aMax) || aMax <= 0) { mostrarToast('❌ Zona A inválida'); return null; }
-
-  // --- B: límite superior ---
-  const bRaw = prompt(
-    'ZONA B\n\n' +
-    '¿Hasta cuántos km llega la zona B?\n' +
-    '(empieza justo donde termina A: ' + aMax + ' km)\n' +
-    'Actual: ' + z.B.minKm + ' – ' + z.B.maxKm + ' km',
-    z.B.maxKm
-  );
-  if (bRaw === null) return null;
-  const bMax = parseFloat(bRaw);
-  if (!isFinite(bMax) || bMax <= aMax) {
-    mostrarToast('❌ Zona B debe ser mayor que Zona A (' + aMax + ' km)');
-    return null;
-  }
-
-  // --- B: compra mínima ---
-  const minRaw = prompt(
-    'ZONA B — compra mínima\n\n' +
-    '¿Monto mínimo del pedido en zona B?\n' +
-    'Actual: $' + z.B.compraMinima,
-    z.B.compraMinima
-  );
-  if (minRaw === null) return null;
-  const minNum = parseFloat(minRaw);
-  if (!isFinite(minNum) || minNum < 0) {
-    mostrarToast('❌ Compra mínima inválida');
-    return null;
-  }
-
-  // --- Confirmación explícita de rangos ---
-  const ok = confirm(
-    '📋 Resumen de zonas a publicar:\n\n' +
-    '🟢 Zona A: 0 – ' + aMax + ' km   (sin mínimo)\n' +
-    '🟡 Zona B: ' + aMax + ' – ' + bMax + ' km   (mín $' + minNum + ')\n' +
-    '🔴 Zona C: > ' + bMax + ' km   (fuera de cobertura)\n\n' +
-    '¿Publicar con estos rangos?'
-  );
-  if (!ok) return null;
-
-  return {
-    A: { maxKm: aMax },
-    B: { minKm: aMax, maxKm: bMax, compraMinima: minNum },
-    C: { minKm: bMax }
-  };
-}  
+    <div class="zonas-step" id="zonasPaso4">
+      <p class="zonas-sub" style="margin-bottom:10px">📋 Resumen de zonas a publicar</p>
+      <div class="zonas-resumen" id="zonaResumenTexto"></div>
+      <div class="zonas-nav">
+        <button type="button" class="zonas-cancelar" id="zonaVolver4">⬅️ Atrás</button>
+        <button type="button" id="zonaConfirmarPublicar">🚀 Publicar</button>
+      </div>
+    </div>
+  </div>
+</div>
 function construirLandingHTML(n, plantillaOverride) {
   return construirLandingPEDIDOS(n, plantillaOverride);
 }
