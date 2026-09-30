@@ -588,7 +588,7 @@ document.getElementById('btnPublicar').onclick = async () => {
   if (!currentPreviewHTML || !negocioActual) return;
 
   // 1) Preguntar zonas antes de publicar
-  const nuevasZonas = preguntarZonasAlPublicar();
+   const nuevasZonas = await abrirModalZonas();
   if (nuevasZonas === null) {
     mostrarToast('ℹ️ Publicación cancelada (zonas sin cambios)');
     return;
