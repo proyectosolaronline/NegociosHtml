@@ -1770,8 +1770,12 @@ window.confirmarPedido = function(){
       });
       return;
     }
-    mostrarAviso(resumen + '\\n\\n¿Cómo deseas enviar tu pedido?', { confirm: true, textoOk: '✅ WhatsApp', textoCancelar: '💬 SMS' }).then(function(esWhatsApp){
-      enviarPedidoPorCanal(esWhatsApp ? 'whatsapp' : 'sms', msg, msgSMS);
+
+    elegirCanal(resumen + '\\n\\n¿Cómo deseas enviar tu pedido?').then(function(canal){
+      enviarPedidoPorCanal(canal, msg, msgSMS);
+  //  mostrarAviso(resumen + '\\n\\n¿Cómo deseas enviar tu pedido?', { confirm: true, textoOk: '✅ WhatsApp', textoCancelar: '💬 SMS' }).then(function(esWhatsApp){
+    //  enviarPedidoPorCanal(esWhatsApp ? 'whatsapp' : 'sms', msg, msgSMS);
+    
       guardarPedidoHistorial(nombre, itemsData, total);
       carrito = {};
       varianteActual = {};
@@ -1824,8 +1828,12 @@ function enviarPedidoPorCanal(canal, msg, msgSMS){
   if(window.history && window.history.replaceState) window.history.replaceState({}, '', window.location.pathname);
   if(!datos || !datos.msg) return;
   setTimeout(function(){
-  mostrarAviso('📦 Tienes un pedido listo desde otra página.\\n\\n¿Cómo deseas enviarlo?', { confirm: true, textoOk: '✅ WhatsApp', textoCancelar: '💬 SMS' }).then(function(esWhatsApp){
-       enviarPedidoPorCanal(esWhatsApp ? 'whatsapp' : 'sms', datos.msg, datos.msgSMS);
+  elegirCanal('📦 Tienes un pedido listo desde otra página.\\n\\n¿Cómo deseas enviarlo?').then(function(canal){
+   enviarPedidoPorCanal(canal, datos.msg, datos.msgSMS);
+
+//  mostrarAviso('📦 Tienes un pedido listo desde otra página.\\n\\n¿Cómo deseas enviarlo?', { confirm: true, textoOk: '✅ WhatsApp', textoCancelar: '💬 SMS' }).then(function(esWhatsApp){
+//       enviarPedidoPorCanal(esWhatsApp ? 'whatsapp' : 'sms', datos.msg, datos.msgSMS);
+    
       guardarPedidoHistorial(datos.nombre, datos.itemsData, datos.total);
       carrito = {};
       varianteActual = {};
