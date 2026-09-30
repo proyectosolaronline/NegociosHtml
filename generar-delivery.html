@@ -1889,14 +1889,18 @@ window.confirmarPedido = function(){
       var rad = function(d){ return d * Math.PI / 180; };
       var dLa = rad(latPedido - latN), dLo = rad(lngPedido - lngN);
       var hh = Math.sin(dLa/2)*Math.sin(dLa/2) + Math.cos(rad(latN))*Math.cos(rad(latPedido))*Math.sin(dLo/2)*Math.sin(dLo/2);
-      var kmPedido = 2 * 6371 * Math.asin(Math.sqrt(hh));
+      
+var kmPedido = 2 * 6371 * Math.asin(Math.sqrt(hh));
+      if(kmPedido >= ZONA_KM.A.maxKm && kmPedido < ZONA_KM.B.maxKm && ZONA_KM.B.compraMinima > 0 && total < ZONA_KM.B.compraMinima){
+        mostrarAviso('🛒 Compra mínima en ' + ZONA_KM.B.nombre + ': $' + ZONA_KM.B.compraMinima + '. Te faltan $' + (ZONA_KM.B.compraMinima - total) + ' para poder enviar tu pedido. Agrega más productos.');
+        return;
+      }
       if(kmPedido >= ZONA_KM.B.maxKm){
         msg = '🚫 FUERA DE COBERTURA (>' + ZONA_KM.B.maxKm + ' km)\\n\\n' + msg;
         msgSMS = quitarAcentosSMS('FUERA DE COBERTURA (>' + ZONA_KM.B.maxKm + ' km)\\n') + msgSMS;
       }
     }
   }catch(e){}
-
   cerrarModalPedido();
   setTimeout(function(){
     if(paginaOrigen){
