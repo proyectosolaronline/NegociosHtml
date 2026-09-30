@@ -587,7 +587,54 @@ document.getElementById('btnDescargar').onclick = () => { if (!currentPreviewHTM
 
 document.getElementById('btnPublicar').onclick = () => {
   if (!currentPreviewHTML || !negocioActual) return;
+if (nuevasZonas === null) {
+    mostrarToast('ℹ️ Publicación cancelada (zonas sin cambios)');
+    return;
+  }
+  zonaConfig = nuevasZonas;
 
+  // 2) Regenerar el HTML con las zonas nuevas
+  currentPreviewHTML = construirLandingHTML(negocioActual, plantillaActual);
+  document.getElementById('previewFrame').srcdoc = currentPreviewHTML;
+
+  // 3) Publicar
+  const carp = currentPreviewSlug;
+  const bt = document.getElementById('btnPublicar');
+  bt.disabled = true; bt.textContent = '> Publicando...';
+  const dt = { nombreArchivo: currentPreviewNombre, html: currentPreviewHTML, sitemap: construirSitemapXML(carp), nombreSitemap: 'sitemap.xml', robots: construirRobotsTxt(carp), nombreRobots: 'robots.txt', slug: carp, nombreNegocio: nombreVisible(negocioActual.nombre) };
+
+  function om(e) {
+    if (e.origin !== 'https://script.google.com') return;
+    if (e.data && typeof e.data === 'object' && 'success' in e.data) {
+      window.removeEventListener('message', om);
+      bt.disabled = false; bt.textContent = '🚀 Publicar';
+      if (e.data.success) {
+        urlPublicada = (e.data.url || (GITHUB_PAGES_BASE + '/' + encodeURIComponent(carp) + '/')).trim();
+        mostrarToast('🚀 Publicado');
+        mostrarModalLink(urlPublicada, nombreVisible(negocioActual.nombre));
+      } else {
+        mostrarToast('❌ Error: ' + (e.data.error || 'desconocido'));
+      }
+    }
+  }
+
+  window.addEventListener('message', om);
+  document.getElementById('hf_action').value = 'publicarGitHub';
+  document.getElementById('hf_id').value = '';
+  document.getElementById('hf_datos').value = JSON.stringify(dt);
+  const fm = document.getElementById('hiddenSaveForm');
+  fm.action = GITHUB_PUBLISH_URL;
+  fm.submit();
+  setTimeout(() => { window.removeEventListener('message', om); bt.disabled = false; bt.textContent = '🚀 Publicar'; }, 30000);
+};
+
+function mostrarModalLink(u, n) {
+  document.getElementById('linkBox').textContent = u;
+  document.getElementById('linkModalSub').textContent = n ? 'Landing de "' + n + '"' : 'Tu landing está en línea';
+  document.getElementById('linkAbrir').href = u;
+  document.getElementById('linkCompartir').href = 'https://wa.me/?text=' + encodeURIComponent('Mira la landing de ' + (n || 'nuestro negocio') + ': ' + u);
+  document.getElementById('linkModal').classList.add('show');
+}
   // 1) Preguntar zonas antes de publicar
   <div class="zonas-modal" id="zonasModal">
   <div class="zonas-modal-inner">
