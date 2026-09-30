@@ -715,10 +715,10 @@ function construirLandingPEDIDOS(n, plantillaOverride) {
   // const datosNegocioJS = JSON.stringify({ nombre: nombreLimpio, id: n.id || '', whatsapp: wd, productos: productos }).replace(/</g, '\\x3C');
   //const datosNegocioJS = JSON.stringify({ nombre: nombreLimpio, id: n.id || '', whatsapp: wd, productos: productos, latitud: n.latitud || '', longitud: n.longitud || '' }).replace(/</g, '\\x3c');
 
- //const correoOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(n.correo || '').trim());
+  const correoOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(n.correo || '').trim());
   const correoPedidos = correoOk ? String(n.correo).trim() : '';
-  const pcRaw = String(n.pedidoCorreo == null ? '' : n.pedidoCorreo).trim().toLowerCase();
-  const correoPedidos = (correoOk && ['true','1','si','sí','yes','on'].indexOf(pcRaw) !== -1) ? String(n.correo).trim() : '';
+ // const pcRaw = String(n.pedidoCorreo == null ? '' : n.pedidoCorreo).trim().toLowerCase();
+  //const correoPedidos = (correoOk && ['true','1','si','sí','yes','on'].indexOf(pcRaw) !== -1) ? String(n.correo).trim() : '';
   const datosNegocioJS = JSON.stringify({ nombre: nombreLimpio, id: n.id || '', whatsapp: wd, productos: productos, latitud: n.latitud || '', longitud: n.longitud || '', correoPedidos: correoPedidos }).replace(/</g, '\\x3c');
  
   const contactosPanelHTML = ci.map(x =>
@@ -1774,6 +1774,7 @@ window.confirmarPedido = function(){
     }
 
     elegirCanal(resumen + '\\n\\n¿Cómo deseas enviar tu pedido?').then(function(canal){
+      if(!canal) return;
       enviarPedidoPorCanal(canal, msg, msgSMS);
   //  mostrarAviso(resumen + '\\n\\n¿Cómo deseas enviar tu pedido?', { confirm: true, textoOk: '✅ WhatsApp', textoCancelar: '💬 SMS' }).then(function(esWhatsApp){
     //  enviarPedidoPorCanal(esWhatsApp ? 'whatsapp' : 'sms', msg, msgSMS);
@@ -1850,6 +1851,7 @@ function enviarPedidoPorCanal(canal, msg, msgSMS){
   if(!datos || !datos.msg) return;
   setTimeout(function(){
   elegirCanal('📦 Tienes un pedido listo desde otra página.\\n\\n¿Cómo deseas enviarlo?').then(function(canal){
+  if(!canal) return;
    enviarPedidoPorCanal(canal, datos.msg, datos.msgSMS);
 
 //  mostrarAviso('📦 Tienes un pedido listo desde otra página.\\n\\n¿Cómo deseas enviarlo?', { confirm: true, textoOk: '✅ WhatsApp', textoCancelar: '💬 SMS' }).then(function(esWhatsApp){
