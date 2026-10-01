@@ -1891,16 +1891,29 @@ window.confirmarPedido = function(){
       var hh = Math.sin(dLa/2)*Math.sin(dLa/2) + Math.cos(rad(latN))*Math.cos(rad(latPedido))*Math.sin(dLo/2)*Math.sin(dLo/2);
       
 var kmPedido = 2 * 6371 * Math.asin(Math.sqrt(hh));
+   //   if(kmPedido >= ZONA_KM.A.maxKm && ZONA_KM.B.compraMinima > 0 && total < ZONA_KM.B.compraMinima){
+    //    var nombreZonaMin = kmPedido >= ZONA_KM.B.maxKm ? 'fuera de cobertura' : ZONA_KM.B.nombre;
+    //    mostrarAviso('🛒 Compra mínima ' + nombreZonaMin + ': $' + ZONA_KM.B.compraMinima + '. Te faltan $' + (ZONA_KM.B.compraMinima - total) + ' para poder enviar tu pedido. Agrega más productos.');
+     //   return;
+   //   }
+   if(kmPedido > LIMITE_PEDIDO_KM){
+        mostrarAviso('🙏 Qué pena, por ahora no llegamos tan lejos. Estás a unos ' + kmPedido.toFixed(1) + ' km y nuestro límite de entrega es de ' + LIMITE_PEDIDO_KM + ' km. Puedes seguir viendo el catálogo.');
+        return;
+      }
       if(kmPedido >= ZONA_KM.A.maxKm && ZONA_KM.B.compraMinima > 0 && total < ZONA_KM.B.compraMinima){
-        var nombreZonaMin = kmPedido >= ZONA_KM.B.maxKm ? 'fuera de cobertura' : ZONA_KM.B.nombre;
-        mostrarAviso('🛒 Compra mínima ' + nombreZonaMin + ': $' + ZONA_KM.B.compraMinima + '. Te faltan $' + (ZONA_KM.B.compraMinima - total) + ' para poder enviar tu pedido. Agrega más productos.');
+        mostrarAviso('🛒 Para pedidos a esta distancia necesitamos un mínimo de $' + ZONA_KM.B.compraMinima + '. Te faltan $' + (ZONA_KM.B.compraMinima - total) + ', ¿agregamos algo más?');
         return;
       }
       if(kmPedido >= ZONA_KM.B.maxKm){
-        msg = '🚫 FUERA DE COBERTURA (>' + ZONA_KM.B.maxKm + ' km)\\n\\n' + msg;
-        msgSMS = quitarAcentosSMS('FUERA DE COBERTURA (>' + ZONA_KM.B.maxKm + ' km)\\n') + msgSMS;
+        resumen = resumen + '\\n\\n🚚 Estás a unos ' + kmPedido.toFixed(1) + ' km: estás un poco lejos de nuestra zona habitual. Podemos entregarte, pero el costo de envío lo acordamos directamente con el dueño antes de confirmar.';
+        msg = '🚚 ENVÍO CON COSTO (~' + kmPedido.toFixed(1) + ' km, más de ' + ZONA_KM.B.maxKm + ' km): A ACORDAR CON EL DUEÑO\\n\\n' + msg;
+        msgSMS = quitarAcentosSMS('ENVIO CON COSTO (~' + kmPedido.toFixed(1) + ' km), A ACORDAR CON EL DUENO\\n') + msgSMS;
       }
-    }
+   //   if(kmPedido >= ZONA_KM.B.maxKm){
+   //     msg = '🚫 FUERA DE COBERTURA (>' + ZONA_KM.B.maxKm + ' km)\\n\\n' + msg;
+    //    msgSMS = quitarAcentosSMS('FUERA DE COBERTURA (>' + ZONA_KM.B.maxKm + ' km)\\n') + msgSMS;
+  //    }
+ //   }
   }catch(e){}
   cerrarModalPedido();
   setTimeout(function(){
@@ -1968,14 +1981,59 @@ function elegirCanal(texto){
   });
 }
 // ===== AQUÍ SE ENVÍA EL WHATSAPP (o SMS): abre la app con el mensaje ya armado =====
+//function enviarPedidoPorCanal(canal, msg, msgSMS){
+ // var numero = String(NEGOCIO.whatsapp || '').replace(/[^0-9+]/g, '');
+ //if(canal === 'correo'){
+   // var para = String(NEGOCIO.correoPedidos || '').trim();
+   // if(!para){ mostrarAviso('Este negocio no tiene correo para pedidos'); return; }
+ //   window.location.href = 'mailto:' + para + '?subject=' + encodeURIComponent('Nuevo pedido - ' + (NEGOCIO.nombre || '')) + '&body=' + encodeURIComponent(msg);
+ //   return;
+//  }
+// ===== Pide teléfono de contacto cuando el canal elegido es correo =====
+function pedirTelefonoContacto(){
+  // Espera a que termine de cerrarse el modal anterior (200 ms) para que no cierre este popup
+  return new Promise(function(r){ setTimeout(r, 260); }).then(pedirTelefonoContactoAhora);
+}
+function pedirTelefonoContactoAhora(){
+  return new Promise(function(resolve){
+    var overlay = document.getElementById('modalAviso');
+    var titulo = document.getElementById('avisoTitulo');
+    var texto = document.getElementById('avisoTexto');
+    var btnOk = document.getElementById('avisoBtnOk');
+    var btnCancelar = document.getElementById('avisoBtnCancelar');
+    if(!overlay || !texto || !btnOk){ resolve(''); return; }
+    titulo.textContent = '📞 ' + (NEGOCIO.nombre || 'Contacto');
+    texto.innerHTML = 'Para enviar tu pedido por correo, déjanos un teléfono donde podamos contactarte:<br><br>' +
+      '<input id="inputTelContacto" type="tel" inputmode="tel" placeholder="Ej. 442 123 4567" style="width:100%;box-sizing:border-box;padding:10px;border-radius:6px;border:1px solid #ccc;font-size:15px;margin-top:4px">';
+    btnCancelar.style.display = 'inline-flex';
+    btnOk.textContent = '✅ Enviar';
+    btnCancelar.textContent = 'Cancelar';
+    overlay.classList.add('activo');
+    setTimeout(function(){ var i = document.getElementById('inputTelContacto'); if(i) i.focus(); }, 50);
+    function limpiar(){ cerrarOverlay(overlay); btnOk.onclick = null; btnCancelar.onclick = null; }
+    btnOk.onclick = function(){
+      var i = document.getElementById('inputTelContacto');
+      var tel = i ? i.value.trim() : '';
+      if(!tel){ if(i){ i.style.borderColor = '#e33'; i.focus(); } return; }
+      limpiar(); resolve(tel);
+    };
+    btnCancelar.onclick = function(){ limpiar(); resolve(null); };
+  });
+}
+
 function enviarPedidoPorCanal(canal, msg, msgSMS){
   var numero = String(NEGOCIO.whatsapp || '').replace(/[^0-9+]/g, '');
  if(canal === 'correo'){
     var para = String(NEGOCIO.correoPedidos || '').trim();
     if(!para){ mostrarAviso('Este negocio no tiene correo para pedidos'); return; }
-    window.location.href = 'mailto:' + para + '?subject=' + encodeURIComponent('Nuevo pedido - ' + (NEGOCIO.nombre || '')) + '&body=' + encodeURIComponent(msg);
+    pedirTelefonoContacto().then(function(tel){
+      if(tel === null) return;
+      var msgConTel = tel ? ('📞 Teléfono de contacto: ' + tel + '\\n\\n' + msg) : msg;
+      window.location.href = 'mailto:' + para + '?subject=' + encodeURIComponent('Nuevo pedido - ' + (NEGOCIO.nombre || '')) + '&body=' + encodeURIComponent(msgConTel);
+    });
     return;
   }
+
   if(canal === 'sms'){
     window.open('sms:' + numero + '?body=' + encodeURIComponent(msgSMS || msg), '_blank', 'noopener');
   } else {
@@ -2015,6 +2073,7 @@ function enviarPedidoPorCanal(canal, msg, msgSMS){
 // A) 0 – ${zonaConfig.A.maxKm} km  → sin compra mínima
 // B) ${zonaConfig.B.minKm} – ${zonaConfig.B.maxKm} km → compra mínima $${zonaConfig.B.compraMinima}
 // C) > ${zonaConfig.C.minKm} km → popup de "Enterado" (fuera de cobertura)
+var LIMITE_PEDIDO_KM = 5;
 var ZONA_KM = {
   A: { nombre: 'Zona A (0-${zonaConfig.A.maxKm} km)',                     maxKm: ${zonaConfig.A.maxKm},        compraMinima: 0 },
   B: { nombre: 'Zona B (${zonaConfig.B.minKm}-${zonaConfig.B.maxKm} km)', maxKm: ${zonaConfig.B.maxKm},        compraMinima: ${zonaConfig.B.compraMinima} },
@@ -2070,17 +2129,19 @@ var MSG_FUERA_COBERTURA = '🚫 Estás fuera de nuestra zona de cobertura (>${zo
     if (typeof mostrarAviso === 'function') mostrarAviso(texto, { textoOk: '✅ Enterado' });
   }
 
-  function popupFueraCobertura() {
+  function popupFueraCobertura(km) {
     if (popupCAbierto) return;
     popupCAbierto = true;
     if (typeof mostrarAviso === 'function') {
-      mostrarAviso(MSG_FUERA_COBERTURA, { textoOk: '✅ Enterado' })
+      var txtC = km > LIMITE_PEDIDO_KM
+        ? '🙏 Qué pena, por ahora no llegamos tan lejos. Estás a unos ' + km.toFixed(1) + ' km y nuestro límite de entrega es de ' + LIMITE_PEDIDO_KM + ' km. Puedes seguir viendo el catálogo.'
+        : '🚚 Estás a unos ' + km.toFixed(1) + ' km, un poco lejos de nuestra zona habitual. Podemos entregarte, pero el costo de envío lo acordamos directamente con el dueño antes de confirmar. Nuestro límite de entrega es de ' + LIMITE_PEDIDO_KM + ' km.';
+      mostrarAviso(txtC, { textoOk: '✅ Enterado' })
         .then(function(){ popupCAbierto = false; });
     } else {
       popupCAbierto = false;
     }
   }
-
   function tick() {
     var nAct = leerNegocio();
     if (nAct) antNeg = nAct;
@@ -2097,7 +2158,8 @@ var MSG_FUERA_COBERTURA = '🚫 Estás fuera de nuestra zona de cobertura (>${zo
     // Cambio de zona
     if (zona.key !== zonaActual) {
       if (zona.key === 'C') {
-        popupFueraCobertura();
+     //   popupFueraCobertura();
+   popupFueraCobertura(km);
       } else if (zonaActual === 'C') {
         // Volvió a cobertura desde fuera → sí avisar
         if (typeof mostrarAviso === 'function') {
