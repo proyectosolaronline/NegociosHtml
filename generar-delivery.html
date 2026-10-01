@@ -1908,13 +1908,9 @@ var kmPedido = 2 * 6371 * Math.asin(Math.sqrt(hh));
         resumen = resumen + '\\n\\n🚚 Estás a unos ' + kmPedido.toFixed(1) + ' km: estás un poco lejos de nuestra zona habitual. Podemos entregarte, pero el costo de envío lo acordamos directamente con el dueño antes de confirmar.';
         msg = '🚚 ENVÍO CON COSTO (~' + kmPedido.toFixed(1) + ' km, más de ' + ZONA_KM.B.maxKm + ' km): A ACORDAR CON EL DUEÑO\\n\\n' + msg;
         msgSMS = quitarAcentosSMS('ENVIO CON COSTO (~' + kmPedido.toFixed(1) + ' km), A ACORDAR CON EL DUENO\\n') + msgSMS;
+       }
       }
-   //   if(kmPedido >= ZONA_KM.B.maxKm){
-   //     msg = '🚫 FUERA DE COBERTURA (>' + ZONA_KM.B.maxKm + ' km)\\n\\n' + msg;
-    //    msgSMS = quitarAcentosSMS('FUERA DE COBERTURA (>' + ZONA_KM.B.maxKm + ' km)\\n') + msgSMS;
-  //    }
- //   }
-  }catch(e){}
+        }catch(e){}
   cerrarModalPedido();
   setTimeout(function(){
     if(paginaOrigen){
