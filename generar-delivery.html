@@ -1175,8 +1175,14 @@ ${productosHTML}
     ${cb ? '<div class="mas-seccion"><h4>Acciones</h4><div class="mas-btns">' + cb + '</div></div>' : ''}
     <div class="mas-seccion"><h4>Comparte</h4><div class="mas-qr">
       <img id="lQrImg" alt="QR" onclick="compartirQR()">
-      <p><span onclick="compartirQR()">📱 Escanea para compartir</span></p>
-    </div></div>
+     // <p><span onclick="compartirQR()">📱 Escanea para compartir</span></p>
+  //  </div></div>
+  <p><span onclick="compartirQR()">📱 Escanea para compartir</span></p>
+<div class="mas-btns" style="margin-top:12px;">
+  <button type="button" class="mas-btn mas-btn-wa" onclick="compartirPagina()">🔗 Compartir página</button>
+  <button type="button" class="mas-btn" style="background:rgba(128,128,128,.18);color:inherit;" onclick="copiarLinkPagina(this)">📋 Copiar link</button>
+</div>
+</div></div>
     <div class="mas-footer">
       <div class="mf-nombre">⚡ ${escHTML(nombreLimpio)}</div>
       <div class="mf-slogan">${escHTML(n.slogan || 'Gracias por visitarnos')}</div>
@@ -1271,9 +1277,35 @@ var NEGOCIO = ${datosNegocioJS};
   var splash = document.getElementById('splash');
   if(splash){ setTimeout(function(){ splash.classList.add('saliendo'); setTimeout(function(){ splash.style.display='none'; },750); },3000); }
   var u = '${escJS(cu)}';
+  try { if(/^https?:$/.test(location.protocol) && location.hostname){ u = location.origin + location.pathname; } } catch(e){}
   var q = document.getElementById('lQrImg');
   if(q) q.src = 'https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=' + encodeURIComponent(u);
-  window.compartirQR = function(){ window.open('https://wa.me/?text=' + encodeURIComponent('${escJS(nombreLimpio)}: ' + u), '_blank', 'noopener'); };
+ // window.compartirQR = function(){ window.open('https://wa.me/?text=' + encodeURIComponent('${escJS(nombreLimpio)}: ' + u), '_blank', 'noopener'); };
+ var _tituloShare = '${escJS(nombreLimpio)}';
+function _waShare(){
+  var w = 'https://wa.me/?text=' + encodeURIComponent(_tituloShare + ': ' + u);
+  var win = null; try { win = window.open(w, '_blank', 'noopener'); } catch(e){}
+  if(!win) location.href = w;
+}
+window.compartirPagina = function(){
+  if(navigator.share){
+    navigator.share({ title: _tituloShare, text: _tituloShare, url: u }).catch(function(e){
+      if(e && e.name === 'AbortError') return;
+      _waShare();
+    });
+  } else { _waShare(); }
+};
+window.compartirQR = window.compartirPagina;
+window.copiarLinkPagina = function(btn){
+  var ok = function(){ if(btn){ var t = btn.textContent; btn.textContent = '✅ Link copiado'; setTimeout(function(){ btn.textContent = t; }, 1800); } };
+  var fb = function(){
+    var ta = document.createElement('textarea'); ta.value = u; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); ok(); } catch(e){ prompt('Copia este link:', u); }
+    document.body.removeChild(ta);
+  };
+  if(navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(u).then(ok, fb); } else { fb(); }
+};
   // ===== 3 toques en el banner -> pantalla para imprimir el QR =====
   window.abrirQRImprimir = function(){
     var ov = document.getElementById('qrPrintOv');
