@@ -1270,9 +1270,47 @@ ${tm ? ('<div class="ubi-modal" id="mapaNegocioModal" onclick="if(event.target==
   </div>
 <script>
 var NEGOCIO = ${datosNegocioJS};
-// 🔒 CANDADO: cambia a "cerrado" para pausar pedidos
-const CANDADO = NEGOCIO.candado || "abierto";
+// ===== CANDADO DE PÁGINA =====
+// Cambia "abierto" por "cerrado" para mostrar el aviso de página en construcción.
+// Vuelve a "abierto" y el aviso desaparece solo.
+var candado = "abierto";
+var CANDADO_TEXTO = "🚧 Página en construcción";
 
+(function monitorCandado(){
+  var overlay = null;
+  var INTERVALO_MS = 800;
+
+  function crearOverlay(){
+    if(overlay) return overlay;
+    overlay = document.createElement('div');
+    overlay.id = 'candadoOverlay';
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(6,6,10,.92);backdrop-filter:blur(14px) saturate(140%);-webkit-backdrop-filter:blur(14px) saturate(140%);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:30px;text-align:center;font-family:inherit';
+    overlay.innerHTML =
+      '<div style="font-size:64px;margin-bottom:18px;animation:candadoSpin 2.4s linear infinite">🚧</div>' +
+      '<div style="font-size:22px;font-weight:800;letter-spacing:-0.02em;color:#fff;max-width:420px;line-height:1.35">' + CANDADO_TEXTO + '</div>' +
+      '<div style="font-size:14px;color:rgba(255,255,255,.7);margin-top:12px;max-width:380px;line-height:1.5">Estamos trabajando para ti. Vuelve en un momento.</div>' +
+      '<style>@keyframes candadoSpin{0%,100%{transform:translateY(0) rotate(-4deg)}50%{transform:translateY(-8px) rotate(4deg)}}</style>';
+    document.body.appendChild(overlay);
+    return overlay;
+  }
+
+  function quitarOverlay(){
+    if(overlay && overlay.parentNode){ overlay.parentNode.removeChild(overlay); }
+    overlay = null;
+  }
+
+  function aplicar(){
+    if(String(candado).toLowerCase() === 'cerrado'){ crearOverlay(); }
+    else { quitarOverlay(); }
+  }
+
+  // Aplica de inmediato (por si el HTML se publica ya con "cerrado")
+  if(document.body) aplicar();
+  else document.addEventListener('DOMContentLoaded', aplicar);
+
+  // Monitor continuo: reacciona en cuanto cambies el valor de "candado"
+  setInterval(aplicar, INTERVALO_MS);
+})();
 
     
   
