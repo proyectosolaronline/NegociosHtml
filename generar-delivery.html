@@ -1170,19 +1170,18 @@ ${productosHTML}
     <h3>${escHTML(nombreLimpio)}</h3>
     <p>${escHTML(n.slogan || '')}</p>
   </div>
-  <div class="mas-body">
+
+<div class="mas-body">
     ${contactosPanelHTML ? '<div class="mas-seccion"><h4>Contacto</h4><div class="mas-contact-grid">' + contactosPanelHTML + '</div></div>' : ''}
     ${cb ? '<div class="mas-seccion"><h4>Acciones</h4><div class="mas-btns">' + cb + '</div></div>' : ''}
-   // <div class="mas-seccion"><h4>Comparte</h4><div class="mas-qr">
-    //  <img id="lQrImg" alt="QR" onclick="compartirQR()">
-     // <p><span onclick="compartirQR()">📱 Escanea para compartir</span></p>
-  //  </div></div>
-  <p><span onclick="compartirQR()">📱 Escanea para compartir</span></p>
-<div class="mas-btns" style="margin-top:12px;">
-  <button type="button" class="mas-btn mas-btn-wa" onclick="compartirPagina()">🔗 Compartir página</button>
-  <button type="button" class="mas-btn" style="background:rgba(128,128,128,.18);color:inherit;" onclick="copiarLinkPagina(this)">📋 Copiar link</button>
-</div>
-</div></div>
+    <div class="mas-seccion"><h4>Comparte</h4><div class="mas-qr">
+      <img id="lQrImg" alt="QR" onclick="compartirQR()">
+      <p><span onclick="compartirQR()">📱 Escanea para compartir</span></p>
+      <div class="mas-btns" style="margin-top:12px;">
+        <button type="button" class="mas-btn mas-btn-wa" onclick="compartirPagina()">🔗 Compartir página</button>
+        <button type="button" class="mas-btn" style="background:rgba(128,128,128,.18);color:inherit;" onclick="copiarLinkPagina(this)">📋 Copiar link</button>
+      </div>
+    </div></div>
     <div class="mas-footer">
       <div class="mf-nombre">⚡ ${escHTML(nombreLimpio)}</div>
       <div class="mf-slogan">${escHTML(n.slogan || 'Gracias por visitarnos')}</div>
@@ -1193,7 +1192,6 @@ ${productosHTML}
     </div>
   </div>
 </div>
-
 <div class="modal-pedido-overlay" id="modalProducto" onclick="if(event.target===this)cerrarProducto()">
   <div class="modal-pedido mp-inner">
     <div class="mp-foto"><img id="mpImg" alt=""><button type="button" class="mp-x" onclick="cerrarProducto()">×</button></div>
