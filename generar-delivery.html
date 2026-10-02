@@ -1344,18 +1344,21 @@ var CONSTRUCCION = {
     overlay = null;
   }
 
-  function verificar(){
+    function verificar(){
     if(String(candado).toLowerCase() === 'cerrado'){ crearOverlay(); }
     else { quitarOverlay(); }
   }
 
-  if(document.body) verificar();
-  else document.addEventListener('DOMContentLoaded', verificar);
+  // Espera a que el HTML generado esté completamente cargado
+  if(document.readyState === 'complete' || document.readyState === 'interactive'){
+    setTimeout(verificar, 0);
+  } else {
+    window.addEventListener('load', verificar);
+  }
 
+  // Verifica cada 7s
   setInterval(verificar, INTERVALO_MS);
 })();
-
-    
   
 (function(){
   var splash = document.getElementById('splash');
