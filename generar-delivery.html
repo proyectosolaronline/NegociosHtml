@@ -1134,6 +1134,7 @@ ${ov}
   body.qr-imprimiendo #qrPrintOv .qp-sub{font-size:18px}
   body.qr-imprimiendo #qrPrintOv .qp-qr{max-width:15cm;width:100%}
   body.qr-imprimiendo #qrPrintOv .qp-btns{display:none!important}
+  body.qr-imprimiendo #qrPrintOv .qp-edad{font-size:16px;margin-top:24px}
   @page{margin:12mm}
 }
 </style></head><body>
@@ -1262,6 +1263,7 @@ ${tm ? ('<div class="ubi-modal" id="mapaNegocioModal" onclick="if(event.target==
       <button type="button" class="qp-cerrar" onclick="cerrarQRImprimir()">Cerrar</button>
     </div>
   </div>
+  <p class="qp-edad">🔞 Usuarios mayores de 18 años</p>
 </div>
 <script>
 var NEGOCIO = ${datosNegocioJS};
