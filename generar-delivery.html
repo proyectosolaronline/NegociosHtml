@@ -1112,6 +1112,30 @@ body{font-family:${fn};font-feature-settings:'cv02','cv03','cv04','cv11','ss01';
 .leaflet-bar a{background:rgba(15,17,23,.9)!important;color:var(--text)!important;border-bottom-color:var(--border)!important}
 
 ${ov}
+/* ===== Pantalla oculta: imprimir QR (3 toques en el banner) ===== */
+.pantalla .banner{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+#qrPrintOv{position:fixed;inset:0;z-index:6000;background:rgba(5,8,15,.92);display:none;align-items:center;justify-content:center;padding:16px}
+#qrPrintOv.activo{display:flex}
+#qrPrintOv .qp-card{background:#fff;color:#111;border-radius:20px;padding:24px 20px;max-width:360px;width:100%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.6)}
+#qrPrintOv .qp-nombre{font-size:20px;font-weight:800;margin:0 0 4px;color:#111}
+#qrPrintOv .qp-sub{font-size:13px;color:#555;margin:0 0 14px}
+#qrPrintOv .qp-qr{width:100%;max-width:300px;height:auto;aspect-ratio:1/1;display:block;margin:0 auto;background:#fff}
+#qrPrintOv .qp-url{font-size:11px;color:#777;margin:12px 0 0;word-break:break-all}
+#qrPrintOv .qp-btns{display:flex;gap:10px;margin-top:18px}
+#qrPrintOv .qp-btns button{flex:1;padding:12px 10px;border-radius:12px;border:0;font-size:14px;font-weight:700;cursor:pointer}
+#qrPrintOv .qp-imp{background:#111;color:#fff}
+#qrPrintOv .qp-cerrar{background:#E9E9EE;color:#333}
+@media print{
+  body.qr-imprimiendo>*:not(#qrPrintOv){display:none!important}
+  body.qr-imprimiendo{background:#fff!important}
+  body.qr-imprimiendo #qrPrintOv{display:flex!important;position:static;background:#fff;padding:0}
+  body.qr-imprimiendo #qrPrintOv .qp-card{box-shadow:none;max-width:none;width:100%;padding:0}
+  body.qr-imprimiendo #qrPrintOv .qp-nombre{font-size:34px}
+  body.qr-imprimiendo #qrPrintOv .qp-sub{font-size:18px}
+  body.qr-imprimiendo #qrPrintOv .qp-qr{max-width:15cm;width:100%}
+  body.qr-imprimiendo #qrPrintOv .qp-btns{display:none!important}
+  @page{margin:12mm}
+}
 </style></head><body>
 <div id="splash">
   ${n.logo ? '<img class="splash-logo" src="' + escHTML(n.logo) + '" alt="Logo ' + escHTML(nombreLimpio) + '">' : ''}
@@ -1227,17 +1251,59 @@ ${tm ? ('<div class="ubi-modal" id="mapaNegocioModal" onclick="if(event.target==
     </div>
   </div>
 </div>
-
+<div id="qrPrintOv" role="dialog" aria-label="Imprimir QR">
+  <div class="qp-card">
+    <h2 class="qp-nombre">${escHTML(nombreLimpio)}</h2>
+    <p class="qp-sub">Escanea el QR y haz tu pedido</p>
+    <img id="qpImg" class="qp-qr" alt="QR ${escHTML(nombreLimpio)}">
+    <p class="qp-url">${escHTML(cu)}</p>
+    <div class="qp-btns">
+      <button type="button" class="qp-imp" onclick="imprimirQR()">🖨️ Imprimir</button>
+      <button type="button" class="qp-cerrar" onclick="cerrarQRImprimir()">Cerrar</button>
+    </div>
+  </div>
+</div>
 <script>
 var NEGOCIO = ${datosNegocioJS};
 
 (function(){
   var splash = document.getElementById('splash');
   if(splash){ setTimeout(function(){ splash.classList.add('saliendo'); setTimeout(function(){ splash.style.display='none'; },750); },3000); }
-  var u = window.location.href;
+  var u = '${escJS(cu)}';
   var q = document.getElementById('lQrImg');
   if(q) q.src = 'https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=' + encodeURIComponent(u);
   window.compartirQR = function(){ window.open('https://wa.me/?text=' + encodeURIComponent('${escJS(nombreLimpio)}: ' + u), '_blank', 'noopener'); };
+  // ===== 3 toques en el banner -> pantalla para imprimir el QR =====
+  window.abrirQRImprimir = function(){
+    var ov = document.getElementById('qrPrintOv');
+    var im = document.getElementById('qpImg');
+    if(im && !im.getAttribute('src')) im.src = 'https://api.qrserver.com/v1/create-qr-code/?size=600x600&margin=10&data=' + encodeURIComponent(u);
+    if(ov) ov.classList.add('activo');
+  };
+  window.cerrarQRImprimir = function(){
+    var ov = document.getElementById('qrPrintOv');
+    if(ov) ov.classList.remove('activo');
+  };
+  window.imprimirQR = function(){
+    var im = document.getElementById('qpImg');
+    function lanzar(){
+      document.body.classList.add('qr-imprimiendo');
+      setTimeout(function(){ window.print(); }, 150);
+    }
+    if(im && im.complete && im.naturalWidth) lanzar(); else if(im) im.onload = lanzar; else lanzar();
+  };
+  window.addEventListener('afterprint', function(){ document.body.classList.remove('qr-imprimiendo'); });
+  document.addEventListener('keydown', function(e){ if(e.key === 'Escape') window.cerrarQRImprimir(); });
+  var qrTaps = [];
+  var bannerQR = document.querySelector('.pantalla .banner');
+  if(bannerQR){
+    bannerQR.addEventListener('click', function(){
+      var t = Date.now();
+      qrTaps = qrTaps.filter(function(x){ return t - x < 1500; });
+      qrTaps.push(t);
+      if(qrTaps.length >= 3){ qrTaps = []; window.abrirQRImprimir(); }
+    });
+  }
 
   var msgRaw = '${escJS(mensajeEmergente)}';
   if(msgRaw){
