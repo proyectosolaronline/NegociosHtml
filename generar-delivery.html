@@ -1270,26 +1270,71 @@ ${tm ? ('<div class="ubi-modal" id="mapaNegocioModal" onclick="if(event.target==
   </div>
 <script>
 var NEGOCIO = ${datosNegocioJS};
+
+
 // ===== CANDADO DE PÁGINA =====
 // Cambia "abierto" por "cerrado" para mostrar el aviso de página en construcción.
-// Vuelve a "abierto" y el aviso desaparece solo.
+// Vuelve a "abierto" y el aviso desaparece solo (se verifica cada 7s).
 var candado = "abierto";
-var CANDADO_TEXTO = "🚧 Página en construcción";
+
+// Variables precargadas para el popup de construcción
+var CONSTRUCCION = {
+  nombre: ${JSON.stringify(nombreLimpio)},
+  banner: ${JSON.stringify(n.banner || '')},
+  lat: ${JSON.stringify(n.latitud || '')},
+  lng: ${JSON.stringify(n.longitud || '')},
+  texto: "está en mantenimiento"
+};
 
 (function monitorCandado(){
   var overlay = null;
-  var INTERVALO_MS = 800;
+  var INTERVALO_MS = 7000;
 
   function crearOverlay(){
     if(overlay) return overlay;
+
+    var tieneMapa = CONSTRUCCION.lat && CONSTRUCCION.lng;
+    var mapaEmbed = tieneMapa
+      ? 'https://www.openstreetmap.org/export/embed.html?bbox=' +
+        (parseFloat(CONSTRUCCION.lng) - 0.006) + '%2C' +
+        (parseFloat(CONSTRUCCION.lat) - 0.006) + '%2C' +
+        (parseFloat(CONSTRUCCION.lng) + 0.006) + '%2C' +
+        (parseFloat(CONSTRUCCION.lat) + 0.006) +
+        '&layer=mapnik&marker=' + CONSTRUCCION.lat + '%2C' + CONSTRUCCION.lng
+      : '';
+    var dirLink = tieneMapa
+      ? 'https://www.google.com/maps/dir/?api=1&destination=' + CONSTRUCCION.lat + ',' + CONSTRUCCION.lng
+      : '';
+
     overlay = document.createElement('div');
     overlay.id = 'candadoOverlay';
-    overlay.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(6,6,10,.92);backdrop-filter:blur(14px) saturate(140%);-webkit-backdrop-filter:blur(14px) saturate(140%);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:30px;text-align:center;font-family:inherit';
-    overlay.innerHTML =
-      '<div style="font-size:64px;margin-bottom:18px;animation:candadoSpin 2.4s linear infinite">🚧</div>' +
-      '<div style="font-size:22px;font-weight:800;letter-spacing:-0.02em;color:#fff;max-width:420px;line-height:1.35">' + CANDADO_TEXTO + '</div>' +
-      '<div style="font-size:14px;color:rgba(255,255,255,.7);margin-top:12px;max-width:380px;line-height:1.5">Estamos trabajando para ti. Vuelve en un momento.</div>' +
-      '<style>@keyframes candadoSpin{0%,100%{transform:translateY(0) rotate(-4deg)}50%{transform:translateY(-8px) rotate(4deg)}}</style>';
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(6,6,10,.95);backdrop-filter:blur(14px) saturate(140%);-webkit-backdrop-filter:blur(14px) saturate(140%);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center;font-family:inherit;overflow-y:auto';
+
+    var html = '';
+    html += '<div style="max-width:520px;width:100%;display:flex;flex-direction:column;align-items:center;gap:18px">';
+
+    // 1) Banner
+    if(CONSTRUCCION.banner){
+      html += '<div style="width:100%;height:180px;border-radius:20px;background-image:url(\'' + CONSTRUCCION.banner.replace(/'/g, "%27") + '\');background-size:cover;background-position:center;box-shadow:0 20px 60px rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.1)"></div>';
+    }
+
+    // 2) Texto: nombre + "está en mantenimiento"
+    html += '<div style="font-size:56px;animation:candadoSpin 2.4s linear infinite">🚧</div>';
+    html += '<div style="font-size:22px;font-weight:800;letter-spacing:-0.02em;color:#fff;line-height:1.35">' + CONSTRUCCION.nombre + ' ' + CONSTRUCCION.texto + '</div>';
+    html += '<div style="font-size:14px;color:rgba(255,255,255,.7);line-height:1.5">Estamos trabajando para ti. Vuelve en un momento.</div>';
+
+    // 3) Mapa + botón Cómo llegar
+    if(tieneMapa){
+      html += '<div style="width:100%;height:200px;border-radius:16px;overflow:hidden;border:2px solid rgba(255,255,255,.15);box-shadow:0 12px 40px rgba(0,0,0,.45)">';
+      html += '<iframe loading="lazy" style="width:100%;height:100%;border:0" src="' + mapaEmbed + '"></iframe>';
+      html += '</div>';
+      html += '<a href="' + dirLink + '" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:14px 26px;border-radius:14px;background:linear-gradient(135deg,#4285F4,#1A73E8);color:#fff;font-weight:800;font-size:15px;text-decoration:none;box-shadow:0 8px 24px rgba(66,133,244,.4)">🧭 Cómo llegar</a>';
+    }
+
+    html += '<style>@keyframes candadoSpin{0%,100%{transform:translateY(0) rotate(-4deg)}50%{transform:translateY(-8px) rotate(4deg)}}</style>';
+    html += '</div>';
+
+    overlay.innerHTML = html;
     document.body.appendChild(overlay);
     return overlay;
   }
@@ -1299,17 +1344,15 @@ var CANDADO_TEXTO = "🚧 Página en construcción";
     overlay = null;
   }
 
-  function aplicar(){
+  function verificar(){
     if(String(candado).toLowerCase() === 'cerrado'){ crearOverlay(); }
     else { quitarOverlay(); }
   }
 
-  // Aplica de inmediato (por si el HTML se publica ya con "cerrado")
-  if(document.body) aplicar();
-  else document.addEventListener('DOMContentLoaded', aplicar);
+  if(document.body) verificar();
+  else document.addEventListener('DOMContentLoaded', verificar);
 
-  // Monitor continuo: reacciona en cuanto cambies el valor de "candado"
-  setInterval(aplicar, INTERVALO_MS);
+  setInterval(verificar, INTERVALO_MS);
 })();
 
     
