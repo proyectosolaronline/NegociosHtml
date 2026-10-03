@@ -817,6 +817,81 @@ ${fh}
     setInterval(m, 15000);
   }
 })();
+// ===== CANDADO DE PÁGINA =====
+var candado = "abierto";
+
+var CONSTRUCCION = {
+  nombre: ${JSON.stringify(nombreLimpio)},
+  banner: ${JSON.stringify(n.banner || '')},
+  lat: ${JSON.stringify(n.latitud || '')},
+  lng: ${JSON.stringify(n.longitud || '')},
+  texto: "está en mantenimiento"
+};
+
+(function monitorCandado(){
+  var overlay = null;
+  var INTERVALO_MS = 7000;
+
+  function crearOverlay(){
+    if(overlay) return overlay;
+    var tieneMapa = CONSTRUCCION.lat && CONSTRUCCION.lng;
+    var mapaEmbed = tieneMapa
+      ? 'https://www.openstreetmap.org/export/embed.html?bbox=' +
+        (parseFloat(CONSTRUCCION.lng) - 0.006) + '%2C' +
+        (parseFloat(CONSTRUCCION.lat) - 0.006) + '%2C' +
+        (parseFloat(CONSTRUCCION.lng) + 0.006) + '%2C' +
+        (parseFloat(CONSTRUCCION.lat) + 0.006) +
+        '&layer=mapnik&marker=' + CONSTRUCCION.lat + '%2C' + CONSTRUCCION.lng
+      : '';
+    var dirLink = tieneMapa
+      ? 'https://www.google.com/maps/dir/?api=1&destination=' + CONSTRUCCION.lat + ',' + CONSTRUCCION.lng
+      : '';
+
+    overlay = document.createElement('div');
+    overlay.id = 'candadoOverlay';
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(6,6,10,.95);backdrop-filter:blur(14px) saturate(140%);-webkit-backdrop-filter:blur(14px) saturate(140%);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center;font-family:inherit;overflow-y:auto';
+
+    var html = '';
+    html += '<div style="max-width:520px;width:100%;display:flex;flex-direction:column;align-items:center;gap:18px">';
+    if(CONSTRUCCION.banner){
+      html += '<div style="width:100%;height:180px;border-radius:20px;background-image:url(\\'' + CONSTRUCCION.banner.replace(/'/g, "%27") + '\\');background-size:cover;background-position:center;box-shadow:0 20px 60px rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.1)"></div>';
+    }
+    html += '<div style="font-size:56px;animation:candadoSpin 2.4s linear infinite">🚧</div>';
+    html += '<div style="font-size:22px;font-weight:800;letter-spacing:-0.02em;color:#fff;line-height:1.35">' + CONSTRUCCION.nombre + ' ' + CONSTRUCCION.texto + '</div>';
+    html += '<div style="font-size:14px;color:rgba(255,255,255,.7);line-height:1.5">Estamos trabajando para ti. Vuelve en un momento.</div>';
+    if(tieneMapa){
+      html += '<div style="width:100%;height:200px;border-radius:16px;overflow:hidden;border:2px solid rgba(255,255,255,.15);box-shadow:0 12px 40px rgba(0,0,0,.45)">';
+      html += '<iframe loading="lazy" style="width:100%;height:100%;border:0" src="' + mapaEmbed + '"></iframe>';
+      html += '</div>';
+      html += '<a href="' + dirLink + '" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:14px 26px;border-radius:14px;background:linear-gradient(135deg,#4285F4,#1A73E8);color:#fff;font-weight:800;font-size:15px;text-decoration:none;box-shadow:0 8px 24px rgba(66,133,244,.4)">🧭 Cómo llegar</a>';
+    }
+    html += '<style>@keyframes candadoSpin{0%,100%{transform:translateY(0) rotate(-4deg)}50%{transform:translateY(-8px) rotate(4deg)}}</style>';
+    html += '</div>';
+
+    overlay.innerHTML = html;
+    document.body.appendChild(overlay);
+    return overlay;
+  }
+
+  function quitarOverlay(){
+    if(overlay && overlay.parentNode){ overlay.parentNode.removeChild(overlay); }
+    overlay = null;
+  }
+
+  function verificar(){
+    if(String(candado).toLowerCase() === 'cerrado'){ crearOverlay(); }
+    else { quitarOverlay(); }
+  }
+
+  // Espera a que el HTML esté cargado
+  if(document.readyState === 'complete' || document.readyState === 'interactive'){
+    setTimeout(verificar, 0);
+  } else {
+    window.addEventListener('load', verificar);
+  }
+
+  setInterval(verificar, INTERVALO_MS);
+})();
 <\/script>
 </body></html>`;
 }
