@@ -819,7 +819,19 @@ ${fh}
 })();
 // ===== CANDADO DE PÁGINA =====
 var candado = "abierto";
+var API_CANDADO = ${JSON.stringify(GITHUB_PUBLISH_URL)};
+var ID_NEGOCIO = ${JSON.stringify(n.id || '')};
 
+// ===== CONTADOR DE VISITAS =====
+(function registrarVisita(){
+  try{
+    if(!ID_NEGOCIO || !API_CANDADO || window.self !== window.top) return;
+    var k = 'visita_' + ID_NEGOCIO;
+    if(sessionStorage.getItem(k)) return;
+    sessionStorage.setItem(k, '1');
+    fetch(API_CANDADO + '?action=registrarVisita&id=' + encodeURIComponent(ID_NEGOCIO), {mode:'no-cors', keepalive:true}).catch(function(){});
+  }catch(e){}
+})();
 var CONSTRUCCION = {
   nombre: ${JSON.stringify(nombreLimpio)},
   banner: ${JSON.stringify(n.banner || '')},
@@ -891,6 +903,27 @@ var CONSTRUCCION = {
   }
 
   setInterval(verificar, INTERVALO_MS);
+    function consultarCandado(){
+    if(!ID_NEGOCIO || !API_CANDADO) return;
+    var cb = '__cand_' + Date.now();
+    var sc = document.createElement('script');
+    window[cb] = function(r){
+      try{
+        if(r && r.success && r.candado){ candado = r.candado; verificar(); }
+      }catch(e){}
+      try{ delete window[cb]; }catch(e){ window[cb] = undefined; }
+      if(sc.parentNode) sc.parentNode.removeChild(sc);
+    };
+    sc.onerror = function(){
+      try{ delete window[cb]; }catch(e){ window[cb] = undefined; }
+      if(sc.parentNode) sc.parentNode.removeChild(sc);
+    };
+    sc.src = API_CANDADO + '?action=verificarCandado&id=' + encodeURIComponent(ID_NEGOCIO) + '&callback=' + cb + '&_=' + Date.now();
+    document.head.appendChild(sc);
+  }
+
+  consultarCandado();
+  setInterval(consultarCandado, INTERVALO_MS);
 })();
 <\/script>
 </body></html>`;
