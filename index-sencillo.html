@@ -659,7 +659,11 @@
 const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzC0XThmPutT8VjPMyYiRrvVIREMr3LfHeRIYsFFJ8wT_H-3vmKcaAuqbz337BahBmPeg/exec';
 const GITHUB_PUBLISH_URL = 'https://script.google.com/macros/s/AKfycbwh4EBEepNZrWVibk7L4jq3KZHx9ly_tFsF7OjFDInt6GS-gjdiQcWVrd83tzLNp-aKSw/exec';
 const VIDEO_PAGE_URL = 'video.html';
-
+function getAdminToken() {
+  let t = sessionStorage.getItem('adm_tk');
+  if (!t) { t = prompt('Clave de administrador:') || ''; if (t) sessionStorage.setItem('adm_tk', t); }
+  return t;
+}
 // ============================================================
 // VARIABLES GLOBALES
 // ============================================================
@@ -1675,7 +1679,7 @@ function postViaIframe(action, id, datos, targetUrl) {
     window.addEventListener('message', onMessage);
     document.getElementById('hf_action').value = action;
     document.getElementById('hf_id').value = id || '';
-    document.getElementById('hf_datos').value = JSON.stringify(datos);
+    document.getElementById('hf_datos').value = JSON.stringify(Object.assign({}, datos, { token: getAdminToken() }));
     const form = document.getElementById('hiddenSaveForm');
     form.action = targetUrl || APPS_SCRIPT_URL;
     form.submit();
@@ -1773,7 +1777,7 @@ async function eliminarNegocio(id) {
   if (!confirm('⚠️ ¿Eliminar?')) return;
   showLoading();
   try {
-    const result = await callAPI('eliminarNegocio', { id });
+const result = await callAPI('eliminarNegocio', { id, token: getAdminToken() });
     hideLoading();
     if (result.success) { showToast('✅ Eliminado', 'success'); cargarNegocios(); }
     else showToast('❌ Error: ' + result.error, 'error');
