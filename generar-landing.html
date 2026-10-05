@@ -651,7 +651,7 @@ function construirLandingNORMAL(n, plantillaOverride) {
   const cu = GITHUB_PAGES_BASE + '/' + encodeURIComponent(carp) + '/';
 
   const galeriaHTML = ft.length ? '<section class="gallery">' + ft.map((f, i) => {
-  const p = (f.descripcion || '').split('&');
+  const p = (function(){ var d = f.descripcion || ''; if(d.indexOf('&') !== -1) return d.split('&'); var idx = d.indexOf('\n'); if(idx !== -1) return [d.substring(0, idx), d.substring(idx + 1)]; return [d]; })();
   const ti = p[0].trim() || '📸 Foto';
   const dL = p[1] ? p[1].trim() : '';
   const cortaLimite = 90;
@@ -809,11 +809,13 @@ ${fh}
   var splash = document.getElementById('splash');
   if(splash){ setTimeout(function(){ splash.classList.add('saliendo'); setTimeout(function(){ splash.style.display='none'; },750); },3000); }
   var lFotos = ${JSON.stringify(ft)};
-  window.lOpenLightbox = function(i){ var f = lFotos[i]; if(!f) return; document.getElementById('lLightboxImg').src = f.url; var p = (f.descripcion || '').split('&'); document.getElementById('lLightboxCap').textContent = p[1] ? p[1].trim() : (p[0].trim() || '📸'); document.getElementById('lLightbox').classList.add('active'); };
+  window.lOpenLightbox = function(i){ var f = lFotos[i]; if(!f) return; document.getElementById('lLightboxImg').src = f.url; 
+ var p = (function(){ var d = f.descripcion || ''; if(d.indexOf('&') !== -1) return d.split('&'); var idx = d.indexOf('\n'); if(idx !== -1) return [d.substring(0, idx), d.substring(idx + 1)]; return [d]; })();
+  document.getElementById('lLightboxCap').textContent = p[1] ? p[1].trim() : (p[0].trim() || '📸'); document.getElementById('lLightbox').classList.add('active'); };
   window.lCloseLightbox = function(){ document.getElementById('lLightbox').classList.remove('active'); };
 window.lAbrirPopup = function(i){
   var f = lFotos[i]; if(!f) return;
-  var p = (f.descripcion || '').split('&');
+  var p = (function(){ var d = f.descripcion || ''; if(d.indexOf('&') !== -1) return d.split('&'); var idx = d.indexOf('\n'); if(idx !== -1) return [d.substring(0, idx), d.substring(idx + 1)]; return [d]; })();
   var titulo = (p[0] || '📸').trim();
   var desc = (p[1] || '').trim();
   document.getElementById('lPopupTitulo').textContent = titulo;
