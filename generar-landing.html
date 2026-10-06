@@ -649,16 +649,14 @@ function construirLandingNORMAL(n, plantillaOverride) {
   const carp = nombreCarpeta(n.nombre);
   const oi = n.banner || n.logo || '';
   const cu = GITHUB_PAGES_BASE + '/' + encodeURIComponent(carp) + '/';
-
-  const galeriaHTML = ft.length ? '<section class="gallery">' + ft.map((f, i) => {
-    const dT = (f.descripcion || '').trim();
+  const galeriaHTML = ft.length ? '<section class="gallery" id="lGaleria">' + ft.map((f, i) => {
+  const dT = (f.descripcion || '').trim();
     const nC = Math.ceil(dT.length * 0.05);
     const hayMas = nC < dT.length;
     const dC = hayMas ? dT.replace(/\s+/g, ' ').substring(0, nC).trim() + '…' : dT.replace(/\s+/g, ' ');
     return '<div class="gallery-item"><img src="' + escHTML(f.url) + '" alt="' + escHTML(dT.substring(0, 60) || '📸 Foto') + '" loading="lazy" onclick="lOpenLightbox(' + i + ')"><div class="gallery-info">' + (dT ? '<p class="gallery-desc"><span>' + escHTML(dC) + '</span>' + (hayMas ? ' <button class="vermas-btn" onclick="lVerMas(' + i + ')">Ver más</button>' : '') + '</p>' : '') + '</div></div>';
-  }).join('') + '</section>' : '';
-  
 
+  }).join('') + '</section>' : '<section class="gallery" id="lGaleria" style="display:none"></section>';
   let urlExternaHTML = '';
   const ext = parsearUrlExterna(n.Urlexterna || n.urlexterna);
   
@@ -792,6 +790,22 @@ ${fh}
   var splash = document.getElementById('splash');
   if(splash){ setTimeout(function(){ splash.classList.add('saliendo'); setTimeout(function(){ splash.style.display='none'; },750); },3000); }
   var lFotos = ${JSON.stringify(ft)};
+  function lEsc(x){ return String(x == null ? '' : x).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+  function lFirma(a){ return JSON.stringify((a || []).map(function(f){ return [f.url, (f.descripcion || '').trim()]; })); }
+  window.lActualizarFotos = function(arr){
+    try{
+      var nuevas = (arr || []).filter(function(f){ return f && f.url; });
+      if(lFirma(nuevas) === lFirma(lFotos)) return;
+      var cont = document.getElementById('lGaleria');
+      if(!cont) return;
+      lFotos = nuevas;
+      cont.innerHTML = lFotos.map(function(f, i){
+        var s = lCorte(i);
+        return '<div class="gallery-item"><img src="' + lEsc(f.url) + '" alt="' + lEsc(s.full.substring(0, 60) || '📸 Foto') + '" loading="lazy" onclick="lOpenLightbox(' + i + ')"><div class="gallery-info">' + (s.full ? '<p class="gallery-desc"><span>' + lEsc(s.prev) + '</span>' + (s.hayMas ? ' <button class="vermas-btn" onclick="lVerMas(' + i + ')">Ver más</button>' : '') + '</p>' : '') + '</div></div>';
+      }).join('');
+      cont.style.display = lFotos.length ? '' : 'none';
+    }catch(e){}
+  };
 window.lOpenLightbox = function(i){ var f = lFotos[i]; if(!f) return; document.getElementById('lLightboxImg').src = f.url; var s = lCorte(i); var cap = document.getElementById('lLightboxCap'); cap.textContent = (s.prev || '📸') + ' '; if(s.hayMas){ var m = document.createElement('button'); m.className = 'vermas-btn'; m.textContent = 'Ver más'; m.onclick = function(e){ e.stopPropagation(); lVerMas(i); }; cap.appendChild(m); } document.getElementById('lLightbox').classList.add('active'); };
   window.lCloseLightbox = function(){ document.getElementById('lLightbox').classList.remove('active'); };
   window.lToggleDescFoto = function(i){ var r = document.getElementById('lDescResto' + i); if(r) r.style.display = r.style.display === 'none' ? 'inline' : 'none'; };
