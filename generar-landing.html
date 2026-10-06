@@ -941,6 +941,36 @@ var CONSTRUCCION = {
   consultarCandado();
   setInterval(consultarCandado, INTERVALO_MS);
 })();
+// ===== SINCRONIZAR CATÁLOGO (FOTOS Y DESCRIPCIONES) DESDE EL SHEET =====
+(function sincronizarSheet(){
+  if(!ID_NEGOCIO || !API_CANDADO) return;
+  function pedir(){
+    if(document.hidden) return;
+    var cb = '__neg_' + Date.now();
+    var sc = document.createElement('script');
+    function limpiar(){
+      try{ delete window[cb]; }catch(e){ window[cb] = undefined; }
+      if(sc.parentNode) sc.parentNode.removeChild(sc);
+    }
+    window[cb] = function(r){
+      try{
+        var lista = (r && r.success && r.negocios) ? r.negocios : [];
+        for(var i = 0; i < lista.length; i++){
+          if(String(lista[i].id) === String(ID_NEGOCIO)){
+            if(window.lActualizarFotos) window.lActualizarFotos(lista[i].fotos || []);
+            break;
+          }
+        }
+      }catch(e){}
+      limpiar();
+    };
+    sc.onerror = limpiar;
+    sc.src = API_CANDADO + '?action=obtenerNegocios&callback=' + cb + '&_=' + Date.now();
+    document.head.appendChild(sc);
+  }
+  setTimeout(pedir, 2500);
+  setInterval(pedir, 120000);
+})();
 // ===== DIAGNÓSTICO: POPUP CON LOS DATOS DEL SHEET (usa ?debug=1 o verDatosSheet()) =====
 window.verDatosSheet = function(){
   var viejo = document.getElementById('lDebugSheet'); if(viejo) viejo.remove();
