@@ -829,8 +829,8 @@ function construirLandingPEDIDOS(n, plantillaOverride) {
   const relleno = productos.length < 4 ? 4 - productos.length : (productos.length % 2 ? 1 : 0);
   const placeholdersHTML = Array.from({ length: relleno }).map(() => '<div class="prod prod-ph"><img src="' + phSVG + '" alt="Espacio reservado a nuevos productos" loading="lazy"></div>').join('');
   const filas = Math.max(1, Math.ceil((productos.length + relleno) / 2));
-  const productosHTML = '<section class="catalogo" style="--filas:' + filas + '">' + productos.map(p => (
-    '<div class="prod" data-idx="' + p.indice + '" onclick="abrirProducto(' + p.indice + ')"><span class="prod-badge" id="badge-' + p.indice + '"></span><img src="' + escHTML(p.url) + '" alt="' + escHTML(p.nombre) + '" loading="lazy"><div class="prod-info"><div class="prod-nombre">' + escHTML(p.nombre) + '</div><div class="prod-precio">' + escHTML(p.precioTexto) + '</div></div></div>'
+    const productosHTML = '<section class="catalogo" id="lCatalogo" style="--filas:' + filas + '">' + productos.map(p => (
+   '<div class="prod" data-idx="' + p.indice + '" onclick="abrirProducto(' + p.indice + ')"><span class="prod-badge" id="badge-' + p.indice + '"></span><img src="' + escHTML(p.url) + '" alt="' + escHTML(p.nombre) + '" loading="lazy"><div class="prod-info"><div class="prod-nombre">' + escHTML(p.nombre) + '</div><div class="prod-precio">' + escHTML(p.precioTexto) + '</div></div></div>'
   )).join('') + placeholdersHTML + '</section>';
 
   const ci = [['📞','Teléfono',n.telefono],['💬','WhatsApp',n.whatsapp],['🕐','Horario',n.horario],['✉️','Correo',n.correo]].filter(x => x[2]);
@@ -1140,7 +1140,7 @@ ${ov}
 </div>
 <main class="pantalla">
 <div class="banner"><span class="banner-edad">🔞 Usuarios mayores de 18 años</span></div>
-${dl ? '<p class="desc">' + escHTML(dl.replace(/\//g, ' ')) + '</p>' : ''}
+<p class="desc" id="lDesc"${dl ? '' : ' style="display:none"'}>${dl ? escHTML(dl.replace(/\//g, ' ')) : ''}</p>
 <h2 class="sec-titulo">Toca un producto para pedir</h2>
 <button type="button" class="historial-btn" onclick="abrirHistorial()">🕓 Ver mis pedidos anteriores</button>
 ${productosHTML}
@@ -2400,7 +2400,107 @@ var CONSTRUCCION = {
   consultarCandado();
   setInterval(consultarCandado, INTERVALO_MS);
 })();
-
+// ===== SINCRONIZAR CATÁLOGO Y DESCRIPCIÓN DESDE EL SHEET =====
+(function sincronizarSheet(){
+  if(!ID_NEGOCIO || !API_CANDADO) return;
+  var L_PH = ${JSON.stringify(phSVG)};
+  function lParse(desc, i, url){
+    var raw = desc || '', nombre, precioRaw = '', precioNum = 0, vars;
+    if(raw.indexOf('/') === -1){
+      var partes = raw.split('&');
+      nombre = partes[0].trim() || ('Producto ' + (i + 1));
+      precioRaw = partes[1] ? partes[1].trim() : '';
+      if(precioRaw && precioRaw.charAt(0) !== '$') precioRaw = '$' + precioRaw;
+      precioNum = parseFloat(String(precioRaw).replace(/[^0-9.]/g, '')) || 0;
+      vars = [nombre];
+    } else {
+      var seg = raw.split('/').map(function(s){ return s.trim(); }).filter(function(s){ return s !== ''; });
+      if(!seg.length) seg = ['Producto ' + (i + 1)];
+      var ult = seg[seg.length - 1];
+      var m = ult.match(/^(.*?)[$&][ ]*([0-9.,]+)$/);
+      if(m){ seg[seg.length - 1] = m[1].trim() || ult; precioRaw = '$' + m[2].trim(); precioNum = parseFloat(m[2].replace(/,/g, '')) || 0; }
+      nombre = seg[0] || ('Producto ' + (i + 1));
+      vars = seg.slice(1); if(!vars.length) vars = [nombre];
+    }
+    return { indice: i, nombre: nombre, variantes: vars, precioTexto: precioRaw || '—', precio: precioNum, url: url };
+  }
+  function lFirma(p){ return JSON.stringify((p || []).map(function(x){ return [x.nombre, x.variantes, x.precioTexto, x.url]; })); }
+  function lAplicarDesc(n){
+    if(n.descripcion === undefined) return;
+    var el = document.getElementById('lDesc'); if(!el) return;
+    var partes = String(n.descripcion || '').split('&');
+    var dc = partes[0].trim() || '';
+    var dl = partes[1] ? partes[1].trim() : dc;
+    var txt = dl.split('/').join(' ');
+    if(el.textContent === txt) return;
+    el.textContent = txt;
+    el.style.display = txt ? '' : 'none';
+  }
+  function lAplicarCatalogo(fotos){
+    var ft = (fotos || []).filter(function(f){ return f && f.url; });
+    var nuevos = ft.map(function(f, i){ return lParse(f.descripcion, i, f.url); });
+    if(lFirma(nuevos) === lFirma(NEGOCIO.productos)) return;
+    var modal = document.getElementById('modalProducto');
+    if(modal && modal.classList.contains('activo')) return;
+    var cont = document.getElementById('lCatalogo'); if(!cont) return;
+    var nuevoCarrito = {};
+    for(var k in carrito){
+      var pos = k.indexOf('::'); if(pos < 0) continue;
+      var vieja = NEGOCIO.productos[parseInt(k.substring(0, pos))];
+      var v = k.substring(pos + 2);
+      if(!vieja) continue;
+      for(var j = 0; j < nuevos.length; j++){
+        if(nuevos[j].nombre === vieja.nombre && nuevos[j].variantes.indexOf(v) !== -1){
+          var nk = claveCarrito(j, v);
+          nuevoCarrito[nk] = (nuevoCarrito[nk] || 0) + carrito[k];
+          break;
+        }
+      }
+    }
+    for(var d in carrito) delete carrito[d];
+    for(var q in nuevoCarrito) carrito[q] = nuevoCarrito[q];
+    for(var a in varianteActual) delete varianteActual[a];
+    NEGOCIO.productos = nuevos;
+    var relleno = nuevos.length < 4 ? 4 - nuevos.length : (nuevos.length % 2 ? 1 : 0);
+    var filas = Math.max(1, Math.ceil((nuevos.length + relleno) / 2));
+    var html = nuevos.map(function(p){
+      return '<div class="prod" data-idx="' + p.indice + '" onclick="abrirProducto(' + p.indice + ')"><span class="prod-badge" id="badge-' + p.indice + '"></span><img src="' + escVar(p.url) + '" alt="' + escVar(p.nombre) + '" loading="lazy"><div class="prod-info"><div class="prod-nombre">' + escVar(p.nombre) + '</div><div class="prod-precio">' + escVar(p.precioTexto) + '</div></div></div>';
+    }).join('');
+    for(var r = 0; r < relleno; r++) html += '<div class="prod prod-ph"><img src="' + L_PH + '" alt="Espacio reservado a nuevos productos" loading="lazy"></div>';
+    cont.innerHTML = html;
+    cont.style.setProperty('--filas', filas);
+    actualizarTodosBadges();
+    actualizarBotonUnico();
+    actualizarResumen();
+  }
+  function pedir(){
+    if(document.hidden) return;
+    var cb = '__neg_' + Date.now();
+    var sc = document.createElement('script');
+    function limpiar(){
+      try{ delete window[cb]; }catch(e){ window[cb] = undefined; }
+      if(sc.parentNode) sc.parentNode.removeChild(sc);
+    }
+    window[cb] = function(r){
+      try{
+        var lista = (r && r.success && r.negocios) ? r.negocios : [];
+        for(var i = 0; i < lista.length; i++){
+          if(String(lista[i].id) === String(ID_NEGOCIO)){
+            try{ lAplicarDesc(lista[i]); }catch(e){}
+            try{ if(Array.isArray(lista[i].fotos)) lAplicarCatalogo(lista[i].fotos); }catch(e){}
+            break;
+          }
+        }
+      }catch(e){}
+      limpiar();
+    };
+    sc.onerror = limpiar;
+    sc.src = API_CANDADO + '?action=obtenerNegocios&callback=' + cb + '&_=' + Date.now();
+    document.head.appendChild(sc);
+  }
+  setTimeout(pedir, 2500);
+  setInterval(pedir, 20000);
+})();
 actualizarTodosBadges();
 actualizarBotonUnico();
 actualizarResumen();
