@@ -971,58 +971,6 @@ var CONSTRUCCION = {
   setTimeout(pedir, 2500);
   setInterval(pedir, 120000);
 })();
-// ===== DIAGNÓSTICO: POPUP CON LOS DATOS DEL SHEET (usa ?debug=1 o verDatosSheet()) =====
-window.verDatosSheet = function(){
-  var viejo = document.getElementById('lDebugSheet'); if(viejo) viejo.remove();
-  var ov = document.createElement('div');
-  ov.id = 'lDebugSheet';
-  ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:99999;overflow:auto;padding:16px;font:13px/1.5 system-ui,sans-serif;color:#eee';
-  var box = document.createElement('div');
-  box.style.cssText = 'max-width:520px;margin:0 auto;background:#111827;border:1px solid #374151;border-radius:14px;padding:16px';
-  ov.appendChild(box);
-  function linea(txt, color){ var d = document.createElement('div'); d.textContent = txt; d.style.cssText = 'margin:4px 0;word-break:break-all;' + (color ? 'color:' + color : ''); box.appendChild(d); return d; }
-  var x = document.createElement('button');
-  x.textContent = '× Cerrar'; x.style.cssText = 'float:right;background:#374151;color:#fff;border:none;border-radius:8px;padding:6px 12px;cursor:pointer';
-  x.onclick = function(){ ov.remove(); };
-  box.appendChild(x);
-  var h = document.createElement('div'); h.textContent = '🔎 Datos desde Google Sheet'; h.style.cssText = 'font-weight:800;font-size:15px;margin-bottom:8px'; box.appendChild(h);
-  linea('ID_NEGOCIO de esta página: ' + (typeof ID_NEGOCIO !== 'undefined' && ID_NEGOCIO ? ID_NEGOCIO : '(vacío)'));
-  var estado = linea('⏳ Consultando el Sheet...', '#FBBF24');
-  document.body.appendChild(ov);
-  if(typeof ID_NEGOCIO === 'undefined' || !ID_NEGOCIO || typeof API_CANDADO === 'undefined' || !API_CANDADO){ estado.textContent = '❌ Falta ID_NEGOCIO o la URL del Apps Script'; estado.style.color = '#F87171'; return; }
-  var t0 = Date.now(), cb = '__dbg_' + t0, sc = document.createElement('script');
-  function limpiar(){ try{ delete window[cb]; }catch(e){ window[cb] = undefined; } if(sc.parentNode) sc.parentNode.removeChild(sc); }
-  var fin = setTimeout(function(){ estado.textContent = '❌ Sin respuesta en 15 s (revisa la URL del Apps Script o su permiso de acceso)'; estado.style.color = '#F87171'; limpiar(); }, 15000);
-  window[cb] = function(r){
-    clearTimeout(fin);
-    var ms = Date.now() - t0, kb = Math.round(JSON.stringify(r || {}).length / 1024);
-    if(!r || !r.success){ estado.textContent = '❌ El Apps Script respondió con error: ' + (r && r.error ? r.error : 'sin detalle'); estado.style.color = '#F87171'; limpiar(); return; }
-    var lista = r.negocios || [], n = null;
-    for(var i = 0; i < lista.length; i++){ if(String(lista[i].id) === String(ID_NEGOCIO)){ n = lista[i]; break; } }
-    estado.textContent = '✅ Respuesta OK · ' + ms + ' ms · ' + kb + ' KB · ' + lista.length + ' negocios recibidos';
-    estado.style.color = '#34D399';
-    if(kb > 500) linea('⚠️ Respuesta pesada (' + kb + ' KB): conviene una acción que devuelva solo este negocio', '#FBBF24');
-    if(!n){ linea('❌ No hay ningún negocio con id "' + ID_NEGOCIO + '" en el Sheet', '#F87171'); limpiar(); return; }
-    linea('Nombre: ' + (n.nombre || '(vacío)'));
-    linea('Descripción del negocio: ' + (n.descripcion || '(vacía)'));
-    var fotos = (n.fotos || []).filter(function(f){ return f && f.url; });
-    var tf = linea('📸 Fotos con URL: ' + fotos.length, fotos.length ? '#34D399' : '#FBBF24'); tf.style.marginTop = '12px'; tf.style.fontWeight = '700';
-    fotos.forEach(function(f, i){
-      var c = document.createElement('div'); c.style.cssText = 'display:flex;gap:10px;margin:8px 0;padding:8px;background:#1F2937;border-radius:10px';
-      var im = document.createElement('img'); im.src = f.url; im.style.cssText = 'width:72px;height:72px;object-fit:cover;border-radius:8px;flex:none;background:#000';
-      var info = document.createElement('div'); info.style.cssText = 'min-width:0;font-size:12px';
-      var u = String(f.url);
-      info.textContent = '#' + (i + 1) + ' · ' + (u.indexOf('data:') === 0 ? 'imagen incrustada (' + Math.round(u.length / 1024) + ' KB)' : u.substring(0, 70)) + ' · Descripción: ' + (f.descripcion || '(vacía)');
-      im.onerror = function(){ im.style.outline = '2px solid #F87171'; info.textContent += ' · ❌ la imagen no carga'; };
-      c.appendChild(im); c.appendChild(info); box.appendChild(c);
-    });
-    limpiar();
-  };
-  sc.onerror = function(){ clearTimeout(fin); estado.textContent = '❌ Error de conexión con el Apps Script'; estado.style.color = '#F87171'; limpiar(); };
-  sc.src = API_CANDADO + '?action=obtenerNegocios&callback=' + cb + '&_=' + t0;
-  document.head.appendChild(sc);
-};
-if(location.search.indexOf('debug=1') > -1) setTimeout(window.verDatosSheet, 800);
 <\/script>
 </body></html>`;
 }
