@@ -661,17 +661,22 @@ const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzC0XThmPutT8Vj
 const GITHUB_PUBLISH_URL = 'https://script.google.com/macros/s/AKfycbwh4EBEepNZrWVibk7L4jq3KZHx9ly_tFsF7OjFDInt6GS-gjdiQcWVrd83tzLNp-aKSw/exec';
 const VIDEO_PAGE_URL = 'video.html';
 // ===== CANDADO: ¿REQUIERE TIEMPO DE ALERTA? =====
+function esNegocioDelivery() {
+  return /&\s*delivery/i.test(document.getElementById('nombre').value);
+}
 function candadoCambio() {
   var cerrado = document.getElementById('candado').value === 'cerrado';
-  document.getElementById('candadoAlertaGrupo').style.display = cerrado ? '' : 'none';
-  if (!cerrado) document.getElementById('candadoAlerta').value = '0';
+  var pregunta = cerrado && esNegocioDelivery();
+  document.getElementById('candadoAlertaGrupo').style.display = pregunta ? '' : 'none';
+  if (!pregunta) document.getElementById('candadoAlerta').value = '0';
 }
+  
 function valorCandado() {
   var c = document.getElementById('candado').value;
   var min = parseInt(document.getElementById('candadoAlerta').value, 10) || 0;
-  return (c === 'cerrado' && min > 0) ? 'aviso:' + min : c;
+  return (c === 'cerrado' && min > 0 && esNegocioDelivery()) ? 'aviso:' + min : c;
 }
-function cargarCandadoEnForm(valor) {
+  function cargarCandadoEnForm(valor) {
   var v = String(valor || '').toLowerCase().trim();
   var m = v.match(/^aviso[: ]?([0-9]+)$/);
   var mins = m ? m[1] : '0';
@@ -687,6 +692,7 @@ function cargarCandadoEnForm(valor) {
   candadoCambio();
 }
 document.getElementById('formNegocio').addEventListener('reset', function () { setTimeout(candadoCambio, 0); });
+document.getElementById('nombre').addEventListener('input', candadoCambio);
   function getAdminToken() {
   let t = sessionStorage.getItem('adm_tk');
   if (!t) { t = prompt('Clave de administrador:') || ''; if (t) sessionStorage.setItem('adm_tk', t); }
