@@ -2367,11 +2367,60 @@ var CONSTRUCCION = {
     overlay = null;
   }
 
-  function verificar(){
-    if(String(candado).toLowerCase() === 'cerrado'){ crearOverlay(); }
-    else { quitarOverlay(); }
+    var avisoBar = null, avisoTimer = null, finAviso = null, avisoClave = null;
+
+  function minutosAviso(){
+    var m = String(candado).toLowerCase().trim().match(/^aviso[: ]?([0-9]+)$/);
+    return m ? parseInt(m[1], 10) : 0;
+  }
+  function fmtTiempo(ms){
+    var s = Math.max(0, Math.ceil(ms / 1000));
+    var mm = Math.floor(s / 60), ss = s % 60;
+    return (mm < 10 ? '0' : '') + mm + ':' + (ss < 10 ? '0' : '') + ss;
+  }
+  function quitarAviso(){
+    if(avisoTimer){ clearInterval(avisoTimer); avisoTimer = null; }
+    if(avisoBar && avisoBar.parentNode){ avisoBar.parentNode.removeChild(avisoBar); }
+    avisoBar = null; finAviso = null; avisoClave = null;
+  }
+  function mostrarAvisoCandado(min){
+    var clave = 'aviso' + min;
+    if(avisoClave !== clave){
+      quitarAviso();
+      avisoClave = clave;
+      finAviso = Date.now() + min * 60000;
+    }
+    if(!avisoBar){
+      avisoBar = document.createElement('div');
+      avisoBar.id = 'candadoAviso';
+      avisoBar.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99998;background:linear-gradient(135deg,#f59e0b,#d97706);color:#111;padding:10px 14px;text-align:center;line-height:1.3;box-shadow:0 6px 24px rgba(0,0,0,.35)';
+      document.body.appendChild(avisoBar);
+    }
+    function pintar(){
+      var resta = finAviso - Date.now();
+      if(resta <= 0){
+        if(avisoTimer){ clearInterval(avisoTimer); avisoTimer = null; }
+        if(avisoBar && avisoBar.parentNode){ avisoBar.parentNode.removeChild(avisoBar); }
+        avisoBar = null;
+        crearOverlay();
+        return;
+      }
+      avisoBar.innerHTML = '<div style="font-size:13px;font-weight:700">⚠️ La página se actualizará pronto. Termina tu pedido.</div><div style="font-size:30px;font-weight:900;letter-spacing:2px;font-variant-numeric:tabular-nums">' + fmtTiempo(resta) + '</div>';
+    }
+    pintar();
+    if(!avisoTimer) avisoTimer = setInterval(pintar, 1000);
   }
 
+  function verificar(){
+    var min = minutosAviso();
+    if(String(candado).toLowerCase() === 'cerrado'){ quitarAviso(); crearOverlay(); }
+    else if(min > 0){
+      if(avisoClave === 'aviso' + min && finAviso && Date.now() >= finAviso){ crearOverlay(); }
+      else { quitarOverlay(); mostrarAvisoCandado(min); }
+    }
+    else { quitarAviso(); quitarOverlay(); }
+  }
+  
   // Espera a que el HTML esté cargado
   if(document.readyState === 'complete' || document.readyState === 'interactive'){
     setTimeout(verificar, 0);
