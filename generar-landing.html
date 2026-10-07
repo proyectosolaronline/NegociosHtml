@@ -676,7 +676,7 @@ const ca = n.colorAcento || (pl === 'futurista' ? '#5BB8D4' : '#00D4FF');
   const jlStr = JSON.stringify(jl).replace(/</g, '\\u003c');
 
   let ov = '';
-  if (pl === 'minimalista') ov = 'body{background:#F4F5F7;color:#1E1E1E}.banner{background:' + cp + '!important;background-image:none!important}.contact-item{background:#F9F9FA}.contact-item .cv{color:#1E1E1E}.section h2{color:#1E1E1E}footer{background:#EFEFEF}';
+    if (pl === 'minimalista') ov = 'body{background:#F7F2FA;color:#000}#splash{background:linear-gradient(135deg,#F7C6DD 0%,#FFF6FA 50%,#D8C8F5 100%)}#splash .splash-nombre{color:#000}#splash .splash-slogan{color:#1A1A1A}#splash .splash-loader{border-color:rgba(0,0,0,.12);border-top-color:#000}.splash-logo{border-color:#fff;box-shadow:0 4px 18px rgba(0,0,0,.15)}' + (n.banner ? '' : '.banner{background:linear-gradient(135deg,#F7C6DD,#D8C8F5)}') + '.banner{min-height:200px}.gallery-item,.externo-card,.contact-item{background:#fff;box-shadow:0 1px 8px rgba(0,0,0,.08)}.gallery-titulo,.contact-item .cv,.section h2,.section p,.desc,.direccion,.gallery-desc,.contact-item .cl,.qr-caption{color:#000!important}footer{background:#EFE3F7}footer .footer-nombre,footer .footer-slogan{color:#000!important}';
   else if (pl === 'clasico') ov = 'body{background:#F3ECDD;color:#3B2A1A}.contact-item{background:#FBF3E3}footer{background:#2A1D12}';
 
   const fh = '<footer><p class="footer-nombre" style="color:' + ca + '">⚡ ' + escHTML(nombreLimpio) + '</p><p class="footer-slogan">' + escHTML(n.slogan || 'Gracias por visitarnos') + '</p></footer>';
