@@ -1143,6 +1143,7 @@ ${ov}
 }
 </style></head><body>
 <div id="splash">
+  ${pl === 'futurista' ? '<canvas id="splashStars"></canvas>' : ''}
   ${n.logo ? '<img class="splash-logo" src="' + escHTML(n.logo) + '" alt="Logo ' + escHTML(nombreLimpio) + '">' : ''}
   <h1 class="splash-nombre">${escHTML(nombreLimpio)}</h1>
   ${n.slogan ? '<p class="splash-slogan">' + escHTML(n.slogan) + '</p>' : ''}
