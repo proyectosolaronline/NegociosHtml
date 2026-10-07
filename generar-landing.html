@@ -445,6 +445,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (!datos.logo || !datos.banner) { document.getElementById('builderSubtitle').textContent = '> ❌ Faltan logo y banner.'; return; }
   negocioActual = datos;
+    try { btnsOcultos = JSON.parse(localStorage.getItem('landingBtns_' + nombreCarpeta(datos.nombre)) || '{}') || {}; } catch(e) { btnsOcultos = {}; }
+  try { btnCfg = JSON.parse(localStorage.getItem('landingBtnCfg_' + nombreCarpeta(datos.nombre)) || '{}') || {}; } catch(e) { btnCfg = {}; }
   document.getElementById('previewBadge').textContent = '👁️ ' + nombreVisible(datos.nombre);
   plantillaActual = datos.plantillaLanding || 'futurista';
   iniciarConstruccion(datos);
@@ -665,8 +667,8 @@ const ca = n.colorAcento || (pl === 'futurista' ? '#5BB8D4' : '#00D4FF');
   const videoEmbedUrl = parsearVideo(n.video);
   const videoHTML = videoEmbedUrl ? '<section class="section"><div class="video-card"><iframe src="' + escHTML(videoEmbedUrl) + '" allowfullscreen loading="lazy"></iframe></div></section>' : '';
   const mapaHTML = tm ? '<section class="section"><h2>📍 Encuéntranos</h2><div class="map-card"><iframe loading="lazy" src="https://www.openstreetmap.org/export/embed.html?bbox=' + (parseFloat(n.longitud) - 0.006) + '%2C' + (parseFloat(n.latitud) - 0.006) + '%2C' + (parseFloat(n.longitud) + 0.006) + '%2C' + (parseFloat(n.latitud) + 0.006) + '&layer=mapnik&marker=' + n.latitud + '%2C' + n.longitud + '"></iframe></div><p class="direccion">' + escHTML(n.direccion || n.ubicacion || '') + '</p></section>' : '';
-  const ci = [['📞','Teléfono',n.telefono],['💬','WhatsApp',n.whatsapp],['🕐','Horario',n.horario],['✉️','Correo',n.correo]].filter(x => x[2]);
-  const cb = (wd && !btnsOcultos.wa ? '<a href="https://wa.me/' + wd + '" class="btn-link btn-whatsapp" target="_blank">💬 WhatsApp</a>' : '') +
+    const ci = [['📞','Teléfono',n.telefono,'tel'],['💬','WhatsApp',n.whatsapp,'wan'],['🕐','Horario',n.horario],['✉️','Correo',n.correo]].filter(x => x[2] && !btnsOcultos[x[3]]);
+   const cb = (wd && !btnsOcultos.wa ? '<a href="https://wa.me/' + wd + '" class="btn-link btn-whatsapp" target="_blank">💬 WhatsApp</a>' : '') +
    (td && !btnsOcultos.call ?  '<a href="tel:' + td + '" class="btn-link btn-call">📞 Llamar</a>' : '') +
     (tm && !btnsOcultos.maps ? '<a href="https://www.google.com/maps/dir/?api=1&destination=' + n.latitud + ',' + n.longitud + '" class="btn-link btn-maps" target="_blank">🧭 Cómo llegar</a>' : '') +
   (n.urlFacebook && !btnsOcultos.fb ?
