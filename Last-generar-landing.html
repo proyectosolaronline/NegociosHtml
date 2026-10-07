@@ -789,6 +789,7 @@ ${fh}
 (function(){
   var splash = document.getElementById('splash');
   if(splash){ setTimeout(function(){ splash.classList.add('saliendo'); setTimeout(function(){ splash.style.display='none'; },750); },3000); }
+  
   var lFotos = ${JSON.stringify(ft)};
   function lEsc(x){ return String(x == null ? '' : x).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
   function lFirma(a){ return JSON.stringify((a || []).map(function(f){ return [f.url, (f.descripcion || '').trim()]; })); }
