@@ -223,10 +223,29 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;color:#00FF41;f
   <button class="plantilla-btn" data-plantilla="futurista" onclick="cambiarPlantilla('futurista')">⚡ Futurista</button>
   <button class="plantilla-btn" data-plantilla="minimalista" onclick="cambiarPlantilla('minimalista')">◻️ Minimalista</button>
   <button class="plantilla-btn" data-plantilla="clasico" onclick="cambiarPlantilla('clasico')">🏛️ Clásico</button>
+  <button class="plantilla-btn" onclick="abrirPanelBotones()">🔘 Botones</button>
 </div>
 
 <button class="fab-toggle" id="fabToggle" onclick="toggleBarras()" aria-label="Mostrar u ocultar barras">👁️</button>
-
+<div id="panelBotones" class="panel-botones"><b>Botones de la landing</b>
+  <button type="button" data-k="wa" data-t="WhatsApp" onclick="toggleBoton('wa')"></button>
+  <button type="button" data-k="call" data-t="Llamar" onclick="toggleBoton('call')"></button>
+  <button type="button" data-k="maps" data-t="Cómo llegar" onclick="toggleBoton('maps')"></button>
+  <button type="button" data-k="fb" data-t="Facebook" onclick="toggleBoton('fb')"></button>
+  <button type="button" data-k="tel" data-t="Número de teléfono" onclick="toggleBoton('tel')"></button>
+  <button type="button" data-k="wan" data-t="Número de WhatsApp" onclick="toggleBoton('wan')"></button>
+  <b>🎨 Color del botón</b>
+  <div class="pb-fila" id="pbSel">
+    <button type="button" data-s="wa" onclick="selBtnColor('wa')">WhatsApp</button>
+    <button type="button" data-s="call" onclick="selBtnColor('call')">Llamar</button>
+    <button type="button" data-s="maps" onclick="selBtnColor('maps')">Cómo llegar</button>
+    <button type="button" data-s="fb" onclick="selBtnColor('fb')">Facebook</button>
+  </div>
+  <div class="pb-fila" id="pbPaleta"></div>
+  <label class="pb-lbl">Color propio <input type="color" id="pbColor" onchange="setColorBtn(this.value)"></label>
+  <label class="pb-lbl">Degradado de tono: <span id="pbTonoTxt">30</span>°<input type="range" id="pbTono" min="-90" max="90" step="5" value="30" oninput="document.getElementById('pbTonoTxt').textContent=this.value" onchange="setTonoBtn(this.value)"></label>
+  <button type="button" id="pbReset" onclick="igualarAlPrimero()">↺ Igualar al 1.º botón</button>
+</div>
 <div class="link-modal" id="linkModal">
   <div class="link-modal-inner">
     <h2>✅ PUBLICADO_EN_GITHUB</h2>
@@ -721,8 +740,8 @@ const ca = n.colorAcento || (pl === 'futurista' ? '#5BB8D4' : '#00D4FF');
    const cb = (wd && !btnsOcultos.wa ? '<a href="https://wa.me/' + wd + '" class="btn-link btn-whatsapp" target="_blank">💬 WhatsApp</a>' : '') +
    (td && !btnsOcultos.call ?  '<a href="tel:' + td + '" class="btn-link btn-call">📞 Llamar</a>' : '') +
     (tm && !btnsOcultos.maps ? '<a href="https://www.google.com/maps/dir/?api=1&destination=' + n.latitud + ',' + n.longitud + '" class="btn-link btn-maps" target="_blank">🧭 Cómo llegar</a>' : '') +
-  (n.urlFacebook && !btnsOcultos.fb ?
-  const jl = { "@context":"https://schema.org","@type":"LocalBusiness","name":nombreLimpio,"description":sd,"image":oi,"logo":n.logo||'',"telephone":n.telefono||'',"email":n.correo||'',"url":cu,"address":{"@type":"PostalAddress","streetAddress":n.direccion||'',"addressLocality":n.ubicacion||'',"addressCountry":"MX"},"openingHours":n.horario||'' };
+    (n.urlFacebook && !btnsOcultos.fb ? '<a href="' + escHTML(n.urlFacebook) + '" class="btn-link btn-facebook" target="_blank">📘 Facebook</a>' : '');
+      const jl = { "@context":"https://schema.org","@type":"LocalBusiness","name":nombreLimpio,"description":sd,"image":oi,"logo":n.logo||'',"telephone":n.telefono||'',"email":n.correo||'',"url":cu,"address":{"@type":"PostalAddress","streetAddress":n.direccion||'',"addressLocality":n.ubicacion||'',"addressCountry":"MX"},"openingHours":n.horario||'' };
   if (tm) jl.geo = { "@type":"GeoCoordinates","latitude":n.latitud,"longitude":n.longitud };
   if (n.urlFacebook) jl.sameAs = [n.urlFacebook];
   const jlStr = JSON.stringify(jl).replace(/</g, '\\u003c');
