@@ -284,6 +284,56 @@ const GITHUB_USER = 'proyectosolaronline';
 const GITHUB_PAGES_BASE = 'https://' + GITHUB_USER + '.github.io';
 
 let negocioActual = null;
+let btnsOcultos = {};
+let btnCfg = {}, btnSel = 'wa';
+const BTN_CLS = { wa: '.btn-whatsapp', call: '.btn-call', maps: '.btn-maps', fb: '.btn-facebook' };
+const BTN_DEF = { wa: '#25D366', call: '#7B2FF7', maps: '#4285F4', fb: '#1877F2' };
+const PALETA = ['#D63A8C','#C026D3','#8E4FD8','#6366F1','#3483FA','#0891B2','#16A34A','#D97706','#DC2626','#1F2937'];
+function hexHsl(h){ const r=parseInt(h.substr(1,2),16)/255, g=parseInt(h.substr(3,2),16)/255, b=parseInt(h.substr(5,2),16)/255; const mx=Math.max(r,g,b), mn=Math.min(r,g,b); let H=0, S=0; const Lm=(mx+mn)/2; if(mx!==mn){ const d=mx-mn; S=Lm>0.5?d/(2-mx-mn):d/(mx+mn); H=mx===r?(g-b)/d+(g<b?6:0):mx===g?(b-r)/d+2:(r-g)/d+4; H*=60; } return [H,S,Lm]; }
+function hslHex(H,S,Lm){ const a=S*Math.min(Lm,1-Lm); const f=function(n){ const k=(n+H/30)%12; const v=Lm-a*Math.max(-1,Math.min(k-3,9-k,1)); return Math.round(255*v).toString(16).padStart(2,'0'); }; return '#'+f(0)+f(8)+f(4); }
+function degradadoBtn(c,t){ const x=hexHsl(c); return 'linear-gradient(135deg,'+c+','+hslHex(((x[0]+t)%360+360)%360,x[1],Math.min(x[2]+0.05,0.8))+')'; }
+function cfgEfectiva(k){ return btnCfg[k] || btnCfg.wa || null; }
+function cfgBtn(k){ return cfgEfectiva(k) || { c: BTN_DEF[k], t: 30 }; }
+function cssBotones(){ return Object.keys(BTN_CLS).map(function(k){ const f = cfgEfectiva(k); if(!f) return ''; return BTN_CLS[k]+'{background:'+degradadoBtn(f.c,f.t)+'!important;color:#fff!important}'; }).join(''); }
+function renderPreview(){
+  currentPreviewHTML = construirLandingHTML(negocioActual, plantillaActual);
+  document.getElementById('previewFrame').srcdoc = currentPreviewHTML;
+}
+function aplicarBtnCfg(){
+  try { localStorage.setItem('landingBtnCfg_' + nombreCarpeta(negocioActual.nombre), JSON.stringify(btnCfg)); } catch(e) {}
+  renderPreview();
+  actualizarPanelColor();
+}
+function toggleBoton(k) {
+  btnsOcultos[k] = !btnsOcultos[k];
+  try { localStorage.setItem('landingBtns_' + nombreCarpeta(negocioActual.nombre), JSON.stringify(btnsOcultos)); } catch(e) {}
+  renderPreview();
+  actualizarPanelBotones();
+}
+function actualizarPanelBotones() {
+  document.querySelectorAll('#panelBotones [data-k]').forEach(b => { const on = !btnsOcultos[b.dataset.k]; b.classList.toggle('on', on); b.textContent = (on ? '✅ ' : '🚫 ') + b.dataset.t; });
+}
+function abrirPanelBotones() {
+  if (!negocioActual) { mostrarToast('⚠️ Aún no hay datos'); return; }
+  actualizarPanelBotones();
+  actualizarPanelColor();
+  document.getElementById('panelBotones').classList.toggle('show');
+}
+function selBtnColor(k){ btnSel = k; actualizarPanelColor(); }
+function setColorBtn(c){ const f = cfgBtn(btnSel); btnCfg[btnSel] = { c: c, t: f.t }; aplicarBtnCfg(); }
+function setTonoBtn(t){ const f = cfgBtn(btnSel); btnCfg[btnSel] = { c: f.c, t: parseInt(t, 10) }; aplicarBtnCfg(); }
+function igualarAlPrimero(){ if (btnSel !== 'wa') { delete btnCfg[btnSel]; aplicarBtnCfg(); } }
+function actualizarPanelColor(){
+  const f = cfgBtn(btnSel);
+  document.querySelectorAll('#pbSel [data-s]').forEach(function(b){ b.classList.toggle('sel', b.dataset.s === btnSel); b.classList.toggle('prop', b.dataset.s !== 'wa' && !!btnCfg[b.dataset.s]); });
+  const pal = document.getElementById('pbPaleta');
+  if (!pal.children.length) { PALETA.forEach(function(c){ const b = document.createElement('button'); b.type = 'button'; b.className = 'sw'; b.dataset.c = c; b.style.background = c; b.onclick = function(){ setColorBtn(c); }; pal.appendChild(b); }); }
+  pal.querySelectorAll('.sw').forEach(function(b){ b.classList.toggle('sel', b.dataset.c.toLowerCase() === f.c.toLowerCase()); });
+  document.getElementById('pbColor').value = f.c;
+  document.getElementById('pbTono').value = f.t;
+  document.getElementById('pbTonoTxt').textContent = f.t;
+  document.getElementById('pbReset').style.display = (btnSel === 'wa') ? 'none' : '';
+}
 let currentPreviewHTML = '';
 let currentPreviewNombre = '';
 let currentPreviewSlug = '';
