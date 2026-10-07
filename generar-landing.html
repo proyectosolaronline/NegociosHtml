@@ -150,6 +150,21 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;color:#00FF41;f
   .flying-element{width:48px;height:48px;font-size:22px}
   .hand-cursor{font-size:24px}
 }
+  .panel-botones{position:fixed;left:12px;right:12px;bottom:calc(70px + env(safe-area-inset-bottom));z-index:102;background:rgba(0,0,0,.95);border:1px solid #00FF41;border-radius:6px;padding:12px;display:none;flex-direction:column;gap:8px;max-width:420px;max-height:60vh;overflow-y:auto;margin:0 auto}
+.panel-botones.show{display:flex}
+.panel-botones b{color:#00FF41;font-size:12px;text-align:center}
+.panel-botones button{background:rgba(0,0,0,.85);border:1px solid #00FF41;color:#00FF41;padding:11px;border-radius:4px;font-size:13px;font-weight:700;cursor:pointer;min-height:44px}
+.panel-botones button[data-k]:not(.on){border-color:#FF0040;color:#FF0040}
+.pb-fila{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}
+.panel-botones .pb-fila button{flex:1;min-width:70px;min-height:38px;padding:6px;font-size:11px;border-color:#00FF41;color:#00FF41}
+.panel-botones .pb-fila button.sel{background:#00FF41;color:#000}
+.panel-botones .pb-fila button.sw{flex:0 0 34px;min-width:34px;width:34px;height:34px;min-height:34px;padding:0;border:2px solid transparent;border-radius:50%}
+.panel-botones .pb-fila button.sw.sel{border-color:#fff;box-shadow:0 0 0 2px #00FF41}
+.panel-botones .pb-fila button.prop::after{content:" ●"}
+#pbReset{min-height:38px!important;font-size:12px!important}
+.pb-lbl{color:#00FF41;font-size:12px;display:flex;flex-direction:column;gap:6px}
+.pb-lbl input[type=color]{width:100%;height:38px;border:1px solid #00FF41;background:#000;padding:2px}
+.pb-lbl input[type=range]{width:100%}
 </style>
 </head>
 <body>
