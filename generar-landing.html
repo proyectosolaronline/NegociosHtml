@@ -651,7 +651,7 @@ const ca = n.colorAcento || (pl === 'futurista' ? '#5BB8D4' : '#00D4FF');
   const cu = GITHUB_PAGES_BASE + '/' + encodeURIComponent(carp) + '/';
   const galeriaHTML = ft.length ? '<section class="gallery" id="lGaleria">' + ft.map((f, i) => {
   const dT = (f.descripcion || '').trim();
-    const nC = Math.ceil(dT.length * 0.05);
+    const nC = Math.ceil(dT.length * 0.20);
     const hayMas = nC < dT.length;
     const dC = hayMas ? dT.replace(/\s+/g, ' ').substring(0, nC).trim() + '…' : dT.replace(/\s+/g, ' ');
     return '<div class="gallery-item"><img src="' + escHTML(f.url) + '" alt="' + escHTML(dT.substring(0, 60) || '📸 Foto') + '" loading="lazy" onclick="lOpenLightbox(' + i + ')"><div class="gallery-info">' + (dT ? '<p class="gallery-desc"><span>' + escHTML(dC) + '</span>' + (hayMas ? ' <button class="vermas-btn" onclick="lVerMas(' + i + ')">Ver más</button>' : '') + '</p>' : '') + '</div></div>';
@@ -846,7 +846,7 @@ if(cvS && splash){
 window.lOpenLightbox = function(i){ var f = lFotos[i]; if(!f) return; document.getElementById('lLightboxImg').src = f.url; var s = lCorte(i); var cap = document.getElementById('lLightboxCap'); cap.textContent = (s.prev || '📸') + ' '; if(s.hayMas){ var m = document.createElement('button'); m.className = 'vermas-btn'; m.textContent = 'Ver más'; m.onclick = function(e){ e.stopPropagation(); lVerMas(i); }; cap.appendChild(m); } document.getElementById('lLightbox').classList.add('active'); };
   window.lCloseLightbox = function(){ document.getElementById('lLightbox').classList.remove('active'); };
   window.lToggleDescFoto = function(i){ var r = document.getElementById('lDescResto' + i); if(r) r.style.display = r.style.display === 'none' ? 'inline' : 'none'; };
-    function lCorte(i){ var t = ((lFotos[i] || {}).descripcion || '').trim(); var n = Math.ceil(t.length * 0.05); var flat = t.split(String.fromCharCode(13)).join('').split(String.fromCharCode(10)).join(' '); var hayMas = n < t.length; return { full: t, hayMas: hayMas, prev: hayMas ? flat.substring(0, n).trim() + '…' : flat }; }
+    function lCorte(i){ var t = ((lFotos[i] || {}).descripcion || '').trim(); var n = Math.ceil(t.length * 0.20); var flat = t.split(String.fromCharCode(13)).join('').split(String.fromCharCode(10)).join(' '); var hayMas = n < t.length; return { full: t, hayMas: hayMas, prev: hayMas ? flat.substring(0, n).trim() + '…' : flat }; }
   window.lVerMas = function(i){ var o = document.createElement('div'); o.style.cssText = 'position:fixed;inset:0;z-index:6000;background:rgba(0,0,0,.8);display:flex;align-items:center;justify-content:center;padding:16px'; var b = document.createElement('div'); b.style.cssText = 'max-width:480px;width:100%;max-height:80vh;overflow:auto;background:#1a1a1a;color:#ddd;border-radius:16px;padding:20px;font-size:14px;line-height:1.6;white-space:pre-line'; b.textContent = lCorte(i).full; var c = document.createElement('button'); c.textContent = 'Cerrar'; c.style.cssText = 'display:block;width:100%;margin-top:16px;padding:12px;border:0;border-radius:10px;background:${ca};color:#111;font-weight:700;font-size:15px;cursor:pointer'; c.onclick = function(){ o.remove(); }; o.onclick = function(e){ if(e.target === o) o.remove(); }; b.appendChild(c); o.appendChild(b); document.body.appendChild(o); };
   document.getElementById('lLightbox').addEventListener('click', function(e){ if(e.target === this) lCloseLightbox(); });
   var u = window.location.href; var q = document.getElementById('lQrImg');
