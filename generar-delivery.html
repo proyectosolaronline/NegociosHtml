@@ -809,9 +809,9 @@ function construirLandingPEDIDOS(n, plantillaOverride) {
   const td = String(n.telefono || '').replace(/\D/g, '');
   const ft = (n.fotos || []).filter(f => f && f.url);
   const tm = n.latitud && n.longitud;
-  const cp = n.colorPrimario || '#7B2FF7';
-  const cs = n.colorSecundario || '#FF00E5';
-  const ca = n.colorAcento || '#00D4FF';
+    const cp = n.colorPrimario || (pl === 'futurista' ? '#6B4FA0' : '#7B2FF7');
+  const cs = n.colorSecundario || (pl === 'futurista' ? '#A0689A' : '#FF00E5');
+  const ca = n.colorAcento || (pl === 'futurista' ? '#5BB8D4' : '#00D4FF');
   const fn = n.fuenteLanding || "'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif";
   const nombreLimpio = nombreVisible(n.nombre);
   const dp = (n.descripcion || '').split('&');
@@ -846,9 +846,10 @@ function construirLandingPEDIDOS(n, plantillaOverride) {
   const jlStr = JSON.stringify(jl).replace(/</g, '\\u003c');
 
   let ov = '';
-  if (pl === 'minimalista') ov = 'body{background:#F4F5F7;color:#1E1E1E}.pantalla .banner{background:' + cp + '!important;background-image:none!important}.mas-contact-item{background:#F9F9FA}.mas-contact-item .cv{color:#1E1E1E}.mas-title h3{color:#1E1E1E}.mas-footer .mf-slogan{color:#777}.total-card{background:#fff;border-color:#E2E2E6}.tc-label{color:#333}.tc-items{color:#777}';
-  else if (pl === 'clasico') ov = 'body{background:#F3ECDD;color:#3B2A1A}.mas-contact-item{background:#FBF3E3}.mas-footer .mf-slogan{color:#7A6650}.total-card{background:#FBF3E3;border-color:#D9C7A3}.tc-label{color:#3B2A1A}.tc-items{color:#7A6650}';
-
+    const ha = (c, a) => /^#[0-9a-f]{6}$/i.test(c) ? c + a : c;
+  if (pl === 'futurista') ov = '#splash{background:#05050C}#splash::before{background:radial-gradient(circle at 30% 25%,' + cp + ',transparent 55%),radial-gradient(circle at 75% 75%,' + cs + ',transparent 50%);opacity:.28;animation:nebulosa 18s ease-in-out infinite alternate}@keyframes nebulosa{from{transform:scale(1) translate(0,0)}to{transform:scale(1.15) translate(-2%,2%)}}#splashStars{position:absolute;inset:0;width:100%;height:100%}#splash>*:not(#splashStars){position:relative;z-index:1}.splash-logo{border:3px solid rgba(255,255,255,.55);box-shadow:0 0 36px ' + cp + ',0 0 90px rgba(255,255,255,.12)}.pantalla{background:radial-gradient(900px 500px at 100% -10%,' + ha(cp,'24') + ',transparent 60%),radial-gradient(700px 400px at -10% 110%,' + ha(cs,'1A') + ',transparent 60%),var(--bg)}.pantalla .sec-titulo::before{box-shadow:0 0 12px ' + ha(cp,'99') + '}';
+  else if (pl === 'minimalista') ov = ':root{--brand:#D63A8C;--brand-2:#8E4FD8;--accent:#8E4FD8}.pantalla,.mas-panel{--bg:#F7F2FA;--bg-2:#fff;--surface:#fff;--surface-2:#F4EAF8;--border:rgba(0,0,0,.08);--border-strong:rgba(0,0,0,.16);--text:#000;--text-dim:#1A1A1A;--text-mute:#555;--shadow-1:0 1px 8px rgba(0,0,0,.08)}body{background:#F7F2FA;color:#000}.pantalla{background:#F7F2FA}.mas-panel{background:#F7F2FA;border-top-color:rgba(0,0,0,.1);box-shadow:0 -12px 40px rgba(0,0,0,.18)}.mas-handle::after{background:rgba(0,0,0,.2)}#splash{background:linear-gradient(135deg,#F7C6DD 0%,#FFF6FA 50%,#D8C8F5 100%)}#splash::before{display:none}.splash-nombre{color:#000}.splash-slogan{color:#1A1A1A}.splash-loader{border-color:rgba(0,0,0,.12);border-top-color:#000}.splash-logo{border-color:#fff;box-shadow:0 4px 18px rgba(0,0,0,.15)}' + (n.banner ? '' : '.pantalla .banner{background-image:linear-gradient(135deg,#F7C6DD,#D8C8F5)}') + '.pantalla .total-card{background:#fff;border:1px solid rgba(0,0,0,.08);box-shadow:0 1px 8px rgba(0,0,0,.08)}.tc-label{color:#000}.tc-items{color:#555}.prod-ph{background:#fff;border-color:rgba(0,0,0,.15)}.prod-ph img{background:#fff}.prod-badge,.cf-badge{color:#fff}.mas-contact-item{background:#fff;box-shadow:0 1px 8px rgba(0,0,0,.08)}.mas-footer{border-top-color:rgba(0,0,0,.1)}.mas-footer .mf-nombre{color:#000}.mas-footer .mf-slogan{color:#1A1A1A}.mas-qr img{border-color:#8E4FD8}';
+  else if (pl === 'clasico') ov = ':root{--brand:#3483FA;--brand-2:#3483FA;--accent:#3483FA}.pantalla,.mas-panel{--bg:#EBEBEB;--bg-2:#fff;--surface:#fff;--surface-2:#F5F5F5;--border:#DDD;--border-strong:#CCC;--text:#333;--text-dim:#666;--text-mute:#777;--shadow-1:0 1px 2px rgba(0,0,0,.13)}body{background:#EBEBEB;color:#333}.pantalla{background:#EBEBEB}.mas-panel{background:#EBEBEB;border-top-color:#DDD;box-shadow:0 -12px 40px rgba(0,0,0,.18)}.mas-handle::after{background:rgba(0,0,0,.2)}#splash{background:#FFE600}#splash::before{display:none}.splash-nombre{color:#2D3277}.splash-slogan{color:#333}.splash-loader{border-color:rgba(45,50,119,.2);border-top-color:#2D3277}.splash-logo{border-color:#fff;box-shadow:0 2px 10px rgba(0,0,0,.2)}.pantalla .banner{background-color:#FFE600}' + (n.banner ? '' : '.pantalla .banner{background-image:linear-gradient(135deg,#FFE600,#FFF159)}') + '.prod,.pantalla .total-card{background:#fff;border:1px solid #DDD;border-radius:6px;box-shadow:0 1px 2px rgba(0,0,0,.13)}.prod-ph{border:1px dashed #CCC}.prod-ph img{background:#fff}.prod-badge,.cf-badge{color:#fff}.tc-label{color:#333}.tc-items{color:#666}.mas-contact-item{background:#fff;border:1px solid #DDD;border-left:4px solid #3483FA;border-radius:6px;box-shadow:0 1px 2px rgba(0,0,0,.13)}.mas-qr img{border-color:#FFE600}.popup-msg,.promo-final a{background:#2D3277}.mas-footer{border-top-color:#DDD}.mas-footer .mf-nombre{color:#2D3277}.mas-footer .mf-slogan{color:#666}';
   // const datosNegocioJS = JSON.stringify({ nombre: nombreLimpio, id: n.id || '', whatsapp: wd, productos: productos }).replace(/</g, '\\x3C');
   //const datosNegocioJS = JSON.stringify({ nombre: nombreLimpio, id: n.id || '', whatsapp: wd, productos: productos, latitud: n.latitud || '', longitud: n.longitud || '' }).replace(/</g, '\\x3c');
 
@@ -1275,6 +1276,37 @@ ${tm ? ('<div class="ubi-modal" id="mapaNegocioModal" onclick="if(event.target==
   </div>
 <div class="legal-modal" id="legalModal"><div class="legal-box"><h3>⚖️ Aviso legal</h3><p>El contenido de esta página (textos, imágenes, videos y datos) es proporcionado por <strong>${escHTML(nombreLimpio)}</strong> bajo su exclusiva responsabilidad. Los productos y servicios aquí ofrecidos son lícitos y están permitidos por la legislación aplicable. Esta página no promueve ni permite la venta de productos o servicios ilegales, prohibidos o que requieran autorización que no se tenga.</p><p>Precios, disponibilidad, promociones, tiempos de entrega y características pueden cambiar sin previo aviso. Las marcas e imágenes mencionadas pertenecen a sus respectivos dueños. Si detectas contenido inapropiado o que infrinja derechos, escríbenos a <a href="mailto:prototipowebapp@gmail.com?subject=Reporte%20de%20contenido">prototipowebapp@gmail.com</a>.</p><button type="button" onclick="legalCerrar()">Entendido</button></div></div>
 <script>
+(function(){
+  var splash = document.getElementById('splash'), cvS = document.getElementById('splashStars');
+  if(!splash || !cvS) return;
+  var cx = cvS.getContext('2d'), sw, sh, estrellas = [], rafS = null;
+  var reducir = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function iniciarEstrellas(){
+    sw = cvS.width = splash.clientWidth; sh = cvS.height = splash.clientHeight;
+    estrellas = [];
+    var total = Math.min(160, Math.floor(sw * sh / 6000));
+    for(var i = 0; i < total; i++){
+      var capa = Math.random();
+      estrellas.push({ x: Math.random() * sw, y: Math.random() * sh, r: capa * 1.3 + 0.3, v: capa * 0.8 + 0.15, t: Math.random() * 6.28 });
+    }
+  }
+  function dibujarEstrellas(){
+    cx.clearRect(0, 0, sw, sh);
+    for(var i = 0; i < estrellas.length; i++){
+      var e = estrellas[i];
+      e.y += e.v; e.t += 0.03;
+      if(e.y > sh){ e.y = 0; e.x = Math.random() * sw; }
+      cx.globalAlpha = 0.35 + 0.65 * Math.abs(Math.sin(e.t));
+      cx.fillStyle = '#FFFFFF';
+      cx.beginPath(); cx.arc(e.x, e.y, e.r, 0, 6.2832); cx.fill();
+    }
+    cx.globalAlpha = 1;
+    if(!reducir) rafS = requestAnimationFrame(dibujarEstrellas);
+  }
+  iniciarEstrellas(); dibujarEstrellas();
+  window.addEventListener('resize', iniciarEstrellas);
+  setTimeout(function(){ if(rafS) cancelAnimationFrame(rafS); }, 3900);
+})();
 var NEGOCIO = ${datosNegocioJS};
 (function(){
   var legalIco = document.getElementById('legalIco'), legalModal = document.getElementById('legalModal');
