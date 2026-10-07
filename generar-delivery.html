@@ -1003,7 +1003,15 @@ body{font-family:${fn};font-feature-settings:'cv02','cv03','cv04','cv11','ss01';
 .promo-final strong{color:var(--text)}
 .promo-final a{display:inline-block;padding:11px 22px;border-radius:12px;background:linear-gradient(135deg,var(--brand),var(--brand-2));color:#fff;font-weight:700;font-size:13px;text-decoration:none;letter-spacing:-0.01em;box-shadow:0 6px 18px rgba(123,47,247,.35), inset 0 1px 0 rgba(255,255,255,.25);transition:transform .15s var(--ease)}
 .promo-final a:active{transform:scale(.97)}
-
+.legal-ico{position:absolute;top:10px;right:10px;z-index:3;width:30px;height:30px;padding:0;border-radius:50%;border:1px solid rgba(255,255,255,.35);background:rgba(0,0,0,.35);color:#fff;font-size:14px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;opacity:0;transform:scale(.8);pointer-events:none;transition:opacity .5s,transform .5s;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
+.legal-ico.visible{opacity:.8;transform:scale(1);pointer-events:auto}
+.legal-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:6500;align-items:center;justify-content:center;padding:20px}
+.legal-modal.active{display:flex}
+.legal-box{max-width:420px;width:100%;max-height:80dvh;overflow:auto;background:#16181f;color:#ddd;border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:20px;font-size:12px;line-height:1.6;text-align:left}
+.legal-box h3{font-size:14px;margin-bottom:10px;color:#fff}
+.legal-box p{margin-bottom:8px}
+.legal-box a{color:var(--brand-2);font-weight:700}
+.legal-box button{display:block;width:100%;margin-top:12px;padding:11px;border:0;border-radius:10px;background:linear-gradient(135deg,var(--brand),var(--brand-2));color:#fff;font-weight:700;font-size:14px;cursor:pointer}
 .modal-pedido-overlay{display:none;position:fixed;inset:0;background:rgba(6,6,10,.78);backdrop-filter:blur(16px) saturate(140%);-webkit-backdrop-filter:blur(16px) saturate(140%);z-index:6000;align-items:center;justify-content:center;padding:12px;overflow:hidden;animation:fadeIn .25s var(--ease)}
 .modal-pedido-overlay.activo{display:flex}
 .modal-pedido-overlay.cerrando{animation:fadeOut .2s var(--ease) forwards}
@@ -1140,7 +1148,9 @@ ${ov}
   <div class="splash-loader"></div>
 </div>
 <main class="pantalla">
-<div class="banner"><span class="banner-edad">🔞 Usuarios mayores de 18 años</span></div>
+
+<div class="banner"><span class="banner-edad">🔞 Usuarios mayores de 18 años</span><button type="button" class="legal-ico" id="legalIco" onclick="event.stopPropagation();legalAbrir()" aria-label="Aviso legal">⚖️</button></div>
+
 <p class="desc" id="lDesc"${dl ? '' : ' style="display:none"'}>${dl ? escHTML(dl.replace(/\//g, ' ')) : ''}</p>
 <h2 class="sec-titulo">Toca un producto para pedir</h2>
 <button type="button" class="historial-btn" onclick="abrirHistorial()">🕓 Ver mis pedidos anteriores</button>
@@ -1263,8 +1273,24 @@ ${tm ? ('<div class="ubi-modal" id="mapaNegocioModal" onclick="if(event.target==
     </div>
   </div>
   </div>
+<div class="legal-modal" id="legalModal"><div class="legal-box"><h3>⚖️ Aviso legal</h3><p>El contenido de esta página (textos, imágenes, videos y datos) es proporcionado por <strong>${escHTML(nombreLimpio)}</strong> bajo su exclusiva responsabilidad. Los productos y servicios aquí ofrecidos son lícitos y están permitidos por la legislación aplicable. Esta página no promueve ni permite la venta de productos o servicios ilegales, prohibidos o que requieran autorización que no se tenga.</p><p>Precios, disponibilidad, promociones, tiempos de entrega y características pueden cambiar sin previo aviso. Las marcas e imágenes mencionadas pertenecen a sus respectivos dueños. Si detectas contenido inapropiado o que infrinja derechos, escríbenos a <a href="mailto:prototipowebapp@gmail.com?subject=Reporte%20de%20contenido">prototipowebapp@gmail.com</a>.</p><button type="button" onclick="legalCerrar()">Entendido</button></div></div>
 <script>
 var NEGOCIO = ${datosNegocioJS};
+(function(){
+  var legalIco = document.getElementById('legalIco'), legalModal = document.getElementById('legalModal');
+  if(!legalIco || !legalModal) return;
+  var legalAbierto = false, legalT = null;
+  var legalMostrar = function(){
+    if(legalAbierto) return;
+    legalIco.classList.add('visible');
+    clearTimeout(legalT);
+    legalT = setTimeout(function(){ if(!legalAbierto) legalIco.classList.remove('visible'); }, 4000);
+  };
+  window.legalAbrir = function(){ legalAbierto = true; legalModal.classList.add('active'); legalIco.classList.remove('visible'); };
+  window.legalCerrar = function(){ legalAbierto = false; legalModal.classList.remove('active'); };
+  legalModal.addEventListener('click', function(e){ if(e.target === legalModal) window.legalCerrar(); });
+  setTimeout(function(){ legalMostrar(); setInterval(legalMostrar, 10000); }, 4500);
+})();
 (function(){
   var splash = document.getElementById('splash');
   if(splash){ setTimeout(function(){ splash.classList.add('saliendo'); setTimeout(function(){ splash.style.display='none'; },750); },3000); }
