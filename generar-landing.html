@@ -850,6 +850,16 @@ footer .footer-slogan{color:#888;font-size:12px}
 .promo-final{background:#050709;text-align:center;padding:22px 16px;border-top:1px solid rgba(255,255,255,0.08)}
 .promo-final p{color:#888;font-size:12px;line-height:1.6;max-width:420px;margin:0 auto 12px}
 .promo-final a{display:inline-block;padding:11px 22px;border-radius:10px;background:linear-gradient(135deg,${cp},${cs});color:#fff;font-weight:700;font-size:13px;text-decoration:none}
+.banner{position:relative}
+.legal-ico{position:absolute;top:10px;right:10px;width:30px;height:30px;padding:0;border-radius:50%;border:1px solid rgba(255,255,255,.35);background:rgba(0,0,0,.35);color:#fff;font-size:14px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;opacity:0;transform:scale(.8);pointer-events:none;transition:opacity .5s,transform .5s;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
+.legal-ico.visible{opacity:.8;transform:scale(1);pointer-events:auto}
+.legal-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:6000;align-items:center;justify-content:center;padding:20px}
+.legal-modal.active{display:flex}
+.legal-box{max-width:420px;width:100%;max-height:80vh;overflow:auto;background:#1a1a1a;color:#ddd;border-radius:14px;padding:20px;font-size:12px;line-height:1.6;text-align:left}
+.legal-box h3{font-size:14px;margin-bottom:10px;color:#fff}
+.legal-box p{margin-bottom:8px}
+.legal-box a{color:${ca};font-weight:700}
+.legal-box button{display:block;width:100%;margin-top:12px;padding:11px;border:0;border-radius:10px;background:${ca};color:#111;font-weight:700;font-size:14px;cursor:pointer}
 .lightbox{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.95);z-index:5000;align-items:center;justify-content:center;flex-direction:column;padding:20px}
 .lightbox.active{display:flex}
 .lightbox img{max-width:100%;max-height:75vh;border-radius:12px;border:3px solid ${ca}}
@@ -865,7 +875,7 @@ ${ov}
   ${n.slogan ? '<p class="splash-slogan">' + escHTML(n.slogan) + '</p>' : ''}
   <div class="splash-loader"></div>
 </div>
-<div class="banner"></div>
+<div class="banner"><button type="button" class="legal-ico" id="legalIco" onclick="legalAbrir()" aria-label="Aviso legal">⚖️</button></div>
 ${dl ? '<p class="desc">' + escHTML(dl) + '</p>' : ''}
 ${n.mision ? '<section class="section"><h2>🎯 Nuestra Misión</h2><p style="color:#AAA">' + escHTML(n.mision) + '</p></section>' : ''}
 ${galeriaHTML}
@@ -878,6 +888,7 @@ ${mapaHTML}
 ${fh}
 <section class="promo-final"><p>🌐 ¿Quieres una página como esta totalmente <strong>gratis</strong>? Solo pagas la administración de contenido.</p><a href="mailto:prototipowebapp@gmail.com?subject=Quiero%20mi%20p%C3%A1gina%20web%20gratis">📧 Escríbenos a prototipowebapp@gmail.com</a></section>
 <div class="lightbox" id="lLightbox"><img id="lLightboxImg" src="" alt=""><p class="lightbox-cap" id="lLightboxCap"></p><button class="lightbox-back" onclick="lCloseLightbox()">← Volver</button></div>
+<div class="legal-modal" id="legalModal"><div class="legal-box"><h3>⚖️ Aviso legal</h3><p>El contenido de esta página (textos, imágenes, videos y datos) es proporcionado por <strong>${escHTML(nombreLimpio)}</strong> bajo su exclusiva responsabilidad. Los productos y servicios aquí ofrecidos son lícitos y están permitidos por la legislación aplicable. Esta página no promueve ni permite la venta de productos o servicios ilegales, prohibidos o que requieran autorización que no se tenga.</p><p>Precios, disponibilidad, promociones y características pueden cambiar sin previo aviso. Las marcas e imágenes mencionadas pertenecen a sus respectivos dueños. Si detectas contenido inapropiado o que infrinja derechos, escríbenos a <a href="mailto:prototipowebapp@gmail.com?subject=Reporte%20de%20contenido">prototipowebapp@gmail.com</a>.</p><button type="button" onclick="legalCerrar()">Entendido</button></div></div>
 <script>
 (function(){
   var splash = document.getElementById('splash');
@@ -912,6 +923,20 @@ if(cvS && splash){
   window.addEventListener('resize', iniciarEstrellas);
   setTimeout(function(){ if(rafS) cancelAnimationFrame(rafS); }, 3900);
 }
+  var legalIco = document.getElementById('legalIco'), legalModal = document.getElementById('legalModal');
+  if(legalIco && legalModal){
+    var legalAbierto = false, legalT = null;
+    var legalMostrar = function(){
+      if(legalAbierto) return;
+      legalIco.classList.add('visible');
+      clearTimeout(legalT);
+      legalT = setTimeout(function(){ if(!legalAbierto) legalIco.classList.remove('visible'); }, 4000);
+    };
+    window.legalAbrir = function(){ legalAbierto = true; legalModal.classList.add('active'); legalIco.classList.remove('visible'); };
+    window.legalCerrar = function(){ legalAbierto = false; legalModal.classList.remove('active'); };
+    legalModal.addEventListener('click', function(e){ if(e.target === legalModal) window.legalCerrar(); });
+    setTimeout(function(){ legalMostrar(); setInterval(legalMostrar, 10000); }, 4500);
+  }
   var lFotos = ${JSON.stringify(ft)};
   function lEsc(x){ return String(x == null ? '' : x).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
   function lFirma(a){ return JSON.stringify((a || []).map(function(f){ return [f.url, (f.descripcion || '').trim()]; })); }
