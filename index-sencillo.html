@@ -1779,6 +1779,7 @@ async function guardarNegocio(event) {
     btnGuardar.textContent = '💾 Guardar Negocio';
     return;
   }
+  showToast('🔒 Candado enviado: ' + datos.candado, 'success');
   showLoading();
   try {
     const action = editId ? 'editarNegocio' : 'agregarNegocio';
