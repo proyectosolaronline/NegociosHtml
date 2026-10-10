@@ -2103,6 +2103,7 @@ var kmPedido = 2 * 6371 * Math.asin(Math.sqrt(hh));
         msgSMS = quitarAcentosSMS('ENVIO CON COSTO (~' + kmPedido.toFixed(1) + ' km), A ACORDAR CON EL DUENO\\n') + msgSMS;
        }
       }
+            }
         }catch(e){}
   cerrarModalPedido();
   setTimeout(function(){
@@ -2570,8 +2571,7 @@ var CONSTRUCCION = {
 (function sincronizarSheet(){
   if(!ID_NEGOCIO || !API_CANDADO) return;
   var L_PH = ${JSON.stringify(phSVG)};
-      if (ES_TAXI) { primera = false; return; }
-  function lParse(desc, i, url){
+       function lParse(desc, i, url){
     var raw = desc || '', nombre, precioRaw = '', precioNum = 0, vars;
     if(raw.indexOf('/') === -1){
       var partes = raw.split('&');
