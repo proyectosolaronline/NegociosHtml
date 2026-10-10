@@ -315,7 +315,7 @@ let currentPreviewSlug = '';
 let plantillaActual = 'futurista';
 let barrasVisibles = true;
 let urlPublicada = '';
-  
+  let taxiConfig = null;
 let zonaConfig = {
   A: { maxKm: 1 },
   B: { minKm: 1, maxKm: 3, compraMinima: 150 },
@@ -597,6 +597,20 @@ function pedirZonas() {
       cerrar(z);
     };
   });
+  }
+  // ===== FUNCIÓN TAXI (dentro de delivery): generador =====
+function parsearDestinosTaxi(desc){
+  return String(desc||'').split(/\n|;/).map(l => {
+    const m = l.trim().match(/^(.+?)\s*\/\s*taxi\s*&\s*\$?\s*(\d+(?:[.,]\d+)?)/i);
+    return m ? { destino:m[1].trim(), tarifa:parseFloat(m[2].replace(',','.')) } : null;
+  }).filter(Boolean).slice(0,6);
+}
+function pedirDatosTaxi(){
+  const num = t => parseFloat(String(t||'').replace(',','.'));
+  const tk = num(prompt('Tarifa por km (recogida fuera de zona):','20'));
+  const kz = num(prompt('Km de zona sin costo:','1'));
+  if (!(tk >= 0) || !(kz >= 0)) return false;
+  return { tarifaKm:tk, kmZona:kz };
 }
   document.getElementById('btnPublicar').onclick = async () => {
   if (!currentPreviewHTML || !negocioActual) return;
@@ -604,12 +618,17 @@ function pedirZonas() {
   // 1) Preguntar zonas antes de publicar
    //const nuevasZonas = await abrirModalZonas();
  
-    const nuevasZonas = await pedirZonas();
-    if (nuevasZonas === null) {
-    mostrarToast('ℹ️ Publicación cancelada (zonas sin cambios)');
-    return;
-  }
-  zonaConfig = nuevasZonas;
+        taxiConfig = null;
+    if (parsearDestinosTaxi(negocioActual.descripcion).length) {
+      const dTaxi = pedirDatosTaxi();
+      if (!dTaxi) { mostrarToast('ℹ️ Publicación cancelada (datos taxi)'); return; }
+      taxiConfig = dTaxi;
+    } else {
+      const nuevasZonas = await pedirZonas();
+      if (nuevasZonas === null) { mostrarToast('ℹ️ Publicación cancelada (zonas sin cambios)'); return; }
+      zonaConfig = nuevasZonas;
+    }
+    
 
   // 2) Regenerar el HTML con las zonas nuevas
   currentPreviewHTML = construirLandingHTML(negocioActual, plantillaActual);
@@ -816,7 +835,7 @@ function construirLandingPEDIDOS(n, plantillaOverride) {
   const nombreLimpio = nombreVisible(n.nombre);
   const dp = (n.descripcion || '').split('&');
   const dc = dp[0].trim() || '';
-  const dl = dp[1] ? dp[1].trim() : dc;
+    const dl = parsearDestinosTaxi(n.descripcion).length ? parsearDestinosTaxi(n.descripcion).map(d => d.destino + ' $' + d.tarifa).join(' · ') : (dp[1] ? dp[1].trim() : dc);
   const st = ((nombreLimpio || 'Negocio') + (n.slogan ? ' - ' + n.slogan : '')).substring(0, 65);
   const sd = (dl || dc || (nombreLimpio || 'Negocio') + ' en ' + (n.direccion || n.ubicacion || 'México')).replace(/\s+/g, ' ').substring(0, 158);
   const carp = nombreCarpeta(n.nombre);
@@ -1682,8 +1701,9 @@ window.cerrarProducto = function(){
 window.pedidoSumar = function(i){
   var p = NEGOCIO.productos[i]; if(!p) return;
   var key = claveCarrito(i, varianteDe(i));
-  carrito[key] = (carrito[key] || 0) + 1;
-  refrescarCantPopup(i);
+    if(ES_TAXI){ for(var q in carrito) delete carrito[q]; carrito[key] = 1; }
+  else { carrito[key] = (carrito[key] || 0) + 1; }
+    refrescarCantPopup(i);
   actualizarTodosBadges();
   actualizarBotonUnico();
 };
@@ -2055,6 +2075,15 @@ window.confirmarPedido = function(){
       var hh = Math.sin(dLa/2)*Math.sin(dLa/2) + Math.cos(rad(latN))*Math.cos(rad(latPedido))*Math.sin(dLo/2)*Math.sin(dLo/2);
       
 var kmPedido = 2 * 6371 * Math.asin(Math.sqrt(hh));
+       if(ES_TAXI){
+        var zt = tarifaRecogida(kmPedido, TARIFA_KM, KM_ZONA);
+        if(zt.extra > 0){
+          var totalTaxi = total + zt.extra;
+          resumen = resumen + '\\n\\n🚕 Recogida a ~' + kmPedido.toFixed(1) + ' km (fuera de zona): +$' + zt.extra + '\\n💰 TOTAL CON RECOGIDA: $' + totalTaxi;
+          msg = msg + '\\n🚕 RECOGIDA EXTRA (~' + kmPedido.toFixed(1) + ' km): +$' + zt.extra + '\\n💰 TOTAL CON RECOGIDA: $' + totalTaxi;
+          msgSMS = msgSMS + quitarAcentosSMS('\\nRECOGIDA EXTRA: +$' + zt.extra + '\\nTOTAL CON RECOGIDA: $' + totalTaxi);
+        }
+      } else {
    //   if(kmPedido >= ZONA_KM.A.maxKm && ZONA_KM.B.compraMinima > 0 && total < ZONA_KM.B.compraMinima){
     //    var nombreZonaMin = kmPedido >= ZONA_KM.B.maxKm ? 'fuera de cobertura' : ZONA_KM.B.nombre;
     //    mostrarAviso('🛒 Compra mínima ' + nombreZonaMin + ': $' + ZONA_KM.B.compraMinima + '. Te faltan $' + (ZONA_KM.B.compraMinima - total) + ' para poder enviar tu pedido. Agrega más productos.');
@@ -2240,7 +2269,35 @@ var ZONA_KM = {
   C: { nombre: 'Zona C (>${zonaConfig.C.minKm} km)',                      maxKm: Infinity,                     fuera: true, compraMinima: 0 }
 };
 var MSG_FUERA_COBERTURA = '🚫 Estás fuera de nuestra zona de cobertura (>${zonaConfig.C.minKm} km).\\n\\nPuedes seguir viendo el catálogo, pero por ahora no podemos tomar pedidos a esa distancia.';
-
+// ===== FUNCIÓN TAXI (dentro de delivery): landing =====
+var TARIFA_KM = ${taxiConfig ? taxiConfig.tarifaKm : 'null'};
+var KM_ZONA = ${taxiConfig ? taxiConfig.kmZona : 'null'};
+var ES_TAXI = TARIFA_KM !== null && KM_ZONA !== null;
+function tarifaRecogida(km, tarifaKm, kmZona){
+  return km <= kmZona ? { zona:'cobertura', extra:0 } : { zona:'fuera', extra:Math.round((km - kmZona) * tarifaKm) };
+}
+(function pantallaTaxi(){
+  if(!ES_TAXI) return;
+  var kIntro = 'taxiIntro_' + (NEGOCIO.id || NEGOCIO.nombre || 'negocio');
+  try{ if(sessionStorage.getItem(kIntro)) return; }catch(e){}
+  setTimeout(function(){
+    var kmEj = Number((KM_ZONA + 2).toFixed(1));
+    var txt = '🚕 Así se cobra tu viaje\\n\\n' +
+      '1️⃣ Elige tu destino: cada uno tiene tarifa fija.\\n' +
+      '2️⃣ Activa tu ubicación: si el taxi está a ' + KM_ZONA + ' km o menos de ti, no pagas recogida.\\n' +
+      '3️⃣ Si está más lejos, se suma $' + TARIFA_KM + ' por cada km extra. Ejemplo: a ' + kmEj + ' km pagas $' + Math.round(2 * TARIFA_KM) + ' extra.\\n' +
+      '4️⃣ Revisas el total y envías tu solicitud por WhatsApp.';
+    mostrarAviso(txt, { textoOk: '✅ Entendido' });
+    try{ sessionStorage.setItem(kIntro, '1'); }catch(e){}
+  }, 4000);
+})();
+(function listaTaxi(){
+  if(!ES_TAXI) return;
+  var st = document.createElement('style');
+  st.textContent = '.pantalla .catalogo{grid-template-columns:1fr!important;grid-template-rows:none!important;grid-auto-rows:96px}.prod-ph{display:none!important}';
+  document.head.appendChild(st);
+  var t = document.querySelector('.sec-titulo'); if(t) t.textContent = 'Elige tu destino';
+})();
 (function monitorZonasKm() {
   var INTERVALO_MS = 1500;
   var antNeg = { lat: null, lng: null };
@@ -2513,6 +2570,7 @@ var CONSTRUCCION = {
 (function sincronizarSheet(){
   if(!ID_NEGOCIO || !API_CANDADO) return;
   var L_PH = ${JSON.stringify(phSVG)};
+      if (ES_TAXI) { primera = false; return; }
   function lParse(desc, i, url){
     var raw = desc || '', nombre, precioRaw = '', precioNum = 0, vars;
     if(raw.indexOf('/') === -1){
@@ -2535,8 +2593,8 @@ var CONSTRUCCION = {
   }
   function lFirma(p){ return JSON.stringify((p || []).map(function(x){ return [x.nombre, x.variantes, x.precioTexto, x.url]; })); }
   function lAplicarDesc(n){
-    if(n.descripcion === undefined) return;
-    var el = document.getElementById('lDesc'); if(!el) return;
+    if(n.descripcion === undefined || ES_TAXI) return;
+       var el = document.getElementById('lDesc'); if(!el) return;
     var partes = String(n.descripcion || '').split('&');
     var dc = partes[0].trim() || '';
     var dl = partes[1] ? partes[1].trim() : dc;
