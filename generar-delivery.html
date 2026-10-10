@@ -2371,6 +2371,7 @@ function tarifaRecogida(km, tarifaKm, kmZona){
     if (neg.lat == null || cli.lat == null) { primera = false; return; }
 
     var km = distanciaKm(neg, cli);
+       if (ES_TAXI) { primera = false; return; }
     var zona = zonaPorKm(km);
 
     // Cambio de zona
