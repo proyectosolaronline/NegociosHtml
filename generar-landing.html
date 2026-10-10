@@ -558,8 +558,8 @@ async function iniciarConstruccion(n) {
   });
   const videoEmbed = parsearVideo(n.video);
   if (videoEmbed) elementos.push({ icono: '🎬', label: 'video', target: 'bVideo',
-    aplicar: () => { const v = document.getElementById('bVideo'); v.innerHTML = '<iframe src="' + videoEmbed + '" allowfullscreen     aplicar: () => { const v = document.getElementById('bVideo'); v.innerHTML = '<iframe src="' + videoEmbed + '" allow="autoplay; fullscreen" allowfullscreen style="position:absolute;inset:0;width:100%;height:100%;border:0;"></iframe>'; v.classList.add('show'); return v; }, style="position:absolute;inset:0;width:100%;height:100%;border:0;"></iframe>'; v.classList.add('show'); return v; },
-    msg: 'Insertando video...' });
+ aplicar: () => { const v = document.getElementById('bVideo'); v.innerHTML = '<iframe src="' + videoEmbed + '" allow="autoplay; fullscreen" allowfullscreen style="position:absolute;inset:0;width:100%;height:100%;border:0;"></iframe>'; v.classList.add('show'); return v; },
+  msg: 'Insertando video...' });
   const ext = parsearUrlExterna(n.Urlexterna || n.urlexterna);
   if (ext) elementos.push({ icono: '🔗', label: 'externo', target: 'bExterno',
     aplicar: () => { const cont = document.getElementById('bExterno'); document.getElementById('bExtName').textContent = '🔗 ' + ext.nombre; const btnEl = document.getElementById('bExtBtn'); btnEl.textContent = '🌐 Visitar ' + ext.nombre; btnEl.setAttribute('href', ext.url); cont.classList.add('show'); return cont; },
