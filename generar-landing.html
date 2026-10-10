@@ -427,8 +427,8 @@ function parsearUrlExterna(raw) {
 function parsearVideo(raw) {
   const link = (raw || '').trim();
   if (!link) return null;
-  if (link.includes('/d/')) { const fid = link.match(/\/d\/([a-zA-Z0-9_-]+)/); if (fid) return 'https://drive.google.com/file/d/' + fid[1] + '/preview'; }
-  if (link.includes('youtube.com') || link.includes('youtu.be')) { const m = link.match(/(?:v=|youtu\.be\/|\/shorts\/|\/embed\/)([a-zA-Z0-9_-]{11})/); if (m && m[1]) return 'https://www.youtube.com/embed/' + m[1] + '?rel=0'; }
+    if (link.includes('/d/') || link.includes('drive.google.com')) { const fid = link.match(/\/d\/([a-zA-Z0-9_-]+)/) || link.match(/[?&]id=([a-zA-Z0-9_-]+)/); if (fid) return 'https://drive.google.com/file/d/' + fid[1] + '/preview'; }
+    if (link.includes('youtube.com') || link.includes('youtu.be')) { const m = link.match(/(?:v=|youtu\.be\/|\/shorts\/|\/embed\/)([a-zA-Z0-9_-]{11})/); if (m && m[1]) return 'https://www.youtube.com/embed/' + m[1] + '?rel=0'; }
   return link;
 }
 function nombreCarpeta(nombre) {
@@ -558,7 +558,7 @@ async function iniciarConstruccion(n) {
   });
   const videoEmbed = parsearVideo(n.video);
   if (videoEmbed) elementos.push({ icono: '🎬', label: 'video', target: 'bVideo',
-    aplicar: () => { const v = document.getElementById('bVideo'); v.innerHTML = '<iframe src="' + videoEmbed + '" allowfullscreen loading="lazy" style="position:absolute;inset:0;width:100%;height:100%;border:0;"></iframe>'; v.classList.add('show'); return v; },
+    aplicar: () => { const v = document.getElementById('bVideo'); v.innerHTML = '<iframe src="' + videoEmbed + '" allowfullscreen     aplicar: () => { const v = document.getElementById('bVideo'); v.innerHTML = '<iframe src="' + videoEmbed + '" allow="autoplay; fullscreen" allowfullscreen style="position:absolute;inset:0;width:100%;height:100%;border:0;"></iframe>'; v.classList.add('show'); return v; }, style="position:absolute;inset:0;width:100%;height:100%;border:0;"></iframe>'; v.classList.add('show'); return v; },
     msg: 'Insertando video...' });
   const ext = parsearUrlExterna(n.Urlexterna || n.urlexterna);
   if (ext) elementos.push({ icono: '🔗', label: 'externo', target: 'bExterno',
@@ -749,7 +749,7 @@ const ca = n.colorAcento || (pl === 'futurista' ? '#5BB8D4' : '#00D4FF');
   if (ext) urlExternaHTML = '<section class="section"><div class="externo-card"><a href="' + escHTML(ext.url) + '" target="_blank" rel="noopener" class="externo-btn" style="background:linear-gradient(135deg,' + cp + ',' + cs + ')">Visitar ' + escHTML(ext.nombre) + '</a></div></section>';
   
   const videoEmbedUrl = parsearVideo(n.video);
-  const videoHTML = videoEmbedUrl ? '<section class="section"><div class="video-card"><iframe src="' + escHTML(videoEmbedUrl) + '" allowfullscreen loading="lazy"></iframe></div></section>' : '';
+  const videoHTML = videoEmbedUrl ? '<section class="section"><div class="video-card"><iframe src="' + escHTML(videoEmbedUrl) + '" allow="autoplay; fullscreen" allowfullscreen></iframe></div></section>' : '';
   const mapaHTML = tm ? '<section class="section"><h2>📍 Encuéntranos</h2><div class="map-card"><iframe loading="lazy" src="https://www.openstreetmap.org/export/embed.html?bbox=' + (parseFloat(n.longitud) - 0.006) + '%2C' + (parseFloat(n.latitud) - 0.006) + '%2C' + (parseFloat(n.longitud) + 0.006) + '%2C' + (parseFloat(n.latitud) + 0.006) + '&layer=mapnik&marker=' + n.latitud + '%2C' + n.longitud + '"></iframe></div><p class="direccion">' + escHTML(n.direccion || n.ubicacion || '') + '</p></section>' : '';
     const ci = [['📞','Teléfono',n.telefono,'tel'],['💬','WhatsApp',n.whatsapp,'wan'],['🕐','Horario',n.horario],['✉️','Correo',n.correo]].filter(x => x[2] && !btnsOcultos[x[3]]);
    const cb = (wd && !btnsOcultos.wa ? '<a href="https://wa.me/' + wd + '" class="btn-link btn-whatsapp" target="_blank">💬 WhatsApp</a>' : '') +
