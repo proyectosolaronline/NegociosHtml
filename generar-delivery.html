@@ -2282,6 +2282,7 @@ var MSG_FUERA_COBERTURA = '🚫 Estás fuera de nuestra zona de cobertura (>${zo
 var TARIFA_KM = ${taxiConfig ? taxiConfig.tarifaKm : 'null'};
 var KM_ZONA = ${taxiConfig ? taxiConfig.kmZona : 'null'};
 var ES_TAXI = TARIFA_KM !== null && KM_ZONA !== null;
+var HAY_TAXI_DESC = ${svTaxi.length > 0};
 function tarifaRecogida(km, tarifaKm, kmZona){
   return km <= kmZona ? { zona:'cobertura', extra:0 } : { zona:'fuera', extra:Math.round((km - kmZona) * tarifaKm) };
 }
@@ -2613,8 +2614,8 @@ var CONSTRUCCION = {
     el.style.display = txt ? '' : 'none';
   }
   function lAplicarCatalogo(fotos){
-      if(ES_TAXI) return;
-    var ft = (fotos || []).filter(function(f){ return f && f.url; });
+            if(ES_TAXI || HAY_TAXI_DESC) return;
+  var ft = (fotos || []).filter(function(f){ return f && f.url; });
     var nuevos = ft.map(function(f, i){ return lParse(f.descripcion, i, f.url); });
     if(lFirma(nuevos) === lFirma(NEGOCIO.productos)) return;
     var modal = document.getElementById('modalProducto');
