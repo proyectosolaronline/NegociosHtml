@@ -2605,6 +2605,7 @@ var CONSTRUCCION = {
     el.style.display = txt ? '' : 'none';
   }
   function lAplicarCatalogo(fotos){
+      if(ES_TAXI) return;
     var ft = (fotos || []).filter(function(f){ return f && f.url; });
     var nuevos = ft.map(function(f, i){ return lParse(f.descripcion, i, f.url); });
     if(lFirma(nuevos) === lFirma(NEGOCIO.productos)) return;
