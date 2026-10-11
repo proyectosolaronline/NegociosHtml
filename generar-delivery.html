@@ -599,11 +599,17 @@ function pedirZonas() {
   });
   }
   // ===== FUNCIÓN TAXI (dentro de delivery): generador =====
-function parsearDestinosTaxi(desc){
-  return String(desc||'').split(/\n|;/).map(l => {
-    const m = l.trim().match(/^(.+?)\s*\/\s*taxi\s*&\s*\$?\s*(\d+(?:[.,]\d+)?)/i);
-    return m ? { destino:m[1].trim(), tarifa:parseFloat(m[2].replace(',','.')) } : null;
-  }).filter(Boolean).slice(0,6);
+
+  function parsearDestinosTaxi(desc){
+  var out = [];
+  String(desc||'').split(/\n|;/).forEach(function(l){
+    var m = l.trim().match(/^(.+?)\s*\/\s*taxi\s*&\s*\$?\s*(\d+(?:[.,]\d+)?)/i);
+    if (!m) return;
+    var tarifa = parseFloat(m[2].replace(',','.'));
+    var lugares = m[1].split(/[-–—]/).map(function(s){ return s.trim().replace(/^./, function(c){ return c.toUpperCase(); }); }).filter(Boolean);
+    for (var k = 0; k < lugares.length - 1; k++) out.push({ destino: lugares[k] + ' → ' + lugares[k + 1], tarifa: tarifa });
+  });
+  return out.slice(0, 8);
 }
 function pedirDatosTaxi(){
   const num = t => parseFloat(String(t||'').replace(',','.'));
@@ -842,8 +848,10 @@ function construirLandingPEDIDOS(n, plantillaOverride) {
   const oi = n.banner || n.logo || '';
   const cu = GITHUB_PAGES_BASE + '/' + encodeURIComponent(carp) + '/';
 
-  const productos = ft.map((f, i) => parseFotoProducto(f.descripcion, i, f.url));
-
+    let productos = ft.map((f, i) => parseFotoProducto(f.descripcion, i, f.url));
+  const svTaxi = parsearDestinosTaxi(n.descripcion);
+  if (svTaxi.length) productos = svTaxi.map((d, i) => ({ indice: i, nombre: d.destino, variantes: [d.destino], precioTexto: '$' + d.tarifa, precio: d.tarifa, url: '' }));
+  
   const phSVG = 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 240"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1A2033"/><stop offset="1" stop-color="#0E1220"/></linearGradient></defs><rect width="300" height="240" fill="url(#g)"/><rect x="10" y="10" width="280" height="220" rx="18" fill="none" stroke="' + cp + '" stroke-width="3" stroke-dasharray="10 8"/><text x="150" y="105" font-size="48" text-anchor="middle">📦</text><text x="150" y="148" font-size="21" font-weight="700" text-anchor="middle" fill="#E0E0E0" font-family="Arial,sans-serif">ESPACIO RESERVADO</text><text x="150" y="175" font-size="17" text-anchor="middle" fill="' + ca + '" font-family="Arial,sans-serif">a nuevos productos</text></svg>');
   const relleno = productos.length < 4 ? 4 - productos.length : (productos.length % 2 ? 1 : 0);
   const placeholdersHTML = Array.from({ length: relleno }).map(() => '<div class="prod prod-ph"><img src="' + phSVG + '" alt="Espacio reservado a nuevos productos" loading="lazy"></div>').join('');
@@ -2295,7 +2303,7 @@ function tarifaRecogida(km, tarifaKm, kmZona){
 (function listaTaxi(){
   if(!ES_TAXI) return;
   var st = document.createElement('style');
-  st.textContent = '.pantalla .catalogo{grid-template-columns:1fr!important;grid-template-rows:none!important;grid-auto-rows:96px}.prod-ph{display:none!important}';
+  st.textContent = '.pantalla .catalogo{grid-template-columns:1fr!important;grid-template-rows:none!important;grid-auto-rows:96px}.prod-ph{display:none!important}.prod img{display:none!important}';
   document.head.appendChild(st);
   var t = document.querySelector('.sec-titulo'); if(t) t.textContent = 'Elige tu destino';
 })();
