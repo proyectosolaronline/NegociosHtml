@@ -850,6 +850,7 @@ function construirLandingPEDIDOS(n, plantillaOverride) {
 
     let productos = ft.map((f, i) => parseFotoProducto(f.descripcion, i, f.url));
   const svTaxi = parsearDestinosTaxi(n.descripcion);
+    alert('Rutas: ' + svTaxi.length + '\nDescripción: ' + n.descripcion);
   if (svTaxi.length) productos = svTaxi.map((d, i) => ({ indice: i, nombre: d.destino, variantes: [d.destino], precioTexto: '$' + d.tarifa, precio: d.tarifa, url: '' }));
   
   const phSVG = 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 240"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1A2033"/><stop offset="1" stop-color="#0E1220"/></linearGradient></defs><rect width="300" height="240" fill="url(#g)"/><rect x="10" y="10" width="280" height="220" rx="18" fill="none" stroke="' + cp + '" stroke-width="3" stroke-dasharray="10 8"/><text x="150" y="105" font-size="48" text-anchor="middle">📦</text><text x="150" y="148" font-size="21" font-weight="700" text-anchor="middle" fill="#E0E0E0" font-family="Arial,sans-serif">ESPACIO RESERVADO</text><text x="150" y="175" font-size="17" text-anchor="middle" fill="' + ca + '" font-family="Arial,sans-serif">a nuevos productos</text></svg>');
