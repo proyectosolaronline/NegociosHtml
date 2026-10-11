@@ -1431,11 +1431,8 @@ function compartirEdicionCliente(negocio) {
         <label><input type="checkbox" value="logo"> Logo y banner</label>
         <label><input type="checkbox" value="video"> Video</label>
       </div>
-      <button type="button" id="btnGenerarLinkCliente" style="width:100%;padding:12px;background:#7B2FF7;color:white;border:none;border-radius:10px;font-weight:600;font-size:14px;margin-bottom:8px;">Generar enlace</button>
-          const campos = Array.from(document.querySelectorAll('#camposCliente input:checked')).map(c => c.value);
-    if (!campos.length) { showToast('⚠️ Elige al menos un campo', 'error'); return; }
-    const link = `${window.location.origin}${window.location.pathname}?editarCliente=${encodeURIComponent(negocio.id)}&exp=${exp}&campos=${campos.join(',')}`;
-          </div>`;
+            <button type="button" id="btnCancelarLinkCliente" style="width:100%;padding:12px;background:#2A2A4A;color:#E0E0E0;border:none;border-radius:10px;font-weight:600;font-size:14px;">Cancelar</button>
+      </div>`;
   document.body.appendChild(overlay);
   overlay.onclick = (e) => { if (e.target === overlay) document.body.removeChild(overlay); };
   overlay.querySelector('#btnCancelarLinkCliente').onclick = () => document.body.removeChild(overlay);
@@ -1447,8 +1444,10 @@ function compartirEdicionCliente(negocio) {
     else if (unidad === 'horas') ms = cantidad * 3600000;
     else ms = cantidad * 24 * 3600000;
     const exp = Date.now() + ms;
-    const link = `${window.location.origin}${window.location.pathname}?editarCliente=${encodeURIComponent(negocio.id)}&exp=${exp}`;
-    document.body.removeChild(overlay);
+        const campos = Array.from(document.querySelectorAll('#camposCliente input:checked')).map(c => c.value);
+    if (!campos.length) { showToast('⚠️ Elige al menos un campo', 'error'); return; }
+    const link = `${window.location.origin}${window.location.pathname}?editarCliente=${encodeURIComponent(negocio.id)}&exp=${exp}&campos=${campos.join(',')}`;
+        document.body.removeChild(overlay);
     mostrarLinkGenerado(link, negocio.nombre, cantidad, unidad);
   };
 }
@@ -1797,8 +1796,8 @@ async function guardarNegocio(event) {
     return;
   }
   if (ubicacionPrevia) { showToast('⚠️ Confirma o regresa la ubicación del mapa', 'error'); return; }
-  if (!ubicacionSeleccionada) { showToast('⚠️ Selecciona ubicación', 'error'); return; }
-  const editId = document.getElementById('editId').value;
+    if (!ubicacionSeleccionada && !(window.camposCliente && !window.camposCliente.includes('ubicacion'))) { showToast('⚠️ Selecciona ubicación', 'error'); return; }
+    const editId = document.getElementById('editId').value;
   const btnGuardar = document.getElementById('btnGuardar');
   btnGuardar.disabled = true;
   btnGuardar.textContent = '⏳ Guardando...';
