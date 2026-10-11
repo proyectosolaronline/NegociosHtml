@@ -753,10 +753,12 @@ const ca = n.colorAcento || (pl === 'futurista' ? '#5BB8D4' : '#00D4FF');
   const videoHTML = videoEmbedUrl ? '<section class="section"><div class="video-card"><iframe src="' + escHTML(videoEmbedUrl) + '" allow="autoplay; fullscreen" allowfullscreen></iframe></div></section>' : '';
   const mapaHTML = tm ? '<section class="section"><h2>📍 Encuéntranos</h2><div class="map-card"><iframe loading="lazy" src="https://www.openstreetmap.org/export/embed.html?bbox=' + (parseFloat(n.longitud) - 0.006) + '%2C' + (parseFloat(n.latitud) - 0.006) + '%2C' + (parseFloat(n.longitud) + 0.006) + '%2C' + (parseFloat(n.latitud) + 0.006) + '&layer=mapnik&marker=' + n.latitud + '%2C' + n.longitud + '"></iframe></div><p class="direccion">' + escHTML(n.direccion || n.ubicacion || '') + '</p></section>' : '';
     const ci = [['📞','Teléfono',n.telefono,'tel'],['💬','WhatsApp',n.whatsapp,'wan'],['🕐','Horario',n.horario],['✉️','Correo',n.correo]].filter(x => x[2] && !btnsOcultos[x[3]]);
-   const cb = (wd && !btnsOcultos.wa ? '<a href="https://wa.me/' + wd + '" class="btn-link btn-whatsapp" target="_blank">💬 WhatsApp</a>' : '') +
+       const correoOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(n.correo || '').trim());
+  const cb = (wd && !btnsOcultos.wa ? '<a href="https://wa.me/' + wd + '" class="btn-link btn-whatsapp" target="_blank">💬 WhatsApp</a>' : '') +
    (td && !btnsOcultos.call ?  '<a href="tel:' + td + '" class="btn-link btn-call">📞 Llamar</a>' : '') +
     (tm && !btnsOcultos.maps ? '<a href="https://www.google.com/maps/dir/?api=1&destination=' + n.latitud + ',' + n.longitud + '" class="btn-link btn-maps" target="_blank">🧭 Cómo llegar</a>' : '') +
-    (n.urlFacebook && !btnsOcultos.fb ? '<a href="' + escHTML(n.urlFacebook) + '" class="btn-link btn-facebook" target="_blank">📘 Facebook</a>' : '');
+    (n.urlFacebook && !btnsOcultos.fb ? '<a href="' + escHTML(n.urlFacebook) + '" class="btn-link btn-facebook" target="_blank">📘 Facebook</a>' : '') +
+      (correoOk && !btnsOcultos.mail ? '<button type="button" class="btn-link btn-correo" onclick="correoContacto()">✉️ Escribir por correo</button>' : '');
       const jl = { "@context":"https://schema.org","@type":"LocalBusiness","name":nombreLimpio,"description":sd,"image":oi,"logo":n.logo||'',"telephone":n.telefono||'',"email":n.correo||'',"url":cu,"address":{"@type":"PostalAddress","streetAddress":n.direccion||'',"addressLocality":n.ubicacion||'',"addressCountry":"MX"},"openingHours":n.horario||'' };
   if (tm) jl.geo = { "@type":"GeoCoordinates","latitude":n.latitud,"longitude":n.longitud };
   if (n.urlFacebook) jl.sameAs = [n.urlFacebook];
@@ -837,6 +839,7 @@ body{font-family:${fn};color:#E0E0E0;background:#0A0E17;line-height:1.6;padding:
 .btn-call{background:${cp};color:#fff}
 .btn-maps{background:#4285F4;color:#fff}
 .btn-facebook{background:#1877F2;color:#fff}
+.btn-correo{background:#475569;color:#fff;border:0;cursor:pointer;font-family:inherit}
 .qr-section{padding:30px 16px 24px;text-align:center}
 .qr-img{width:160px;height:160px;border-radius:12px;border:4px solid ${ca};padding:8px;cursor:pointer;background:#fff}
 .qr-caption{font-size:13px;color:#888;margin-top:12px}
@@ -964,6 +967,55 @@ window.lOpenLightbox = function(i){ var f = lFotos[i]; if(!f) return; document.g
   var u = window.location.href; var q = document.getElementById('lQrImg');
   if(q) q.src = 'https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=' + encodeURIComponent(u);
   window.compartirQR = function(){ window.open('https://wa.me/?text=' + encodeURIComponent('${escJS(nombreLimpio)}: ' + u), '_blank'); };
+    // ===== CORREO (opción alternativa): producto o motivo + teléfono antes de abrir el correo =====
+  var CORREO_CONTACTO = ${JSON.stringify(correoOk ? String(n.correo).trim() : '')};
+  window.correoContacto = function(){
+    if(!CORREO_CONTACTO) return;
+    function esc(x){ return String(x).split('&').join('&amp;').split('<').join('&lt;').split('>').join('&gt;').split('"').join('&quot;'); }
+    var prods = [];
+    for(var i = 0; i < lFotos.length; i++){
+      var nm = lCorte(i).nombre;
+      if(nm && prods.indexOf(nm) === -1) prods.push(nm);
+    }
+    var tipo = prods.length ? 'p' : 'o';
+    var campo = 'width:100%;box-sizing:border-box;padding:12px;border-radius:8px;border:1px solid #555;background:#111;color:#fff;font-size:16px';
+    var btnT = 'flex:1;padding:10px;border:0;border-radius:10px;font-weight:700;cursor:pointer;color:#fff';
+    var ov = document.createElement('div');
+    ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:6500;display:flex;align-items:center;justify-content:center;padding:20px';
+    ov.innerHTML = '<div style="max-width:380px;width:100%;max-height:90vh;overflow:auto;background:#1a1a1a;color:#ddd;border-radius:14px;padding:20px;font-size:14px;line-height:1.5">' +
+      '<h3 style="font-size:16px;color:#fff;margin-bottom:10px">✉️ Escribir por correo</h3>' +
+      (prods.length ? '<div style="display:flex;gap:8px;margin-bottom:12px"><button type="button" id="correoTipoP" style="' + btnT + '">🛍️ Un producto</button><button type="button" id="correoTipoO" style="' + btnT + '">💬 Otro motivo</button></div>' : '') +
+      '<div id="correoBoxP"><p style="margin-bottom:6px">¿Qué producto te interesa?</p><select id="correoProd" style="' + campo + '">' + prods.map(function(p){ return '<option>' + esc(p) + '</option>'; }).join('') + '</select></div>' +
+      '<div id="correoBoxO"><p style="margin-bottom:6px">¿Cuál es el motivo de tu contacto?</p><input id="correoMotivo" type="text" maxlength="120" placeholder="Ej. Cotización, horarios, una duda" style="' + campo + '"></div>' +
+      '<p style="margin:10px 0 6px">Déjanos un teléfono donde podamos contactarte:</p>' +
+      '<input id="correoTel" type="tel" inputmode="tel" placeholder="Ej. 442 123 4567" style="' + campo + '">' +
+      '<div style="display:flex;gap:10px;margin-top:14px"><button type="button" id="correoNo" style="flex:1;padding:12px;border:0;border-radius:10px;background:#333;color:#ccc;font-weight:700;cursor:pointer">Cancelar</button><button type="button" id="correoOk" style="flex:1;padding:12px;border:0;border-radius:10px;background:#25D366;color:#fff;font-weight:700;cursor:pointer">✅ Continuar</button></div></div>';
+    document.body.appendChild(ov);
+    var mot = ov.querySelector('#correoMotivo'), inp = ov.querySelector('#correoTel'), sel = ov.querySelector('#correoProd');
+    function pintar(){
+      ov.querySelector('#correoBoxP').style.display = tipo === 'p' ? '' : 'none';
+      ov.querySelector('#correoBoxO').style.display = tipo === 'o' ? '' : 'none';
+      var bp = ov.querySelector('#correoTipoP'), bo = ov.querySelector('#correoTipoO');
+      if(bp) bp.style.background = tipo === 'p' ? '#25D366' : '#333';
+      if(bo) bo.style.background = tipo === 'o' ? '#25D366' : '#333';
+    }
+    var bpEl = ov.querySelector('#correoTipoP'), boEl = ov.querySelector('#correoTipoO');
+    if(bpEl) bpEl.onclick = function(){ tipo = 'p'; pintar(); };
+    if(boEl) boEl.onclick = function(){ tipo = 'o'; pintar(); if(mot) mot.focus(); };
+    pintar();
+    function cerrar(){ if(ov.parentNode) ov.parentNode.removeChild(ov); }
+    ov.addEventListener('click', function(e){ if(e.target === ov) cerrar(); });
+    ov.querySelector('#correoNo').onclick = cerrar;
+    ov.querySelector('#correoOk').onclick = function(){
+      var valor = tipo === 'p' ? (sel ? sel.value : '') : (mot ? mot.value.trim() : '');
+      var tel = inp ? inp.value.trim() : '';
+      if(!valor){ if(tipo === 'o' && mot){ mot.style.borderColor = '#e33'; mot.focus(); } return; }
+      if(!tel){ if(inp){ inp.style.borderColor = '#e33'; inp.focus(); } return; }
+      cerrar();
+      var cuerpo = (tipo === 'p' ? '🛍️ Producto: ' : '📌 Motivo: ') + valor + '\\n📞 Teléfono de contacto: ' + tel;
+      window.location.href = 'mailto:' + CORREO_CONTACTO + '?subject=' + encodeURIComponent('Contacto - ${escJS(nombreLimpio)}') + '&body=' + encodeURIComponent(cuerpo);
+    };
+  };
   var msgRaw = '${escJS(n.mensajeEmergente || '')}';
   if(msgRaw){
     var partes = msgRaw.split('&');
