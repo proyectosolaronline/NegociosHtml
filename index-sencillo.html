@@ -1479,14 +1479,13 @@ function mostrarLinkGenerado(link, nombre, cantidad, unidad) {
     window.open(`https://wa.me/?text=${encodeURIComponent(texto)}`, '_blank');
   };
 }
-
 // ============================================================
 // MODO CLIENTE
 // ============================================================
 function verificarModoClienteEdicion() {
   const params = new URLSearchParams(window.location.search);
   const idCliente = params.get('editarCliente');
-      abrirModalEdicionCliente(negocio, exp, params.get('campos'));
+  if (!idCliente) return false;
   const exp = parseInt(params.get('exp'), 10);
   document.body.classList.add('modo-cliente-edicion');
   document.querySelector('.header').style.display = 'none';
@@ -1501,13 +1500,41 @@ function verificarModoClienteEdicion() {
     negocios = result.negocios || [];
     const negocio = negocios.find(n => n.id === idCliente);
     if (!negocio) { mostrarPantallaExpirada(); return; }
-    abrirModalEdicionCliente(negocio, exp);
+    abrirModalEdicionCliente(negocio, exp, params.get('campos'));
   }).catch(() => { hideLoading(); mostrarPantallaExpirada(); });
   return true;
 }
 
-function abrirModalEdicionCliente(negocio, exp) {
+function aplicarCamposCliente(sel) {
+  const PERMITIDOS = {
+    descripcion: ['descripcion'], slogan: ['slogan'], mision: ['mision'],
+    mensaje: ['mensajeEmergente'], horario: ['horario'],
+    contacto: ['telefono', 'whatsapp', 'correo', 'urlFacebook']
+  };
+  const ids = [];
+  sel.forEach(k => (PERMITIDOS[k] || []).forEach(i => ids.push(i)));
+  document.querySelectorAll('#formNegocio .form-section').forEach(sec => {
+    const h = ((sec.querySelector('h3') || {}).textContent || '');
+    let ver = false;
+    if (sec.querySelector('#fotosGrid')) ver = sel.includes('fotos');
+    else if (h.includes('Video')) ver = sel.includes('video');
+    else if (h.includes('Logo')) ver = sel.includes('logo');
+    else if (h.includes('Ubicación')) ver = sel.includes('ubicacion');
+    else if (h.includes('Datos Básicos') || h.includes('Contacto')) {
+      sec.querySelectorAll('.form-group').forEach(g => {
+        const campo = g.querySelector('input,textarea,select');
+        const ok = campo && ids.includes(campo.id);
+        g.style.display = ok ? '' : 'none';
+        if (ok) ver = true;
+      });
+    }
+    sec.style.display = ver ? '' : 'none';
+  });
+}
+
+function abrirModalEdicionCliente(negocio, exp, campos) {
   abrirModalEditar(negocio.id);
+  if (campos) { window.camposCliente = campos.split(','); aplicarCamposCliente(window.camposCliente); }
   document.getElementById('modalTitle').textContent = '✏️ Editar negocio';
   document.getElementById('btnGuardar').textContent = '💾 Guardar cambios';
   const capsula = document.querySelector('#modalOverlay .modal > div');
@@ -1536,7 +1563,6 @@ function abrirModalEdicionCliente(negocio, exp) {
     }
   }
 }
-
 function actualizarBannerTiempoCliente() {
   const banner = document.getElementById('clienteEdicionBanner');
   if (!banner) return;
