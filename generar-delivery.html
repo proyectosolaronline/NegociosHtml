@@ -2602,7 +2602,7 @@ var CONSTRUCCION = {
   }
   function lFirma(p){ return JSON.stringify((p || []).map(function(x){ return [x.nombre, x.variantes, x.precioTexto, x.url]; })); }
   function lAplicarDesc(n){
-    if(n.descripcion === undefined || ES_TAXI) return;
+    if(n.descripcion === undefined || ES_TAXI || HAY_TAXI_DESC) return;
        var el = document.getElementById('lDesc'); if(!el) return;
     var partes = String(n.descripcion || '').split('&');
     var dc = partes[0].trim() || '';
