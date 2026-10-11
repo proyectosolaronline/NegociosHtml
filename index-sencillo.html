@@ -1418,9 +1418,24 @@ function compartirEdicionCliente(negocio) {
           <option value="dias">Días</option>
         </select>
       </div>
+           <label style="font-size:13px;font-weight:600;color:#AAA;display:block;margin-bottom:6px;">Campos que podrá editar</label>
+      <div id="camposCliente" style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:16px;font-size:13px;color:#E0E0E0;">
+        <label><input type="checkbox" value="descripcion" checked> Descripción</label>
+        <label><input type="checkbox" value="fotos" checked> Fotos</label>
+        <label><input type="checkbox" value="slogan"> Slogan</label>
+        <label><input type="checkbox" value="mision"> Misión</label>
+        <label><input type="checkbox" value="mensaje"> Mensaje emergente</label>
+        <label><input type="checkbox" value="horario"> Horario</label>
+        <label><input type="checkbox" value="contacto"> Contacto</label>
+        <label><input type="checkbox" value="ubicacion"> Ubicación</label>
+        <label><input type="checkbox" value="logo"> Logo y banner</label>
+        <label><input type="checkbox" value="video"> Video</label>
+      </div>
       <button type="button" id="btnGenerarLinkCliente" style="width:100%;padding:12px;background:#7B2FF7;color:white;border:none;border-radius:10px;font-weight:600;font-size:14px;margin-bottom:8px;">Generar enlace</button>
-      <button type="button" id="btnCancelarLinkCliente" style="width:100%;padding:12px;background:#2A2A4A;color:#E0E0E0;border:none;border-radius:10px;font-weight:600;font-size:14px;">Cancelar</button>
-    </div>`;
+          const campos = Array.from(document.querySelectorAll('#camposCliente input:checked')).map(c => c.value);
+    if (!campos.length) { showToast('⚠️ Elige al menos un campo', 'error'); return; }
+    const link = `${window.location.origin}${window.location.pathname}?editarCliente=${encodeURIComponent(negocio.id)}&exp=${exp}&campos=${campos.join(',')}`;
+          </div>`;
   document.body.appendChild(overlay);
   overlay.onclick = (e) => { if (e.target === overlay) document.body.removeChild(overlay); };
   overlay.querySelector('#btnCancelarLinkCliente').onclick = () => document.body.removeChild(overlay);
@@ -1471,7 +1486,7 @@ function mostrarLinkGenerado(link, nombre, cantidad, unidad) {
 function verificarModoClienteEdicion() {
   const params = new URLSearchParams(window.location.search);
   const idCliente = params.get('editarCliente');
-  if (!idCliente) return false;
+      abrirModalEdicionCliente(negocio, exp, params.get('campos'));
   const exp = parseInt(params.get('exp'), 10);
   document.body.classList.add('modo-cliente-edicion');
   document.querySelector('.header').style.display = 'none';
