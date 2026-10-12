@@ -625,7 +625,7 @@ function pedirDatosTaxi(){
    //const nuevasZonas = await abrirModalZonas();
  
         taxiConfig = null;
-    if (parsearDestinosTaxi(negocioActual.descripcion).length) {
+ if ((negocioActual.fotos || []).some(f => f && f.url && parsearDestinosTaxi(f.descripcion).length)) {
       const dTaxi = pedirDatosTaxi();
       if (!dTaxi) { mostrarToast('ℹ️ Publicación cancelada (datos taxi)'); return; }
       taxiConfig = dTaxi;
