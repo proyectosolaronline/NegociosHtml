@@ -1390,8 +1390,17 @@ function cargarImagenPreview(input, campoId, previewId) {
       const canvas = document.createElement('canvas');
       canvas.width = w; canvas.height = h;
       canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-      const dataUrl = canvas.toDataURL('image/jpeg', 0.6);
-      document.getElementById(campoId).value = dataUrl;
+                  let calidad = 0.6;
+      let dataUrl = canvas.toDataURL('image/jpeg', calidad);
+      while (dataUrl.length > 45000 && calidad > 0.2) { calidad -= 0.1; dataUrl = canvas.toDataURL('image/jpeg', calidad); }
+      while (dataUrl.length > 45000 && w > 150) {
+        w = Math.round(w * 0.8); h = Math.round(h * 0.8);
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        dataUrl = canvas.toDataURL('image/jpeg', 0.5);
+      }
+      if (dataUrl.length > 45000) { showToast('❌ Imagen muy pesada, elige otra', 'error'); return; }
+         document.getElementById(campoId).value = dataUrl;
       document.getElementById(previewId).src = dataUrl;
       document.getElementById(previewId).style.display = 'block';
     };
@@ -1838,6 +1847,15 @@ async function guardarNegocio(event) {
   };
   if (!datos.nombre) {
     showToast('❌ El nombre es obligatorio', 'error');
+    btnGuardar.disabled = false;
+    btnGuardar.textContent = '💾 Guardar Negocio';
+    return;
+  }
+    const pesados = [];
+  ['logo', 'banner'].forEach(k => { if ((datos[k] || '').length > 49000) pesados.push(k); });
+  datos.fotos.forEach((f, i) => { if (f.url.length > 49000) pesados.push('foto ' + (i + 1)); });
+  if (pesados.length) {
+    showToast('❌ Muy pesado: ' + pesados.join(', '), 'error');
     btnGuardar.disabled = false;
     btnGuardar.textContent = '💾 Guardar Negocio';
     return;
