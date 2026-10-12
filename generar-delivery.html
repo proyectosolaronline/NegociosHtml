@@ -848,11 +848,13 @@ function construirLandingPEDIDOS(n, plantillaOverride) {
   const oi = n.banner || n.logo || '';
   const cu = GITHUB_PAGES_BASE + '/' + encodeURIComponent(carp) + '/';
 
-    let productos = ft.map((f, i) => parseFotoProducto(f.descripcion, i, f.url));
-  const svTaxi = parsearDestinosTaxi(n.descripcion);
-    alert('Rutas: ' + svTaxi.length + '\nDescripción: ' + n.descripcion);
-  if (svTaxi.length) productos = svTaxi.map((d, i) => ({ indice: i, nombre: d.destino, variantes: [d.destino], precioTexto: '$' + d.tarifa, precio: d.tarifa, url: '' }));
-  
+      let productos = [];
+  ft.forEach((f) => {
+    const sv = parsearDestinosTaxi(f.descripcion);
+    if (sv.length) sv.forEach(d => productos.push({ indice: productos.length, nombre: d.destino, variantes: [d.destino], precioTexto: '$' + d.tarifa, precio: d.tarifa, url: f.url }));
+    else productos.push(parseFotoProducto(f.descripcion, productos.length, f.url));
+  });
+    
   const phSVG = 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 240"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1A2033"/><stop offset="1" stop-color="#0E1220"/></linearGradient></defs><rect width="300" height="240" fill="url(#g)"/><rect x="10" y="10" width="280" height="220" rx="18" fill="none" stroke="' + cp + '" stroke-width="3" stroke-dasharray="10 8"/><text x="150" y="105" font-size="48" text-anchor="middle">📦</text><text x="150" y="148" font-size="21" font-weight="700" text-anchor="middle" fill="#E0E0E0" font-family="Arial,sans-serif">ESPACIO RESERVADO</text><text x="150" y="175" font-size="17" text-anchor="middle" fill="' + ca + '" font-family="Arial,sans-serif">a nuevos productos</text></svg>');
   const relleno = productos.length < 4 ? 4 - productos.length : (productos.length % 2 ? 1 : 0);
   const placeholdersHTML = Array.from({ length: relleno }).map(() => '<div class="prod prod-ph"><img src="' + phSVG + '" alt="Espacio reservado a nuevos productos" loading="lazy"></div>').join('');
@@ -2283,7 +2285,7 @@ var MSG_FUERA_COBERTURA = '🚫 Estás fuera de nuestra zona de cobertura (>${zo
 var TARIFA_KM = ${taxiConfig ? taxiConfig.tarifaKm : 'null'};
 var KM_ZONA = ${taxiConfig ? taxiConfig.kmZona : 'null'};
 var ES_TAXI = TARIFA_KM !== null && KM_ZONA !== null;
-var HAY_TAXI_DESC = ${svTaxi.length > 0};
+${parsearDestinosTaxi.toString()}
 function tarifaRecogida(km, tarifaKm, kmZona){
   return km <= kmZona ? { zona:'cobertura', extra:0 } : { zona:'fuera', extra:Math.round((km - kmZona) * tarifaKm) };
 }
@@ -2604,8 +2606,8 @@ var CONSTRUCCION = {
   }
   function lFirma(p){ return JSON.stringify((p || []).map(function(x){ return [x.nombre, x.variantes, x.precioTexto, x.url]; })); }
   function lAplicarDesc(n){
-    if(n.descripcion === undefined || ES_TAXI || HAY_TAXI_DESC) return;
-       var el = document.getElementById('lDesc'); if(!el) return;
+    if(n.descripcion === undefined) return;
+     var el = document.getElementById('lDesc'); if(!el) return;
     var partes = String(n.descripcion || '').split('&');
     var dc = partes[0].trim() || '';
     var dl = partes[1] ? partes[1].trim() : dc;
@@ -2615,10 +2617,14 @@ var CONSTRUCCION = {
     el.style.display = txt ? '' : 'none';
   }
   function lAplicarCatalogo(fotos){
-            if(ES_TAXI || HAY_TAXI_DESC) return;
-  var ft = (fotos || []).filter(function(f){ return f && f.url; });
-    var nuevos = ft.map(function(f, i){ return lParse(f.descripcion, i, f.url); });
-    if(lFirma(nuevos) === lFirma(NEGOCIO.productos)) return;
+                var ft = (fotos || []).filter(function(f){ return f && f.url; });
+    var nuevos = [];
+    ft.forEach(function(f){
+      var sv = parsearDestinosTaxi(f.descripcion);
+      if(sv.length) sv.forEach(function(d){ nuevos.push({ indice: nuevos.length, nombre: d.destino, variantes: [d.destino], precioTexto: '$' + d.tarifa, precio: d.tarifa, url: f.url }); });
+      else nuevos.push(lParse(f.descripcion, nuevos.length, f.url));
+    });
+                if(lFirma(nuevos) === lFirma(NEGOCIO.productos)) return;
     var modal = document.getElementById('modalProducto');
     if(modal && modal.classList.contains('activo')) return;
     var cont = document.getElementById('lCatalogo'); if(!cont) return;
