@@ -1192,9 +1192,9 @@ var CONSTRUCCION = {
       try{
         var lista = (r && r.success && r.negocios) ? r.negocios : [];
         for(var i = 0; i < lista.length; i++){
-          if(String(lista[i].id) === String(ID_NEGOCIO)){
+           if(String(lista[i].id) === String(ID_NEGOCIO)){
             if(window.lActualizarFotos) window.lActualizarFotos(lista[i].fotos || []);
-                        if(window.lActualizarPopup) window.lActualizarPopup(String(lista[i].mensajeEmergente || '').replace(/[\n\r]/g, ' ').trim());
+                        if(window.lActualizarPopup) window.lActualizarPopup(String(lista[i].mensajeEmergente || '').replace(/[\\n\\r]/g, ' ').trim());
             actualizarExterno(lista[i].Urlexterna);
             break;
           }
