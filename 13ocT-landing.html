@@ -1195,8 +1195,7 @@ var CONSTRUCCION = {
            if(String(lista[i].id) === String(ID_NEGOCIO)){
             if(window.lActualizarFotos) window.lActualizarFotos(lista[i].fotos || []);
                         if(window.lActualizarPopup) window.lActualizarPopup(String(lista[i].mensajeEmergente || '').replace(/[\\n\\r]/g, ' ').trim());
-            actualizarExterno(lista[i].Urlexterna);
-            break;
+            actualizarExterno(lista[i].Urlexterna || lista[i].urlexterna || lista[i].UrlExterna || lista[i].urlExterna);            break;
           }
         }
       }catch(e){}
