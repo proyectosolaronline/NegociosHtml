@@ -1843,6 +1843,7 @@ async function guardarNegocio(event) {
     return;
   }
   showToast('🔒 Candado enviado: ' + datos.candado, 'success');
+    console.log('📤 ENVIANDO:', datos.mensajeEmergente, '|', datos.Urlexterna, '| editId=', editId);
   showLoading();
   try {
     const action = editId ? 'editarNegocio' : 'agregarNegocio';
