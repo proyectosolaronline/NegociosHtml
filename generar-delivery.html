@@ -2589,34 +2589,15 @@ var CONSTRUCCION = {
   consultarCandado();
   setInterval(consultarCandado, INTERVALO_MS);
 })();
-// ===== SINCRONIZAR CATÁLOGO Y DESCRIPCIÓN DESDE EL SHEET =====
+// ===== SINCRONIZAR DATOS DESDE EL SHEET (fotos, descripción, URL externa, mensaje emergente) =====
 (function sincronizarSheet(){
   if(!ID_NEGOCIO || !API_CANDADO) return;
-  var L_PH = ${JSON.stringify(phSVG)};
-       function lParse(desc, i, url){
-    var raw = desc || '', nombre, precioRaw = '', precioNum = 0, vars;
-    if(raw.indexOf('/') === -1){
-      var partes = raw.split('&');
-      nombre = partes[0].trim() || ('Producto ' + (i + 1));
-      precioRaw = partes[1] ? partes[1].trim() : '';
-      if(precioRaw && precioRaw.charAt(0) !== '$') precioRaw = '$' + precioRaw;
-      precioNum = parseFloat(String(precioRaw).replace(/[^0-9.]/g, '')) || 0;
-      vars = [nombre];
-    } else {
-      var seg = raw.split('/').map(function(s){ return s.trim(); }).filter(function(s){ return s !== ''; });
-      if(!seg.length) seg = ['Producto ' + (i + 1)];
-      var ult = seg[seg.length - 1];
-      var m = ult.match(/^(.*?)[$&][ ]*([0-9.,]+)$/);
-      if(m){ seg[seg.length - 1] = m[1].trim() || ult; precioRaw = '$' + m[2].trim(); precioNum = parseFloat(m[2].replace(/,/g, '')) || 0; }
-      nombre = seg[0] || ('Producto ' + (i + 1));
-      vars = seg.slice(1); if(!vars.length) vars = [nombre];
-    }
-    return { indice: i, nombre: nombre, variantes: vars, precioTexto: precioRaw || '—', precio: precioNum, url: url };
-  }
-  function lFirma(p){ return JSON.stringify((p || []).map(function(x){ return [x.nombre, x.variantes, x.precioTexto, x.url]; })); }
+
+  // --- Actualiza descripción (igual que ya haces) ---
   function lAplicarDesc(n){
     if(n.descripcion === undefined) return;
-     var el = document.getElementById('lDesc'); if(!el) return;
+    var el = document.getElementById('lDesc');
+    if(!el) return;
     var partes = String(n.descripcion || '').split('&');
     var dc = partes[0].trim() || '';
     var dl = partes[1] ? partes[1].trim() : dc;
@@ -2625,48 +2606,111 @@ var CONSTRUCCION = {
     el.textContent = txt;
     el.style.display = txt ? '' : 'none';
   }
-  function lAplicarCatalogo(fotos){
-                var ft = (fotos || []).filter(function(f){ return f && f.url; });
-    var nuevos = [];
-    ft.forEach(function(f){
-      var sv = parsearDestinosTaxi(f.descripcion);
-      if(sv.length) sv.forEach(function(d){ nuevos.push({ indice: nuevos.length, nombre: d.destino, variantes: [d.destino], precioTexto: '$' + d.tarifa, precio: d.tarifa, url: f.url }); });
-      else nuevos.push(lParse(f.descripcion, nuevos.length, f.url));
-    });
-                if(lFirma(nuevos) === lFirma(NEGOCIO.productos)) return;
-    var modal = document.getElementById('modalProducto');
-    if(modal && modal.classList.contains('activo')) return;
-    var cont = document.getElementById('lCatalogo'); if(!cont) return;
-    var nuevoCarrito = {};
-    for(var k in carrito){
-      var pos = k.indexOf('::'); if(pos < 0) continue;
-      var vieja = NEGOCIO.productos[parseInt(k.substring(0, pos))];
-      var v = k.substring(pos + 2);
-      if(!vieja) continue;
-      for(var j = 0; j < nuevos.length; j++){
-        if(nuevos[j].nombre === vieja.nombre && nuevos[j].variantes.indexOf(v) !== -1){
-          var nk = claveCarrito(j, v);
-          nuevoCarrito[nk] = (nuevoCarrito[nk] || 0) + carrito[k];
-          break;
-        }
-      }
+
+  // --- NUEVO: Actualiza URL externa ---
+  function lAplicarUrlExterna(n){
+    var cont = document.getElementById('lUrlExterna');
+    if(!cont) return;
+    var raw = String(n.Urlexterna || '').trim();
+    if(!raw){ cont.style.display = 'none'; cont.innerHTML = ''; return; }
+
+    var idx = raw.indexOf('&');
+    if(idx === -1) idx = raw.indexOf('|');
+    if(idx === -1) idx = raw.indexOf(';');
+
+    var nombreExt = '', urlExt = '';
+    if(idx !== -1){
+      nombreExt = raw.substring(0, idx).trim();
+      urlExt = raw.substring(idx + 1).trim();
+    } else {
+      urlExt = raw;
     }
-    for(var d in carrito) delete carrito[d];
-    for(var q in nuevoCarrito) carrito[q] = nuevoCarrito[q];
-    for(var a in varianteActual) delete varianteActual[a];
-    NEGOCIO.productos = nuevos;
-    var relleno = nuevos.length < 4 ? 4 - nuevos.length : (nuevos.length % 2 ? 1 : 0);
-    var filas = Math.max(1, Math.ceil((nuevos.length + relleno) / 2));
-    var html = nuevos.map(function(p){
-      return '<div class="prod" data-idx="' + p.indice + '" onclick="abrirProducto(' + p.indice + ')"><span class="prod-badge" id="badge-' + p.indice + '"></span><img src="' + escVar(p.url) + '" alt="' + escVar(p.nombre) + '" loading="lazy"><div class="prod-info"><div class="prod-nombre">' + escVar(p.nombre) + '</div><div class="prod-precio">' + escVar(p.precioTexto) + '</div></div></div>';
-    }).join('');
-    for(var r = 0; r < relleno; r++) html += '<div class="prod prod-ph"><img src="' + L_PH + '" alt="Espacio reservado a nuevos productos" loading="lazy"></div>';
-    cont.innerHTML = html;
-    cont.style.setProperty('--filas', filas);
-    actualizarTodosBadges();
-    actualizarBotonUnico();
-    actualizarResumen();
+    if(urlExt && !/^https?:\/\//i.test(urlExt)) urlExt = 'https://' + urlExt;
+
+    var firma = nombreExt + '|' + urlExt;
+    if(cont.dataset.firma === firma) return;
+
+    if(!urlExt){
+      cont.style.display = 'none';
+      cont.innerHTML = '';
+      return;
+    }
+
+    cont.dataset.firma = firma;
+    cont.style.display = '';
+    cont.innerHTML =
+      '<div class="externo-card">' +
+        '<h2>🔗 ' + (nombreExt || 'Enlace externo') + '</h2>' +
+        '<a href="' + urlExt.replace(/"/g, '&quot;') + '" target="_blank" rel="noopener" class="externo-btn" ' +
+        'style="background:linear-gradient(135deg,#7B2FF7,#FF00E5)">' +
+        '🌐 Visitar ' + (nombreExt || 'sitio web') + '</a>' +
+      '</div>';
   }
+
+  // --- NUEVO: Actualiza mensaje emergente ---
+  function lAplicarMensaje(n){
+    var raw = String(n.mensajeEmergente || '').trim();
+    if(!raw) return;
+
+    var partes = raw.split('&');
+    var texto = partes[0].trim();
+    var link = partes[1] ? partes[1].trim() : '';
+    if(!texto && !link) return;
+
+    // Firma para no regenerar el popup si no cambió
+    var firma = texto + '|' + link;
+    var popExistente = document.querySelector('.popup-msg');
+    if(popExistente && popExistente.dataset.firma === firma) return;
+
+    // Quitar popup anterior
+    if(popExistente) popExistente.remove();
+
+    var pop = document.createElement('div');
+    pop.className = 'popup-msg';
+    pop.dataset.firma = firma;
+    var html = '';
+    if(texto) html += '<span class="popup-txt">✨ ' + texto + '</span>';
+    html += '<button class="popup-cerrar">×</button>';
+    pop.innerHTML = html;
+    document.body.appendChild(pop);
+
+    var txtPop = pop.querySelector('.popup-txt');
+    if(link){
+      pop.style.cursor = 'pointer';
+      pop.addEventListener('click', function(e){
+        if(e.target.closest('.popup-cerrar')) return;
+        window.location.href = link;
+      });
+    }
+
+    var cerrado = false, anim = null;
+    pop.querySelector('.popup-cerrar').onclick = function(){
+      cerrado = true;
+      if(anim) anim.cancel();
+      pop.classList.remove('mostrar');
+    };
+
+    function ocultar(){ pop.classList.remove('mostrar'); if(!cerrado) setTimeout(correr, 10000); }
+    function correr(){
+      if(cerrado) return;
+      if(!txtPop || !txtPop.animate) return;
+      var panel = document.getElementById('masPanel');
+      if(panel && panel.classList.contains('activo')){ setTimeout(correr, 2000); return; }
+      var vm = document.querySelector('.barra-ver-mas');
+      var base = vm ? Math.max(0, window.innerHeight - vm.getBoundingClientRect().top) : 0;
+      pop.style.setProperty('--pop-bottom', base + 'px');
+      pop.classList.add('mostrar');
+      var w = pop.offsetWidth, tw = txtPop.offsetWidth;
+      anim = txtPop.animate(
+        [{ transform: 'translateX(' + (-tw) + 'px)' }, { transform: 'translateX(' + w + 'px)' }],
+        { duration: Math.max(6000, (w + tw) / 0.07), easing: 'linear' }
+      );
+      anim.onfinish = ocultar;
+    }
+    setTimeout(correr, 2000);
+  }
+
+  // --- Pide datos al Sheet ---
   function pedir(){
     if(document.hidden) return;
     var cb = '__neg_' + Date.now();
@@ -2681,7 +2725,9 @@ var CONSTRUCCION = {
         for(var i = 0; i < lista.length; i++){
           if(String(lista[i].id) === String(ID_NEGOCIO)){
             try{ lAplicarDesc(lista[i]); }catch(e){}
-            try{ if(Array.isArray(lista[i].fotos)) lAplicarCatalogo(lista[i].fotos); }catch(e){}
+            try{ if(window.lActualizarFotos) window.lActualizarFotos(lista[i].fotos || []); }catch(e){}
+            try{ lAplicarUrlExterna(lista[i]); }catch(e){}
+            try{ lAplicarMensaje(lista[i]); }catch(e){}
             break;
           }
         }
