@@ -894,7 +894,16 @@ function construirLandingPEDIDOS(n, plantillaOverride) {
   ).join('');
 
   const mensajeEmergente = n.mensajeEmergente || '';
-
+  const urlExternaInicial = (function(){
+    const raw = String(n.Urlexterna || n.urlExterna || n.urlexterna || '').trim();
+    if (!raw) return '';
+    let idx = raw.indexOf('&'); if (idx === -1) idx = raw.indexOf('|'); if (idx === -1) idx = raw.indexOf(';');
+    let nom = '', u = '';
+    if (idx !== -1) { nom = raw.substring(0, idx).trim(); u = raw.substring(idx + 1).trim(); } else { u = raw; }
+    if (!u) return '';
+    if (!/^https?:\/\//i.test(u)) u = 'https://' + u;
+    return '<div class="externo-card"><h2>🔗 ' + escHTML(nom || 'Enlace externo') + '</h2><a href="' + escHTML(u) + '" target="_blank" rel="noopener" class="externo-btn" style="background:linear-gradient(135deg,var(--brand),var(--brand-2))">🌐 Visitar ' + escHTML(nom || 'sitio web') + '</a></div>';
+  })();
   const bannerCSS = n.banner ? "background-image:url('" + String(n.banner).replace(/'/g, "%27") + "');" : '';
 
   return `<!DOCTYPE html><html lang="es"><head>
