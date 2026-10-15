@@ -836,8 +836,7 @@ async function cargarNegocios() {
   console.log('📡 Cargando negocios...');
   showLoading();
   try {
-    const result = await callAPI('obtenerNegocios');
-    hideLoading();
+    const result = await callAPI('obtenerNegocios', { token: getAdminToken() });    hideLoading();
     if (result.success) {
       negocios = result.negocios || [];
       console.log(`✅ ${negocios.length} negocios cargados`);
