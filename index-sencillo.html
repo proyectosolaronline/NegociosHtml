@@ -693,13 +693,9 @@ function valorCandado() {
 }
 document.getElementById('formNegocio').addEventListener('reset', function () { setTimeout(candadoCambio, 0); });
 document.getElementById('nombre').addEventListener('input', candadoCambio);
- let _admTk = '', _admTkExp = 0;
 function getAdminToken() {
   try { sessionStorage.removeItem('adm_tk'); localStorage.removeItem('adm_tk'); } catch (e) {}
-  if (_admTk && Date.now() < _admTkExp) return _admTk;
-  _admTk = prompt('Clave de administrador:') || '';
-  _admTkExp = _admTk ? Date.now() + 60000 : 0;
-  return _admTk;
+  return (prompt('Clave de administrador:') || '').trim();
 }
 // ============================================================
 // VARIABLES GLOBALES
@@ -2454,8 +2450,48 @@ window.addEventListener('message', function(e) {
     }
   }
 });
+// ============================================================
+// CIERRE POR INACTIVIDAD (1 minuto) Y REGRESO A URL ORIGEN
+// ============================================================
+const INACTIVIDAD_MS = 60000;
+// Pon aquí la URL exacta a la que debe regresar. Si la dejas vacía usa
+// document.referrer y, si tampoco existe, la raíz del sitio.
+const URL_ORIGEN = '';
+let _timerInactividad = null;
 
-console.log('✅ Sistema I.A. Futurista activo');
+function cerrarPorInactividad() {
+  // No cerrar mientras se guarda o publica
+  if (document.getElementById('loadingOverlay').classList.contains('active')) {
+    reiniciarInactividad();
+    return;
+  }
+  negocios = [];
+  detenerVerificacionVideo();
+  document.body.innerHTML = '';
+
+  const destino = URL_ORIGEN || document.referrer || (location.origin + '/');
+
+  // Si otra pestaña abrió esta, se cierra y el usuario queda en la de origen
+  if (window.opener && !window.opener.closed) {
+    try { window.close(); } catch (e) {}
+  }
+  // Si no se pudo cerrar, regresa a la URL de origen (sin dejar "Atrás" al panel)
+  location.replace(destino);
+}
+function reiniciarInactividad() {
+  clearTimeout(_timerInactividad);
+  _timerInactividad = setTimeout(cerrarPorInactividad, INACTIVIDAD_MS);
+}
+
+if (ACCESO_OK && !ES_MODO_CLIENTE) {
+  ['mousemove', 'mousedown', 'keydown', 'touchstart', 'scroll', 'click', 'input']
+    .forEach(function (ev) {
+      document.addEventListener(ev, reiniciarInactividad, { passive: true, capture: true });
+    });
+  reiniciarInactividad();
+}
+
+  console.log('✅ Sistema I.A. Futurista activo');
 </script>
 <a href="https://proyectosolaronline.github.io/NegociosHtml/tu-negocio-online.html" target="_blank" class="fab-left" aria-label="Negocio Online">
   🏪
