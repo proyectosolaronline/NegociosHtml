@@ -693,10 +693,13 @@ function valorCandado() {
 }
 document.getElementById('formNegocio').addEventListener('reset', function () { setTimeout(candadoCambio, 0); });
 document.getElementById('nombre').addEventListener('input', candadoCambio);
-  function getAdminToken() {
-  let t = sessionStorage.getItem('adm_tk');
-  if (!t) { t = prompt('Clave de administrador:') || ''; if (t) sessionStorage.setItem('adm_tk', t); }
-  return t;
+ let _admTk = '', _admTkExp = 0;
+function getAdminToken() {
+  try { sessionStorage.removeItem('adm_tk'); localStorage.removeItem('adm_tk'); } catch (e) {}
+  if (_admTk && Date.now() < _admTkExp) return _admTk;
+  _admTk = prompt('Clave de administrador:') || '';
+  _admTkExp = _admTk ? Date.now() + 60000 : 0;
+  return _admTk;
 }
 // ============================================================
 // VARIABLES GLOBALES
