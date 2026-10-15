@@ -1439,11 +1439,23 @@ function compartirEdicionCliente(negocio) {
     const cantidad = parseFloat(document.getElementById('cantidadTiempo').value) || 24;
     const unidad = document.getElementById('unidadTiempo').value;
     let ms;
-    if (unidad === 'minutos') ms = cantidad * 60000;
-    else if (unidad === 'horas') ms = cantidad * 3600000;
-    else ms = cantidad * 24 * 3600000;
-    const exp = Date.now() + ms;
-        const campos = Array.from(document.querySelectorAll('#camposCliente input:checked')).map(c => c.value);
+    overlay.querySelector('#btnGenerarLinkCliente').onclick = async () => {
+    const cantidad = parseFloat(document.getElementById('cantidadTiempo').value) || 30;
+    const unidad = document.getElementById('unidadTiempo').value;
+    const minutos = Math.round(unidad === 'minutos' ? cantidad : unidad === 'horas' ? cantidad * 60 : cantidad * 1440);
+    const campos = Array.from(document.querySelectorAll('#camposCliente input:checked')).map(c => c.value);
+    if (!campos.length) { showToast('⚠️ Elige al menos un campo', 'error'); return; }
+    showLoading();
+    try {
+      const r = await postViaIframe('crearTokenCliente', negocio.id, { minutos, campos });
+      hideLoading();
+      if (!r.success) { showToast('❌ ' + r.error, 'error'); return; }
+      const link = `${window.location.origin}${window.location.pathname}?editarCliente=${encodeURIComponent(negocio.id)}&t=${r.token}`;
+      document.body.removeChild(overlay);
+      mostrarLinkGenerado(link, negocio.nombre, cantidad, unidad);
+    } catch (e) { hideLoading(); showToast('❌ Error de conexión', 'error'); }
+  };
+    const campos = Array.from(document.querySelectorAll('#camposCliente input:checked')).map(c => c.value);
     if (!campos.length) { showToast('⚠️ Elige al menos un campo', 'error'); return; }
     const link = `${window.location.origin}${window.location.pathname}?editarCliente=${encodeURIComponent(negocio.id)}&exp=${exp}&campos=${campos.join(',')}`;
         document.body.removeChild(overlay);
@@ -1474,28 +1486,28 @@ function mostrarLinkGenerado(link, nombre, cantidad, unidad) {
   };
   overlay.querySelector('#btnWhatsappLink').onclick = () => {
     const texto = `Hola${nombre ? ' ' + nombre : ''}, aquí puedes editar tu negocio: ${link}`;
-    window.open(`https://wa.me/?text=${encodeURIComponent(texto)}`, '_blank');
-  };
-}
-// ============================================================
-// MODO CLIENTE
-// ============================================================
-function verificarModoClienteEdicion() {
+   function verificarModoClienteEdicion() {
   const params = new URLSearchParams(window.location.search);
   const idCliente = params.get('editarCliente');
   if (!idCliente) return false;
-  const exp = parseInt(params.get('exp'), 10);
+  const t = params.get('t') || '';
+  window.tokenCliente = t;
   document.body.classList.add('modo-cliente-edicion');
   document.querySelector('.header').style.display = 'none';
   document.querySelector('.toolbar').style.display = 'none';
   document.querySelector('.sheet-list').style.display = 'none';
   document.querySelector('.fab-admin').style.display = 'none';
-  if (!exp || Date.now() > exp) { mostrarPantallaExpirada(); return true; }
+  const fl = document.querySelector('.fab-left'); if (fl) fl.style.display = 'none';
+  if (!t) { mostrarPantallaExpirada(); return true; }
   showLoading();
-  callAPI('obtenerNegocios').then(result => {
+  callAPI('clienteGet', { t }).then(result => {
     hideLoading();
-    if (!result.success) { mostrarPantallaExpirada(); return; }
-    negocios = result.negocios || [];
+    if (!result.success || !result.negocio || result.negocio.id !== idCliente) { mostrarPantallaExpirada(); return; }
+    negocios = [result.negocio];
+    abrirModalEdicionCliente(result.negocio, result.exp, (result.campos || []).join(','));
+  }).catch(() => { hideLoading(); mostrarPantallaExpirada(); });
+  return true;
+}
     const negocio = negocios.find(n => n.id === idCliente);
     if (!negocio) { mostrarPantallaExpirada(); return; }
     abrirModalEdicionCliente(negocio, exp, params.get('campos'));
@@ -1774,8 +1786,7 @@ function postViaIframe(action, id, datos, targetUrl) {
     window.addEventListener('message', onMessage);
     document.getElementById('hf_action').value = action;
     document.getElementById('hf_id').value = id || '';
-    document.getElementById('hf_datos').value = JSON.stringify(Object.assign({}, datos, { token: getAdminToken() }));
-    const form = document.getElementById('hiddenSaveForm');
+    document.getElementById('hf_datos').value = JSON.stringify(Object.assign({}, datos, window.tokenCliente ? { tokenCliente: window.tokenCliente } : { token: getAdminToken() }));    const form = document.getElementById('hiddenSaveForm');
     form.action = targetUrl || APPS_SCRIPT_URL;
     form.submit();
     setTimeout(() => {
@@ -1844,8 +1855,7 @@ async function guardarNegocio(event) {
     console.log('📤 ENVIANDO:', datos.mensajeEmergente, '|', datos.Urlexterna, '| editId=', editId);
   showLoading();
   try {
-    const action = editId ? 'editarNegocio' : 'agregarNegocio';
-    const result = await postViaIframe(action, editId, datos);
+    const action = window.tokenCliente ? 'editarNegocioCliente' : (editId ? 'editarNegocio' : 'agregarNegocio');    const result = await postViaIframe(action, editId, datos);
     hideLoading();
     btnGuardar.disabled = false;
     btnGuardar.textContent = '💾 Guardar Negocio';
@@ -1854,9 +1864,8 @@ async function guardarNegocio(event) {
       if (!editId && result.id) {
         document.getElementById('editId').value = result.id;
       }
-      cerrarModal();
-      cargarNegocios();
-    } else {
+          if (window.tokenCliente) { showToast('✅ Cambios guardados', 'success'); }
+      else { cerrarModal(); cargarNegocios(); }    } else {
       showToast('❌ Error: ' + result.error, 'error');
     }
   } catch(e) {
