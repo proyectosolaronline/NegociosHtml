@@ -1392,7 +1392,7 @@ function compartirEdicionCliente(negocio) {
       if (!r.success) { showToast('❌ ' + r.error, 'error'); return; }
       const link = `${window.location.origin}${window.location.pathname}?editarCliente=${encodeURIComponent(negocio.id)}&t=${r.token}`;
       document.body.removeChild(overlay);
-
+      mostrarLinkGenerado(link, negocio.nombre, cantidad, unidad);
           } catch (e) { hideLoading(); showToast(msgErrorEnvio(e), 'error'); }
   };
 }
@@ -1817,8 +1817,8 @@ async function guardarNegocio(event) {
     hideLoading();
     btnGuardar.disabled = false;
     btnGuardar.textContent = '💾 Guardar Negocio';
-    showToast('❌ Error de conexión', 'error');
-  }
+    showToast(msgErrorEnvio(e), 'error');
+    }
 }
 
 // ============================================================
