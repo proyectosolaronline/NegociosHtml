@@ -601,7 +601,14 @@ document.getElementById('formNegocio').addEventListener('reset', function () { s
 document.getElementById('nombre').addEventListener('input', candadoCambio);
 function getAdminToken() {
   try { sessionStorage.removeItem('adm_tk'); localStorage.removeItem('adm_tk'); } catch (e) {}
-  return (prompt('Clave de administrador:') || '').trim();
+    const t = prompt('Clave de administrador:');
+  if (t === null) return null;
+  const limpio = t.trim();
+  return limpio ? limpio : null;
+}
+function msgErrorEnvio(e) {
+  return (e && e.message === 'CANCELADO') ? '🔒 Cancelado: no se envió nada' : '❌ Error de conexión';
+  
 }
 // ============================================================
 // VARIABLES GLOBALES
@@ -740,9 +747,12 @@ function detenerVerificacionVideo() {
 // ============================================================
 async function cargarNegocios() {
   console.log('📡 Cargando negocios...');
+   const tokenAdmin = getAdminToken();
+  if (tokenAdmin === null) { showToast('🔒 Clave cancelada: no se cargaron los negocios', 'error'); return; }
   showLoading();
   try {
-    const result = await callAPI('obtenerNegocios', { token: getAdminToken() });    hideLoading();
+        const result = await callAPI('obtenerNegocios', { token: tokenAdmin });    hideLoading();
+    
     if (result.success) {
       negocios = result.negocios || [];
       console.log(`✅ ${negocios.length} negocios cargados`);
@@ -1382,8 +1392,8 @@ function compartirEdicionCliente(negocio) {
       if (!r.success) { showToast('❌ ' + r.error, 'error'); return; }
       const link = `${window.location.origin}${window.location.pathname}?editarCliente=${encodeURIComponent(negocio.id)}&t=${r.token}`;
       document.body.removeChild(overlay);
-      mostrarLinkGenerado(link, negocio.nombre, cantidad, unidad);
-    } catch (e) { hideLoading(); showToast('❌ Error de conexión', 'error'); }
+
+          } catch (e) { hideLoading(); showToast(msgErrorEnvio(e), 'error'); }
   };
 }
 
@@ -1683,6 +1693,11 @@ function cerrarMapaPopup() { document.getElementById('mapPopupOverlay').classLis
 // GUARDAR
 // ============================================================
 function postViaIframe(action, id, datos, targetUrl) {
+   let tokenAdmin = null;
+  if (!window.tokenCliente) {
+    tokenAdmin = getAdminToken();
+    if (tokenAdmin === null) return Promise.reject(new Error('CANCELADO'));
+  }
   return new Promise((resolve, reject) => {
     let resuelto = false;
     function onMessage(e) {
@@ -1696,7 +1711,7 @@ function postViaIframe(action, id, datos, targetUrl) {
     window.addEventListener('message', onMessage);
     document.getElementById('hf_action').value = action;
     document.getElementById('hf_id').value = id || '';
-    document.getElementById('hf_datos').value = JSON.stringify(Object.assign({}, datos, window.tokenCliente ? { tokenCliente: window.tokenCliente } : { token: getAdminToken() }));    const form = document.getElementById('hiddenSaveForm');
+    document.getElementById('hf_datos').value = JSON.stringify(Object.assign({}, datos, window.tokenCliente ? { tokenCliente: window.tokenCliente } : {  token: tokenAdmin }));    const form = document.getElementById('hiddenSaveForm');
     form.action = targetUrl || APPS_SCRIPT_URL;
     form.submit();
     setTimeout(() => {
@@ -1811,14 +1826,17 @@ async function guardarNegocio(event) {
 // ============================================================
 async function eliminarNegocio(id) {
   if (!confirm('⚠️ ¿Eliminar?')) return;
+   const tokenAdmin = getAdminToken();
+  if (tokenAdmin === null) { showToast('🔒 Clave cancelada: no se eliminó nada', 'error'); return; }
   showLoading();
   try {
-const result = await callAPI('eliminarNegocio', { id, token: getAdminToken() });
+const result = await callAPI('eliminarNegocio', { id, token: tokenAdmin });
+    
     hideLoading();
     if (result.success) { showToast('✅ Eliminado', 'success'); cargarNegocios(); }
     else showToast('❌ Error: ' + result.error, 'error');
-  } catch(e) { hideLoading(); showToast('❌ Error de conexión', 'error'); }
-}
+    } catch(e) { hideLoading(); showToast(msgErrorEnvio(e), 'error'); }
+  }
 
 // ============================================================
 // LANDING PAGE - ESTILO FINO
@@ -2164,8 +2182,8 @@ async function publicarEnGitHub() {
     hideLoading();
     btn.disabled = false;
     btn.textContent = '🚀 Publicar';
-    showToast('❌ Error de conexión', 'error');
-  }
+        showToast(msgErrorEnvio(e), 'error');
+     }
 }
 
 function showToast(mensaje, tipo = 'success') {
