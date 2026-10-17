@@ -308,6 +308,16 @@
     <div class="search-box">
       <input type="text" id="searchInput" placeholder="🔍 Buscar..." oninput="filtrarNegocios()">
     </div>
+        <select id="filtroEstado" onchange="renderizarLista()" style="padding:12px 14px;border:2px solid #7B2FF7;border-radius:10px;background:#1A1A2E;color:#E0E0E0;font-size:14px;">
+      <option value="todos">📋 Estado: todos</option>
+      <option value="activos">✅ Activos</option>
+      <option value="inactivos">❌ Inactivos</option>
+    </select>
+    <select id="filtroCandado" onchange="renderizarLista()" style="padding:12px 14px;border:2px solid #7B2FF7;border-radius:10px;background:#1A1A2E;color:#E0E0E0;font-size:14px;">
+      <option value="todos">🔒 Candado: todos</option>
+      <option value="abiertos">🟢 Abiertos</option>
+      <option value="cerrados">🔴 Cerrados</option>
+    </select>
     <span id="contador" style="font-size:14px;color:#888;"></span>
   </div>
 
@@ -772,16 +782,34 @@ function hideLoading() { document.getElementById('loadingOverlay').classList.rem
 // ============================================================
 // RENDERIZAR LISTA
 // ============================================================
-function renderizarLista() {
+function esActivo(n) {
+  const v = String(n.activo == null ? 'true' : n.activo).toLowerCase().trim();
+  return !(v === 'false' || v === '0' || v === 'no' || v === 'inactivo');
+}
+function esCerrado(n) {
+  return String(n.candado || '').toLowerCase().trim() === 'cerrado';
+}
+  
+  function renderizarLista() {
   const body = document.getElementById('negociosListBody');
   const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-  const filtrados = negocios.filter(n => 
-    (n.nombre||'').toLowerCase().includes(searchTerm) ||
-    (n.id||'').toLowerCase().includes(searchTerm) ||
-    (n.direccion||'').toLowerCase().includes(searchTerm)
-  );
+    const fEstado = (document.getElementById('filtroEstado') || {}).value || 'todos';
+  const fCandado = (document.getElementById('filtroCandado') || {}).value || 'todos';
+  const filtrados = negocios.filter(n => {
+    const coincide = (n.nombre||'').toLowerCase().includes(searchTerm) ||
+      (n.id||'').toLowerCase().includes(searchTerm) ||
+      (n.direccion||'').toLowerCase().includes(searchTerm);
+    if (!coincide) return false;
+    if (fEstado === 'activos' && !esActivo(n)) return false;
+    if (fEstado === 'inactivos' && esActivo(n)) return false;
+    if (fCandado === 'abiertos' && esCerrado(n)) return false;
+    if (fCandado === 'cerrados' && !esCerrado(n)) return false;
+    return true;
+  });
+  
   document.getElementById('contador').textContent = `Mostrando ${filtrados.length} de ${negocios.length}`;
   if (filtrados.length === 0) {
+    
     body.innerHTML = '<div class="sheet-empty-state">📭 No se encontraron negocios</div>';
     return;
   }
