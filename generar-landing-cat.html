@@ -1001,6 +1001,38 @@ window.lOpenLightbox = function(i){ var f = lFotos[i]; if(!f) return; document.g
   var u = window.location.href; var q = document.getElementById('lQrImg');
   if(q) q.src = 'https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=' + encodeURIComponent(u);
   window.compartirQR = function(){ window.open('https://wa.me/?text=' + encodeURIComponent('${escJS(nombreLimpio)}: ' + u), '_blank'); };
+  // ===== 2 toques en el banner -> pantalla para imprimir el QR =====
+  window.abrirQRImprimir = function(){
+    var ov = document.getElementById('qrPrintOv');
+    var im = document.getElementById('qpImg');
+    if(im && !im.getAttribute('src')) im.src = 'https://api.qrserver.com/v1/create-qr-code/?size=600x600&margin=10&data=' + encodeURIComponent(u);
+    if(ov) ov.classList.add('activo');
+  };
+  window.cerrarQRImprimir = function(){
+    var ov = document.getElementById('qrPrintOv');
+    if(ov) ov.classList.remove('activo');
+  };
+  window.imprimirQR = function(){
+    var im = document.getElementById('qpImg');
+    function lanzar(){
+      document.body.classList.add('qr-imprimiendo');
+      setTimeout(function(){ window.print(); }, 150);
+    }
+    if(im && im.complete && im.naturalWidth) lanzar(); else if(im) im.onload = lanzar; else lanzar();
+  };
+  window.addEventListener('afterprint', function(){ document.body.classList.remove('qr-imprimiendo'); });
+  document.addEventListener('keydown', function(e){ if(e.key === 'Escape') window.cerrarQRImprimir(); });
+  var qrTaps = [];
+  var bannerQR = document.querySelector('.banner');
+  if(bannerQR){
+    bannerQR.addEventListener('click', function(e){
+      if(e.target.closest && e.target.closest('.legal-ico')) return;
+      var t = Date.now();
+      qrTaps = qrTaps.filter(function(x){ return t - x < 600; });
+      qrTaps.push(t);
+      if(qrTaps.length >= 2){ qrTaps = []; window.abrirQRImprimir(); }
+    });
+  }
     // ===== CORREO (opción alternativa): producto o motivo + teléfono antes de abrir el correo =====
   var CORREO_CONTACTO = ${JSON.stringify(correoOk ? String(n.correo).trim() : '')};
   window.correoContacto = function(){
