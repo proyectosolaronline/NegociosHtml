@@ -1,0 +1,2609 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Gestión de Negocios - Vista Futurista</title>
+  
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0A0E17; padding: 20px; color: #E0E0E0; }
+    .container { max-width: 1400px; margin: 0 auto; }
+    
+    .header { background: linear-gradient(135deg, #7B2FF7 0%, #FF00E5 50%, #00D4FF 100%); color: white; padding: 20px 30px; border-radius: 16px; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; box-shadow: 0 0 40px rgba(123, 47, 247, 0.5), 0 0 80px rgba(0, 212, 255, 0.3); }
+    .header h1 { font-size: 26px; font-weight: 700; color: white; text-shadow: 0 0 20px rgba(255, 255, 255, 0.5); }
+    .header-actions { display: flex; gap: 12px; }
+    
+    .btn { padding: 10px 24px; border: none; border-radius: 10px; cursor: pointer; font-weight: 600; font-size: 14px; transition: all 0.3s ease; display: inline-flex; align-items: center; gap: 8px; }
+    .btn:hover { transform: translateY(-2px); box-shadow: 0 0 25px rgba(0, 212, 255, 0.6); }
+    .btn:active { transform: translateY(0); }
+    .btn-primary { background: #7B2FF7; color: white; box-shadow: 0 0 15px rgba(123, 47, 247, 0.4); }
+    .btn-success { background: #00FF88; color: #0A0E17; box-shadow: 0 0 15px rgba(0, 255, 136, 0.4); }
+    .btn-danger { background: #FF0040; color: white; box-shadow: 0 0 15px rgba(255, 0, 64, 0.4); }
+    .btn-warning { background: #FFB300; color: #0A0E17; box-shadow: 0 0 15px rgba(255, 179, 0, 0.4); }
+    .btn-info { background: #00D4FF; color: #0A0E17; box-shadow: 0 0 15px rgba(0, 212, 255, 0.4); }
+    .btn-outline { background: transparent; border: 2px solid #00D4FF; color: #00D4FF; }
+    .btn-outline:hover { background: #00D4FF; color: #0A0E17; }
+    .btn-sm { padding: 6px 14px; font-size: 12px; }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+    
+    .toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }
+    .search-box { flex: 1; max-width: 400px; }
+    .search-box input { width: 100%; padding: 12px 18px; border: 2px solid #7B2FF7; border-radius: 10px; font-size: 14px; transition: border-color 0.3s; background: #1A1A2E; color: #E0E0E0; }
+    .search-box input:focus { outline: none; border-color: #00D4FF; box-shadow: 0 0 20px rgba(0, 212, 255, 0.3); }
+    .search-box input::placeholder { color: #888; }
+    
+    .foto-mini { width: 40px; height: 40px; object-fit: cover; border-radius: 6px; cursor: pointer; border: 2px solid #7B2FF7; margin: 2px; }
+    .foto-mini:hover { border-color: #00D4FF; transform: scale(1.5); box-shadow: 0 0 15px rgba(0, 212, 255, 0.5); }
+    
+    .status-badge { padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; display: inline-block; }
+    .status-active { background: rgba(0, 255, 136, 0.2); color: #00FF88; }
+    .status-inactive { background: rgba(255, 0, 64, 0.2); color: #FF0040; }
+    
+    /* ===== LISTA TIPO SHEET ===== */
+    .sheet-list { background: #1A1A2E; border-radius: 12px; overflow: hidden; box-shadow: 0 0 30px rgba(123, 47, 247, 0.2); margin-bottom: 20px; border: 1px solid #7B2FF7; }
+    .sheet-header-row { display: grid; grid-template-columns: 70px 1fr 1.4fr 60px 90px 90px; gap: 10px; padding: 12px 16px; background: #7B2FF7; color: white; font-size: 11px; font-weight: 700; text-transform: uppercase; }
+    .sheet-row { display: grid; grid-template-columns: 70px 1fr 1.4fr 60px 90px 90px; gap: 10px; align-items: center; padding: 12px 16px; border-bottom: 1px solid #2A2A4A; cursor: pointer; transition: background 0.15s; }
+    .sheet-row:last-child { border-bottom: none; }
+    .sheet-row:hover { background: #2A2A4A; box-shadow: inset 0 0 20px rgba(0, 212, 255, 0.1); }
+    .sheet-cell-id { font-weight: 700; color: #00D4FF; font-size: 13px; text-shadow: 0 0 10px rgba(0, 212, 255, 0.5); }
+    .sheet-cell-nombre { font-weight: 600; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #E0E0E0; }
+    .sheet-cell-desc { font-size: 12px; color: #AAA; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .sheet-mini-logo { width: 34px; height: 34px; border-radius: 50%; object-fit: cover; border: 2px solid #00D4FF; }
+    .sheet-mini-banner { width: 70px; height: 34px; border-radius: 6px; object-fit: cover; border: 2px solid #FF00E5; }
+    .sheet-mini-empty { display: inline-flex; align-items: center; justify-content: center; color: #555; font-size: 16px; width: 34px; height: 34px; }
+    .sheet-video-btn { background: rgba(0, 212, 255, 0.15); border: 1px solid #00D4FF; color: #00D4FF; padding: 4px 10px; border-radius: 6px; font-size: 11px; cursor: pointer; font-weight: 600; transition: all 0.2s; }
+    .sheet-video-btn:hover { background: #00D4FF; color: #0A0E17; }
+    .sheet-video-btn.has-video { background: rgba(0, 255, 136, 0.15); border-color: #00FF88; color: #00FF88; }
+    .sheet-video-btn.has-video:hover { background: #00FF88; color: #0A0E17; }
+    .sheet-empty-state { text-align: center; padding: 50px 20px; color: #888; }
+    @media (max-width: 768px) {
+      .sheet-header-row { display: none; }
+      .sheet-row { grid-template-columns: 44px 1fr 44px; grid-template-areas: "logo nombre banner" "logo desc banner"; padding: 12px 14px; }
+      .sheet-cell-id { display: none; }
+      .sheet-mini-logo { grid-area: logo; }
+      .sheet-cell-nombre { grid-area: nombre; white-space: normal; }
+      .sheet-cell-desc { grid-area: desc; white-space: normal; }
+      .sheet-mini-banner { grid-area: banner; width: 44px; height: 44px; border-radius: 8px; }
+      .sheet-video-btn { display: none; }
+    }
+    
+    .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); z-index: 1000; overflow-y: auto; padding: 20px; backdrop-filter: blur(8px); }
+    .modal-overlay.active { display: flex; align-items: flex-start; justify-content: center; }
+    
+    .modal { background: #1A1A2E; max-width: 800px; width: 100%; border-radius: 20px; padding: 30px; margin-top: 20px; margin-bottom: 20px; box-shadow: 0 0 60px rgba(123, 47, 247, 0.4), 0 0 100px rgba(0, 212, 255, 0.2); animation: slideDown 0.3s ease; border: 1px solid #7B2FF7; }
+    @keyframes slideDown { from { opacity: 0; transform: translateY(-50px); } to { opacity: 1; transform: translateY(0); } }
+    
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 2px solid #2A2A4A; }
+    .modal-header h2 { font-size: 22px; color: #E0E0E0; }
+    .modal-close { background: none; border: none; font-size: 32px; cursor: pointer; color: #AAA; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+    .modal-close:hover { background: #2A2A4A; color: #00D4FF; }
+    
+    .form-section { margin-bottom: 20px; padding: 20px; background: #0D1117; border-radius: 12px; border: 1px solid #2A2A4A; }
+    .form-section h3 { font-size: 16px; margin-bottom: 15px; color: #00D4FF; display: flex; align-items: center; gap: 8px; text-shadow: 0 0 10px rgba(0, 212, 255, 0.5); }
+    
+    .form-group { margin-bottom: 15px; }
+    .form-group label { display: block; font-weight: 600; font-size: 13px; margin-bottom: 5px; color: #AAA; }
+    .form-group input, .form-group textarea, .form-group select { width: 100%; padding: 10px 14px; border: 2px solid #2A2A4A; border-radius: 8px; font-size: 14px; transition: border-color 0.3s; font-family: inherit; background: #1A1A2E; color: #E0E0E0; }
+    .form-group input:focus, .form-group textarea:focus, .form-group select:focus { outline: none; border-color: #00D4FF; box-shadow: 0 0 20px rgba(0, 212, 255, 0.2); }
+    .form-group textarea { min-height: 80px; resize: vertical; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+    
+    .map-section { margin-bottom: 20px; }
+    #map { height: 400px; border-radius: 12px; border: 2px solid #7B2FF7; margin-bottom: 10px; z-index: 1; }
+    .map-status { padding: 10px 15px; border-radius: 8px; font-size: 13px; font-weight: 600; text-align: center; }
+    .map-status.pending { background: rgba(255, 179, 0, 0.15); color: #FFB300; }
+    .map-status.confirmed { background: rgba(0, 255, 136, 0.15); color: #00FF88; }
+    .map-status.error { background: rgba(255, 0, 64, 0.15); color: #FF0040; }
+    
+    .btn-abrir-mapa { 
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 10px 20px; background: #7B2FF7; color: white; 
+      border: none; border-radius: 8px; cursor: pointer; 
+      font-weight: 600; font-size: 14px; transition: all 0.3s ease;
+      box-shadow: 0 0 15px rgba(123, 47, 247, 0.4);
+    }
+    .btn-abrir-mapa:hover { transform: translateY(-2px); box-shadow: 0 0 25px rgba(123, 47, 247, 0.6); }
+    
+    .fotos-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+    .foto-card { border: 2px dashed #2A2A4A; border-radius: 12px; padding: 10px; text-align: center; cursor: pointer; transition: all 0.3s; min-height: 160px; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #0D1117; position: relative; }
+    .foto-card:hover { border-color: #00D4FF; background: #1A1A2E; box-shadow: 0 0 20px rgba(0, 212, 255, 0.2); }
+    .foto-card.has-foto { border-style: solid; border-color: #00FF88; }
+    .foto-card img { width: 100%; height: 120px; object-fit: cover; border-radius: 8px; margin-bottom: 8px; }
+    .foto-card .placeholder { font-size: 40px; color: #555; margin-bottom: 8px; }
+    .foto-card .foto-label { font-size: 11px; color: #888; }
+    .foto-card input[type="file"] { display: none; }
+    .foto-card .foto-desc { width: 100%; padding: 6px 8px; border: 1px solid #2A2A4A; border-radius: 6px; font-size: 11px; margin-top: 6px; min-height: 60px; resize: vertical; font-family: inherit; line-height: 1.4; background: #1A1A2E; color: #E0E0E0; }
+    .foto-card .foto-desc-hint { font-size: 9px; color: #666; margin-top: 3px; display: block; text-align: left; width: 100%; }
+    .btn-remove-foto { background: #FF0040; color: white; border: none; border-radius: 50%; width: 24px; height: 24px; font-size: 14px; cursor: pointer; position: absolute; top: -8px; right: -8px; display: none; }
+    .foto-card.has-foto .btn-remove-foto { display: flex; align-items: center; justify-content: center; }
+    
+    .toast { position: fixed; bottom: 30px; right: 30px; padding: 16px 28px; border-radius: 12px; color: white; font-weight: 600; z-index: 2000; box-shadow: 0 0 30px rgba(0, 212, 255, 0.4); animation: slideIn 0.3s ease; max-width: 400px; }
+    @keyframes slideIn { from { opacity: 0; transform: translateX(100px); } to { opacity: 1; transform: translateX(0); } }
+    .toast-success { background: linear-gradient(135deg, #00FF88, #00D4FF); color: #0A0E17; }
+    .toast-error { background: linear-gradient(135deg, #FF0040, #FF00E5); }
+    
+    .loading-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.9); z-index: 3000; justify-content: center; align-items: center; flex-direction: column; }
+    .loading-overlay.active { display: flex; }
+    .spinner { width: 50px; height: 50px; border: 4px solid #1A1A2E; border-top: 4px solid #00D4FF; border-radius: 50%; animation: spin 0.8s linear infinite; margin-bottom: 15px; box-shadow: 0 0 30px rgba(0, 212, 255, 0.5); }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    
+    #previewOverlay { z-index: 1200; }
+    .preview-modal { max-width: 95%; width: 95%; height: 90vh; padding: 0; display: flex; flex-direction: column; }
+    .preview-header { background: linear-gradient(135deg, #7B2FF7 0%, #FF00E5 50%, #00D4FF 100%); color: white; padding: 15px 20px; border-radius: 20px 20px 0 0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+    .preview-header h2 { font-size: 18px; color: white; text-shadow: 0 0 15px rgba(255,255,255,0.5); }
+    .preview-frame { flex: 1; border: none; width: 100%; background: #0A0E17; }
+    
+    .fab-admin {
+      position: fixed; bottom: 20px; right: 20px;
+      width: 60px; height: 60px; border-radius: 50%;
+      background: linear-gradient(135deg, #7B2FF7 0%, #FF00E5 50%, #00D4FF 100%);
+      color: white; display: flex; align-items: center; justify-content: center;
+      font-size: 26px; text-decoration: none;
+      box-shadow: 0 0 30px rgba(123, 47, 247, 0.6), 0 0 60px rgba(0, 212, 255, 0.4);
+      z-index: 99999; border: none; cursor: pointer;
+      transition: transform 0.25s ease, box-shadow 0.25s ease;
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0% { box-shadow: 0 0 30px rgba(123, 47, 247, 0.6), 0 0 60px rgba(0, 212, 255, 0.4); }
+      50% { box-shadow: 0 0 50px rgba(123, 47, 247, 0.9), 0 0 80px rgba(0, 212, 255, 0.6); }
+      100% { box-shadow: 0 0 30px rgba(123, 47, 247, 0.6), 0 0 60px rgba(0, 212, 255, 0.4); }
+    }
+    .fab-admin:hover { transform: translateY(-4px) scale(1.05); }
+    .fab-admin:active { transform: translateY(0) scale(0.97); }
+    .fab-admin .fab-tooltip {
+      position: absolute; right: 70px; top: 50%; transform: translateY(-50%);
+      background: #222; color: white; padding: 6px 12px; border-radius: 8px;
+      font-size: 13px; white-space: nowrap; opacity: 0; pointer-events: none;
+      transition: opacity 0.2s ease;
+    }
+    .fab-admin:hover .fab-tooltip { opacity: 1; }
+    
+    /* ===== SECCIÓN VIDEO EN FORMULARIO ===== */
+    .video-gestion-section { 
+      background: #0D1117; border: 1px solid #7B2FF7; border-radius: 12px; 
+      padding: 16px; margin-bottom: 15px; text-align: center;
+    }
+    .video-gestion-btn {
+      width: 100%; padding: 14px 20px;
+      background: linear-gradient(135deg, #7B2FF7 0%, #FF00E5 50%, #00D4FF 100%);
+      color: white; border: none; border-radius: 10px;
+      font-weight: 700; font-size: 15px; cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 0 20px rgba(123, 47, 247, 0.4);
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+    }
+    .video-gestion-btn:hover { transform: translateY(-2px); box-shadow: 0 0 35px rgba(0, 212, 255, 0.5); }
+    .video-gestion-btn:active { transform: translateY(0); }
+    .video-status-indicator {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: 12px; font-weight: 600; margin-top: 8px;
+      padding: 4px 12px; border-radius: 20px;
+    }
+    .video-status-indicator.has-video { background: rgba(0, 255, 136, 0.15); color: #00FF88; }
+    .video-status-indicator.no-video { background: rgba(255, 179, 0, 0.15); color: #FFB300; }
+    
+    /* ===== MODAL DE DETALLE ===== */
+    .detail-modal { max-width: 640px; padding: 0; overflow: hidden; }
+    .detail-close { position: absolute; top: 14px; right: 14px; background: rgba(255,255,255,0.15); border: none; font-size: 26px; width: 38px; height: 38px; border-radius: 50%; cursor: pointer; color: white; z-index: 5; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(5px); }
+    .detail-banner-wrap { width: 100%; padding: 20px 20px 0; }
+    .detail-banner { width: 40%; min-width: 260px; border-radius: 16px; overflow: hidden; background: linear-gradient(135deg, #7B2FF7 0%, #FF00E5 50%, #00D4FF 100%); background-size: cover; background-position: center; box-shadow: 0 0 40px rgba(123, 47, 247, 0.5); }
+    .detail-banner-inner { display: flex; align-items: center; gap: 12px; padding: 14px; background: linear-gradient(135deg, rgba(0,0,0,0.4), rgba(0,0,0,0.6)); min-height: 90px; }
+    .detail-logo { width: 56px; height: 56px; border-radius: 50%; object-fit: cover; border: 3px solid #00D4FF; flex-shrink: 0; box-shadow: 0 0 20px rgba(0, 212, 255, 0.5); }
+    .detail-logo-placeholder { width: 56px; height: 56px; border-radius: 50%; background: rgba(255,255,255,0.15); border: 3px solid #00D4FF; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 22px; }
+    .detail-banner-text h2 { color: white; font-size: 17px; font-weight: 700; text-shadow: 0 0 15px rgba(255,255,255,0.5); line-height: 1.25; }
+    .detail-banner-text p { color: rgba(255,255,255,0.9); font-size: 12px; margin-top: 3px; text-shadow: 0 1px 4px rgba(0,0,0,0.4); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .detail-slogan { padding: 14px 20px 0; font-size: 14px; font-style: italic; color: #00D4FF; font-weight: 600; text-shadow: 0 0 10px rgba(0, 212, 255, 0.5); }
+    .detail-gallery { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; padding: 16px 20px 0; }
+    .detail-gallery img { width: 100%; height: 70px; object-fit: cover; border-radius: 10px; cursor: pointer; border: 2px solid #7B2FF7; }
+    .detail-contact-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 18px 20px 0; }
+    .detail-contact-item { background: #0D1117; border-radius: 10px; padding: 10px 12px; border-left: 3px solid #00D4FF; }
+    .detail-contact-item .dc-label { font-size: 10px; text-transform: uppercase; color: #888; font-weight: 700; }
+    .detail-contact-item .dc-valor { font-size: 13px; color: #E0E0E0; margin-top: 2px; word-break: break-word; }
+    .detail-actions { display: flex; flex-wrap: wrap; gap: 10px; padding: 20px; }
+    .detail-actions .btn { flex: 1; min-width: 130px; justify-content: center; }
+    
+    /* ===== POPUP MAPA ===== */
+    .map-popup-modal { max-width: 480px; padding: 20px; }
+    #detailMap { height: 280px; border-radius: 12px; margin-top: 10px; border: 2px solid #7B2FF7; }
+
+    /* ===== MODO CLIENTE ===== */
+    body.modo-cliente-edicion { padding: 0; background: #0A0E17; }
+    .modo-cliente-edicion #modalOverlay { padding: 0; align-items: stretch; }
+    .modo-cliente-edicion #modalOverlay .modal {
+      max-width: 100%; width: 100%; min-height: 100vh;
+      margin: 0; border-radius: 0; box-shadow: none; animation: none;
+      padding: 18px 16px 100px;
+    }
+    .modo-cliente-edicion .form-row { grid-template-columns: 1fr; }
+    .modo-cliente-edicion .form-group input,
+    .modo-cliente-edicion .form-group textarea,
+    .modo-cliente-edicion .form-group select {
+      font-size: 16px; padding: 14px; min-height: 48px;
+    }
+    .modo-cliente-edicion .form-section { padding: 16px; }
+    .modo-cliente-edicion .fotos-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .modo-cliente-edicion #map { height: 260px; }
+    .modo-cliente-edicion .modal-header h2 { font-size: 17px; }
+    .modo-cliente-edicion .btn-abrir-mapa { width: 100%; justify-content: center; }
+
+    .modo-cliente-edicion #formBotones {
+      position: static !important;
+      display: flex !important;
+      flex-direction: column !important;
+      gap: 12px !important;
+      margin-top: 30px !important;
+      padding: 16px 0 20px !important;
+      background: transparent !important;
+      border-top: 2px solid #2A2A4A !important;
+      box-shadow: none !important;
+    }
+    .modo-cliente-edicion #formBotones .btn {
+      width: 100% !important;
+      min-height: 54px !important;
+      font-size: 17px !important;
+      justify-content: center !important;
+    }
+    .modo-cliente-edicion #btnGuardar {
+      background: #00FF88 !important;
+      color: #0A0E17 !important;
+    }
+    .modo-cliente-edicion #formBotones .btn-warning {
+      display: none !important;
+    }
+    @media (max-width: 768px) {
+      .modo-cliente-edicion #modalOverlay .modal { padding: 18px 16px 90px; }
+    }
+    
+    @media (max-width: 768px) {
+      body { padding: 10px; }
+      .header { flex-direction: column; text-align: center; padding: 16px 18px; }
+      .header h1 { font-size: 21px; }
+      .header-actions { width: 100%; }
+      .header-actions .btn { flex: 1; justify-content: center; }
+      .btn { padding: 13px 20px; font-size: 15px; min-height: 46px; }
+      .btn-sm { padding: 10px 14px; font-size: 13px; min-height: 40px; }
+      .toolbar { flex-direction: column; align-items: stretch; }
+      .search-box { max-width: none; }
+      .search-box input { padding: 13px 16px; min-height: 46px; }
+      .form-row { grid-template-columns: 1fr; }
+      .fotos-grid { grid-template-columns: repeat(2, 1fr); }
+      .modal { padding: 18px; margin: 8px; }
+      .preview-modal { max-width: 100%; height: 100vh; border-radius: 0; }
+      .preview-header { border-radius: 0; }
+      .form-group input, .form-group textarea, .form-group select { padding: 12px 14px; min-height: 44px; }
+      .fab-admin { bottom: 16px; right: 16px; width: 54px; height: 54px; font-size: 22px; }
+      .fab-admin .fab-tooltip { display: none; }
+      .detail-banner { width: 85%; min-width: 0; }
+      .detail-gallery { grid-template-columns: repeat(2, 1fr); }
+      .detail-contact-grid { grid-template-columns: 1fr; }
+      .detail-actions .btn { min-width: 100%; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="spinner"></div>
+  <p style="color:#00D4FF;font-weight:600;">Procesando...</p>
+</div>
+
+<div class="container">
+  <div class="header">
+    <h1>🤖 I.A. Cambaceo de Negocios</h1>
+    <div class="header-actions">
+      <button class="btn btn-outline" onclick="cargarNegocios()">🔄 Actualizar</button>
+      <button class="btn btn-success" onclick="abrirModalNuevo()">➕ Nuevo Negocio</button>
+    </div>
+  </div>
+
+  <div class="toolbar">
+    <div class="search-box">
+      <input type="text" id="searchInput" placeholder="🔍 Buscar..." oninput="filtrarNegocios()">
+    </div>
+        <select id="filtroEstado" onchange="renderizarLista()" style="padding:12px 14px;border:2px solid #7B2FF7;border-radius:10px;background:#1A1A2E;color:#E0E0E0;font-size:14px;">
+      <option value="todos">📋 Estado: todos</option>
+      <option value="activos">✅ Activos</option>
+      <option value="inactivos">❌ Inactivos</option>
+    </select>
+    <select id="filtroCandado" onchange="renderizarLista()" style="padding:12px 14px;border:2px solid #7B2FF7;border-radius:10px;background:#1A1A2E;color:#E0E0E0;font-size:14px;">
+      <option value="todos">🔒 Candado: todos</option>
+      <option value="abiertos">🟢 Abiertos</option>
+      <option value="cerrados">🔴 Cerrados</option>
+    </select>
+    <span id="contador" style="font-size:14px;color:#888;"></span>
+  </div>
+
+  <div class="sheet-list">
+    <div class="sheet-header-row">
+      <span>ID</span><span>Nombre</span><span>Descripción</span><span>Logo</span><span>Banner</span><span>Video</span>
+    </div>
+    <div id="negociosListBody">
+      <div class="sheet-empty-state">Cargando...</div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de formulario -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="modalTitle">Nuevo Negocio</h2>
+      <button class="modal-close" onclick="cerrarModal()">&times;</button>
+    </div>
+    
+    <!-- CAPSULA WHATSAPP -->
+    <div style="background:#0D1117;border:1px solid #7B2FF7;border-radius:10px;padding:16px;margin-bottom:20px;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+            <span style="font-size:20px;">🤖</span>
+            <span style="font-weight:700;font-size:14px;color:#00D4FF;">Datos Cliente - I.A. Formulario</span>
+        </div>
+        <textarea id="capsulaInput" placeholder="Pega aquí el texto que recibiste por WhatsApp..." style="width:100%;padding:10px;border:2px solid #2A2A4A;border-radius:8px;font-family:monospace;font-size:13px;resize:vertical;min-height:80px;background:#1A1A2E;color:#E0E0E0;"></textarea>
+        <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap;">
+            <button type="button" onclick="procesarCapsulaPegada()" style="padding:8px 20px;background:#7B2FF7;color:white;border:none;border-radius:6px;cursor:pointer;font-weight:600;font-size:13px;box-shadow:0 0 15px rgba(123,47,247,0.4);">
+                🔄 Procesar Datos
+            </button>
+            <button type="button" onclick="limpiarCapsulaInput()" style="padding:8px 16px;background:#555;color:white;border:none;border-radius:6px;cursor:pointer;font-size:13px;">
+                ✖ Limpiar
+            </button>
+        </div>
+        <div id="capsulaStatus" style="margin-top:8px;font-size:12px;color:#888;"></div>
+    </div>
+    
+    <form id="formNegocio" onsubmit="guardarNegocio(event)">
+      <input type="hidden" id="editId" value="">
+      
+      <div class="form-section">
+        <h3>📋 Datos Básicos</h3>
+        <div class="form-group"><label>Nombre *</label><input type="text" id="nombre" required></div>
+        <div class="form-group"><label>Slogan</label><input type="text" id="slogan"></div>
+        <div class="form-group"><label>Descripción</label><textarea id="descripcion"></textarea></div>
+        <div class="form-group"><label>Misión</label><textarea id="mision" placeholder="¿Cuál es la misión de tu negocio?"></textarea></div>
+        <div class="form-group"><label>Mensaje emergente</label><input type="text" id="mensajeEmergente" placeholder="Ej. ¡Envío gratis en compras mayores a $500!"></div>
+      </div>
+      
+      <div class="form-section">
+        <h3>📍 Ubicación (OBLIGATORIO)</h3>
+        <div class="map-section">
+          <div id="map"></div>
+          <div class="map-status pending" id="mapStatus">⚠️ Haz clic en el mapa para seleccionar ubicación</div>
+          <button type="button" class="btn-abrir-mapa" onclick="abrirMapaPantallaCompleta()" style="margin-top:10px;">
+            🗺️ Abrir mapa en pantalla completa
+          </button>
+          <div class="form-group" style="margin-top:14px;">
+            <label>📎 O pega un link de Google Maps</label>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+              <input type="text" id="linkGoogleMaps" placeholder="https://www.google.com/maps/..." style="flex:1;min-width:200px;">
+              <button type="button" class="btn btn-info btn-sm" onclick="usarLinkGoogleMaps()" style="white-space:nowrap;">📍 Usar link</button>
+            </div>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Referencia</label><input type="text" id="ubicacion"></div>
+          <div class="form-group"><label>Dirección</label><input type="text" id="direccion"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Latitud</label><input type="text" id="latitud" readonly></div>
+          <div class="form-group"><label>Longitud</label><input type="text" id="longitud" readonly></div>
+        </div>
+      </div>
+      
+      <div class="form-section">
+        <h3>📞 Contacto</h3>
+        <div class="form-row">
+          <div class="form-group"><label>Teléfono</label><input type="text" id="telefono"></div>
+          <div class="form-group"><label>WhatsApp</label><input type="text" id="whatsapp"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Correo</label><input type="email" id="correo"></div>
+          <div class="form-group"><label>Horario</label><input type="text" id="horario"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Facebook URL</label><input type="text" id="urlFacebook"></div>
+
+          <!-- ====== NEGOCIO EXTERNO ====== -->
+          <div class="form-group">
+            <label>URL externa (Nombre & URL)</label>
+            <input type="text" id="Urlexterna" 
+                   placeholder="Proveedor mariscos & https://ejemplo.com"
+                   style="width: 100%; padding: 10px; border: 2px solid #2A2A4A; border-radius: 8px; font-size: 14px; background: #1A1A2E; color: #E0E0E0;">
+            <small style="color:#888; display:block; margin-top:4px;">Escribe: Nombre del negocio & URL</small>
+          </div>
+          <div class="form-group"><label>Rol</label><select id="rol"><option value="Admin">Admin</option><option value="Usuario">Usuario</option><option value="Supervisor">Supervisor</option></select></div>
+        </div>
+        <div class="form-group"><label>Estado</label><select id="activo"><option value="true">✅ Activo</option><option value="false">❌ Inactivo</option></select></div>
+                            <div class="form-group"><label>🔒 Candado de la página</label><select id="candado" onchange="candadoCambio()"><option value="abierto">🟢 Abierto</option><option value="cerrado">🔴 Cerrado (en mantenimiento)</option></select></div>
+              <div class="form-group" id="candadoAlertaGrupo" style="display:none"><label>⏱️ ¿Requiere tiempo de alerta antes de cerrar?</label><select id="candadoAlerta"><option value="0">No, cerrar de inmediato (emergencia)</option><option value="5">Sí, avisar 5 minutos antes</option><option value="10">Sí, avisar 10 minutos antes</option><option value="15">Sí, avisar 15 minutos antes</option></select></div>
+              </div>
+      
+      <div class="form-section">
+        <h3>📸 Fotos (hasta 4)</h3>
+        <div class="fotos-grid" id="fotosGrid"></div>
+        <small style="color:#888;">Toca cada cuadro para tomar foto o seleccionar de galería</small>
+      </div>
+
+      <!-- ===== SECCIÓN VIDEO - GESTIÓN INDEPENDIENTE ===== -->
+      <div class="form-section">
+        <h3>🎥 Video del Negocio</h3>
+        <div class="video-gestion-section">
+          <button type="button" class="video-gestion-btn" onclick="abrirGestionVideo()">
+            🎬 Gestionar Video
+          </button>
+          <div id="videoPreviewContainer" style="display:none; margin-top:15px; text-align:center;"></div>
+          <div id="videoStatusIndicator" class="video-status-indicator no-video" style="margin-top:10px;">
+            ⚠️ Sin video configurado
+          </div>
+        </div>
+        <input type="hidden" id="video" value="">
+      </div>
+
+      <div class="form-section">
+        <h3>🎨 Logo y Banner</h3>
+        <div class="form-row">
+          <div class="form-group">
+            <label>🏷️ Logo</label>
+            <button type="button" class="btn btn-primary" style="width:100%;justify-content:center;" onclick="seleccionarImagenLogoBanner('logo','logoPreview')">📷 Elegir logo</button>
+            <input type="hidden" id="logoInput" value="">
+            <input type="hidden" id="logo" value="">
+            <img id="logoPreview" style="max-width:120px; max-height:120px; margin-top:10px; display:none; border-radius:10px; border:2px solid #00D4FF;">
+            <div id="logoKB"></div>
+          </div>
+          <div class="form-group">
+            <label>🖼️ Banner</label>
+            <button type="button" class="btn btn-primary" style="width:100%;justify-content:center;" onclick="seleccionarImagenLogoBanner('banner','bannerPreview')">📷 Elegir banner</button>
+            <input type="hidden" id="bannerInput" value="">
+            <input type="hidden" id="banner" value="">
+            <img id="bannerPreview" style="max-width:250px; max-height:100px; margin-top:10px; display:none; border-radius:10px; border:2px solid #FF00E5;">
+            <div id="bannerKB"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <h3>👤 Datos del Dueño</h3>
+        <div class="form-group"><label>Mensaje del dueño</label><input type="text" id="duenoMensaje" placeholder="Mensaje que verá el cliente"></div>
+        <div class="form-row">
+          <div class="form-group"><label>Teléfono del dueño</label><input type="text" id="duenoTelefono"></div>
+          <div class="form-group"><label>Correo del dueño</label><input type="email" id="duenoCorreo"></div>
+        </div>
+      </div>
+      
+      <div id="formBotones" style="display:flex;gap:12px;justify-content:flex-end;margin-top:20px;padding-top:20px;border-top:2px solid #2A2A4A;">
+        <button type="button" class="btn btn-warning" onclick="cerrarModal()">Cancelar</button>
+        <button type="submit" class="btn btn-primary" id="btnGuardar">💾 Guardar Negocio</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal de Preview -->
+<div class="modal-overlay" id="previewOverlay">
+  <div class="modal preview-modal">
+    <div class="preview-header">
+      <h2>🌐 Vista Previa - <span id="previewTitle">Landing Page</span></h2>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-outline btn-sm" onclick="descargarHTML()">⬇️ Descargar</button>
+        <button class="btn btn-sm btn-primary" onclick="publicarEnGitHub()" id="btnPublicarGitHub">🚀 Publicar</button>
+        <button class="modal-close" onclick="cerrarPreview()" style="color:white;">&times;</button>
+      </div>
+    </div>
+    <iframe id="previewFrame" class="preview-frame" sandbox="allow-scripts"></iframe>
+  </div>
+</div>
+  
+<!-- Modal de Detalle -->
+<div class="modal-overlay" id="detailOverlay">
+  <div class="modal detail-modal" style="position:relative;">
+    <button class="detail-close" onclick="cerrarDetalle()">&times;</button>
+    <div class="detail-banner-wrap">
+      <div class="detail-banner" id="detailBanner">
+        <div class="detail-banner-inner">
+          <img class="detail-logo" id="detailLogoImg" style="display:none;">
+          <div class="detail-logo-placeholder" id="detailLogoPlaceholder">🏪</div>
+          <div class="detail-banner-text">
+            <h2 id="detailNombre"></h2>
+            <p id="detailDescripcion"></p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="detail-slogan" id="detailSlogan"></p>
+    <div class="detail-gallery" id="detailGallery"></div>
+    <div class="detail-contact-grid" id="detailContact"></div>
+    <div class="detail-actions">
+      <button class="btn btn-info" id="detailBtnMapa">📍 Cómo llegar</button>
+      <button class="btn btn-info" id="detailBtnVideo" style="display:none;">🎬 Ver Video</button>
+      <button class="btn btn-outline" style="border-color:#00D4FF;color:#00D4FF;" id="detailBtnLanding">🌐 Ver Landing</button>
+      <button class="btn btn-primary" id="detailBtnEditar">✏️ Editar</button>
+      <button class="btn btn-warning" id="detailBtnCompartirEdicion">🔗 Compartir</button>
+      <button class="btn btn-danger" id="detailBtnEliminar">🗑️ Eliminar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Popup Mapa -->
+<div class="modal-overlay" id="mapPopupOverlay">
+  <div class="modal map-popup-modal">
+    <div class="modal-header">
+      <h2>📍 Ubicación</h2>
+      <button class="modal-close" onclick="cerrarMapaPopup()">&times;</button>
+    </div>
+    <div id="detailMap"></div>
+    <p style="margin-top:10px;font-size:13px;color:#AAA;" id="detailMapDireccion"></p>
+    <a href="#" target="_blank" class="btn btn-success" style="width:100%;justify-content:center;margin-top:14px;" id="detailBtnComoLlegar">🧭 Cómo llegar</a>
+  </div>
+</div>
+
+<!-- Iframe y form ocultos -->
+<iframe name="hiddenSaveFrame" style="display:none;"></iframe>
+<form id="hiddenSaveForm" method="POST" target="hiddenSaveFrame" style="display:none;">
+  <input type="hidden" name="action" id="hf_action">
+  <input type="hidden" name="id" id="hf_id">
+  <input type="hidden" name="datos" id="hf_datos">
+</form>
+
+<!-- Botón flotante -->
+<a href="https://search.google.com/search-console?resource_id=https%3A%2F%2Fproyectosolaronline.github.io%2Fcasitas-de-mascotas-armando%2F" target="_blank" rel="noopener" class="fab-admin" aria-label="Abrir panel">⚡
+  <span class="fab-tooltip">Panel I.A.</span>
+</a>
+
+<script>
+// ============================================================
+// CONFIGURACIÓN
+// ============================================================
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzC0XThmPutT8VjPMyYiRrvVIREMr3LfHeRIYsFFJ8wT_H-3vmKcaAuqbz337BahBmPeg/exec';
+const GITHUB_PUBLISH_URL = 'https://script.google.com/macros/s/AKfycbwh4EBEepNZrWVibk7L4jq3KZHx9ly_tFsF7OjFDInt6GS-gjdiQcWVrd83tzLNp-aKSw/exec';
+const VIDEO_PAGE_URL = 'video.html';
+
+// ===== ACCESO: solo si viene de alguno de los 2 repositorios base =====
+const URLS_BASE = [
+  'https://proyectosolaronline.github.io/Directorio-negocios/',
+  'https://proyectosolaronline.github.io/NegociosHtml/'
+];
+const URL_BASE = URLS_BASE[0];   // respaldo para regresar si no hay referrer
+const ES_MODO_CLIENTE = new URLSearchParams(location.search).has('editarCliente');
+const REFERRER = document.referrer || '';
+const ACCESO_OK = URLS_BASE.some(function (b) { return REFERRER.indexOf(b) === 0; }) || ES_MODO_CLIENTE;
+
+if (!ACCESO_OK) {
+  document.documentElement.style.display = 'none';   // no deja ver nada mientras redirige
+  location.replace('https://www.google.com/');
+}
+// ===== CANDADO: ¿REQUIERE TIEMPO DE ALERTA? =====
+function esNegocioDelivery() {
+  return /&\s*delivery/i.test(document.getElementById('nombre').value);
+}
+function candadoCambio() {
+  var cerrado = document.getElementById('candado').value === 'cerrado';
+  var pregunta = cerrado && esNegocioDelivery();
+  document.getElementById('candadoAlertaGrupo').style.display = pregunta ? '' : 'none';
+  if (!pregunta) document.getElementById('candadoAlerta').value = '0';
+}
+  
+function valorCandado() {
+  var c = document.getElementById('candado').value;
+  var min = parseInt(document.getElementById('candadoAlerta').value, 10) || 0;
+  return (c === 'cerrado' && min > 0 && esNegocioDelivery()) ? 'aviso:' + min : c;
+}
+  function cargarCandadoEnForm(valor) {
+  var v = String(valor || '').toLowerCase().trim();
+  var m = v.match(/^aviso[: ]?([0-9]+)$/);
+  var mins = m ? m[1] : '0';
+  var sel = document.getElementById('candadoAlerta');
+  if (!sel.querySelector('option[value="' + mins + '"]')) {
+    var op = document.createElement('option');
+    op.value = mins;
+    op.textContent = 'Sí, avisar ' + mins + ' minutos antes';
+    sel.appendChild(op);
+  }
+  document.getElementById('candado').value = (v === 'cerrado' || m) ? 'cerrado' : 'abierto';
+  sel.value = mins;
+  candadoCambio();
+}
+document.getElementById('formNegocio').addEventListener('reset', function () { setTimeout(candadoCambio, 0); });
+document.getElementById('nombre').addEventListener('input', candadoCambio);
+function getAdminToken() {
+  try { sessionStorage.removeItem('adm_tk'); localStorage.removeItem('adm_tk'); } catch (e) {}
+    const t = prompt('Clave de administrador:');
+  if (t === null) return null;
+  const limpio = t.trim();
+  return limpio ? limpio : null;
+}
+function msgErrorEnvio(e) {
+  return (e && e.message === 'CANCELADO') ? '🔒 Cancelado: no se envió nada' : '❌ Error de conexión';
+  
+}
+// ============================================================
+// VARIABLES GLOBALES
+// ============================================================
+let negocios = [];
+let map = null;
+let marker = null;
+let ubicacionSeleccionada = false;
+let ubicacionPrevia = null;   // respaldo de la ubicación confirmada mientras hay una nueva pendiente
+let direccionPendiente = '';  // dirección de la ubicación pendiente (no se escribe al form hasta confirmar)
+let fotosSeleccionadas = [null, null, null, null];
+let currentPreviewHTML = '';
+let currentPreviewNombre = '';
+let currentPreviewId = '';
+let videoPollInterval = null;
+
+// ============================================================
+// INICIALIZACIÓN
+// ============================================================
+document.addEventListener('DOMContentLoaded', function() {
+  if (!ACCESO_OK) return;   // sin acceso: no se inicializa nada
+  console.log('🚀 App iniciada');
+  inicializarMapa();
+  generarSlotsFotos();
+  const esModoCliente = verificarModoClienteEdicion();
+  if (!esModoCliente) cargarNegocios();
+});
+
+// ============================================================
+// API CALLS
+// ============================================================
+function callAPI(action, params = {}) {
+  return new Promise((resolve, reject) => {
+    const callbackName = 'cb_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+    window[callbackName] = function(result) {
+      delete window[callbackName];
+      document.body.removeChild(script);
+      resolve(result);
+    };
+    let url = `${APPS_SCRIPT_URL}?action=${action}&callback=${callbackName}`;
+    for (const key in params) {
+      url += `&${key}=${encodeURIComponent(typeof params[key] === 'object' ? JSON.stringify(params[key]) : params[key])}`;
+    }
+    const script = document.createElement('script');
+    script.src = url;
+    script.onerror = function() {
+      delete window[callbackName];
+      document.body.removeChild(script);
+      reject(new Error('Error de conexión'));
+    };
+    document.body.appendChild(script);
+  });
+}
+
+// ============================================================
+// GESTIÓN DE VIDEO - ABRIR video.html
+// ============================================================
+function abrirGestionVideo() {
+  const editId = document.getElementById('editId').value;
+  const nombre = document.getElementById('nombre').value.trim();
+  
+  if (!editId) {
+    showToast('⚠️ Primero guarda el negocio para gestionar su video', 'error');
+    return;
+  }
+  
+  const params = new URLSearchParams({
+    id: editId,
+    name: nombre || 'Negocio',
+    plan: 'Standard'
+  });
+  
+  const videoUrl = VIDEO_PAGE_URL + '?' + params.toString();
+  window.open(videoUrl, '_blank');
+  showToast('🎬 Abriendo gestor de video...', 'success');
+}
+
+function actualizarIndicadorVideo() {
+  const videoUrl = document.getElementById('video').value.trim();
+  const indicador = document.getElementById('videoStatusIndicator');
+  const previewContainer = document.getElementById('videoPreviewContainer');
+  
+  if (videoUrl) {
+    indicador.className = 'video-status-indicator has-video';
+    indicador.textContent = '✅ Video configurado';
+    
+    let embedUrl = videoUrl;
+    if (videoUrl.includes('/d/') && !videoUrl.includes('/preview')) {
+      const fid = videoUrl.match(/\/d\/([a-zA-Z0-9_-]+)/);
+      if (fid) embedUrl = 'https://drive.google.com/file/d/' + fid[1] + '/preview';
+    } else if (videoUrl.includes('youtube.com') || videoUrl.includes('youtu.be')) {
+      const yid = videoUrl.match(/(?:v=|youtu\.be\/|\/shorts\/|\/embed\/)([a-zA-Z0-9_-]{11})/);
+      if (yid && yid[1]) embedUrl = 'https://www.youtube.com/embed/' + yid[1] + '?rel=0';
+    }
+    
+    previewContainer.innerHTML = `
+      <div style="position:relative;padding-bottom:56.25%;height:0;border-radius:10px;overflow:hidden;border:2px solid #7B2FF7;background:#000;">
+        <iframe src="${embedUrl}" allow="autoplay; fullscreen" allowfullscreen style="position:absolute;top:0;left:0;width:100%;height:100%;border:0;"></iframe>
+      </div>
+      <small style="color:#888;display:block;margin-top:6px;">Vista previa del video</small>
+    `;
+    previewContainer.style.display = 'block';
+  } else {
+    indicador.className = 'video-status-indicator no-video';
+    indicador.textContent = '⚠️ Sin video configurado';
+    previewContainer.innerHTML = '';
+    previewContainer.style.display = 'none';
+  }
+}
+
+function iniciarVerificacionVideo(id) {
+  detenerVerificacionVideo();
+  videoPollInterval = setInterval(async function() {
+    if (!document.getElementById('modalOverlay').classList.contains('active')) { detenerVerificacionVideo(); return; }
+    const idActual = document.getElementById('editId').value;
+    if (!idActual || idActual !== id) { detenerVerificacionVideo(); return; }
+    try {
+      const result = await callAPI('video.get', { storeId: id });
+      if (result && result.ok) {
+        const actual = document.getElementById('video').value;
+        if ((result.videoUrl || '') !== actual) {
+          document.getElementById('video').value = result.videoUrl || '';
+          actualizarIndicadorVideo();
+        }
+      }
+    } catch(e) {}
+  }, 4000);
+}
+
+function detenerVerificacionVideo() {
+  if (videoPollInterval) { clearInterval(videoPollInterval); videoPollInterval = null; }
+}
+
+// ============================================================
+// CARGAR NEGOCIOS
+// ============================================================
+async function cargarNegocios() {
+  console.log('📡 Cargando negocios...');
+   const tokenAdmin = getAdminToken();
+  if (tokenAdmin === null) { showToast('🔒 Clave cancelada: no se cargaron los negocios', 'error'); return; }
+  showLoading();
+  try {
+        const result = await callAPI('obtenerNegocios', { token: tokenAdmin });    hideLoading();
+    
+    if (result.success) {
+      negocios = result.negocios || [];
+      console.log(`✅ ${negocios.length} negocios cargados`);
+      renderizarLista();
+    } else {
+      showToast('Error: ' + result.error, 'error');
+    }
+  } catch(e) {
+    hideLoading();
+    showToast('Error de conexión', 'error');
+  }
+}
+
+function showLoading() { document.getElementById('loadingOverlay').classList.add('active'); }
+function hideLoading() { document.getElementById('loadingOverlay').classList.remove('active'); }
+
+// ============================================================
+// RENDERIZAR LISTA
+// ============================================================
+function esActivo(n) {
+  const v = String(n.activo == null ? 'true' : n.activo).toLowerCase().trim();
+  return !(v === 'false' || v === '0' || v === 'no' || v === 'inactivo');
+}
+function esCerrado(n) {
+  return String(n.candado || '').toLowerCase().trim() === 'cerrado';
+}
+  
+  function renderizarLista() {
+  const body = document.getElementById('negociosListBody');
+  const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+    const fEstado = (document.getElementById('filtroEstado') || {}).value || 'todos';
+  const fCandado = (document.getElementById('filtroCandado') || {}).value || 'todos';
+  const filtrados = negocios.filter(n => {
+    const coincide = (n.nombre||'').toLowerCase().includes(searchTerm) ||
+      (n.id||'').toLowerCase().includes(searchTerm) ||
+      (n.direccion||'').toLowerCase().includes(searchTerm);
+    if (!coincide) return false;
+    if (fEstado === 'activos' && !esActivo(n)) return false;
+    if (fEstado === 'inactivos' && esActivo(n)) return false;
+    if (fCandado === 'abiertos' && esCerrado(n)) return false;
+    if (fCandado === 'cerrados' && !esCerrado(n)) return false;
+    return true;
+  });
+  
+  document.getElementById('contador').textContent = `Mostrando ${filtrados.length} de ${negocios.length}`;
+  if (filtrados.length === 0) {
+    
+    body.innerHTML = '<div class="sheet-empty-state">📭 No se encontraron negocios</div>';
+    return;
+  }
+  body.innerHTML = filtrados.map(n => {
+    const tieneVideo = n.video && n.video.trim() !== '';
+    return `
+    <div class="sheet-row" onclick="abrirDetalle('${n.id}')">
+      <span class="sheet-cell-id">${n.id||'-'}</span>
+      <span class="sheet-cell-nombre">${n.nombre||'-'}</span>
+      <span class="sheet-cell-desc">${n.descripcion||''}</span>
+      ${n.logo ? `<img src="${n.logo}" class="sheet-mini-logo" onerror="this.style.display='none'">` : `<span class="sheet-mini-empty">🏪</span>`}
+      ${n.banner ? `<img src="${n.banner}" class="sheet-mini-banner" onerror="this.style.display='none'">` : `<span class="sheet-mini-empty">🖼️</span>`}
+      <button class="sheet-video-btn ${tieneVideo ? 'has-video' : ''}" onclick="event.stopPropagation();abrirGestionVideoDesdeLista('${n.id}','${(n.nombre||'').replace(/'/g,"\\'")}')">
+        ${tieneVideo ? '✅ Video' : '🎬 Video'}
+      </button>
+    </div>`;
+  }).join('');
+}
+
+function filtrarNegocios() { renderizarLista(); }
+
+// ============================================================
+// ABRIR GESTIÓN DE VIDEO DESDE LISTA
+// ============================================================
+function abrirGestionVideoDesdeLista(id, nombre) {
+  const params = new URLSearchParams({
+    id: id,
+    name: nombre || 'Negocio',
+    plan: 'Standard'
+  });
+  window.open(VIDEO_PAGE_URL + '?' + params.toString(), '_blank');
+}
+
+// ============================================================
+// MAPA
+// ============================================================
+function inicializarMapa() {
+  map = L.map('map', {
+    center: [20.5888, -100.3899],
+    zoom: 13,
+    minZoom: 4,
+    maxZoom: 19,
+    maxBounds: [[-90, -180], [90, 180]],
+    maxBoundsViscosity: 1.0,
+    zoomControl: false
+  });
+  
+  L.control.zoom({ position: 'topright' }).addTo(map);
+  
+  var osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap',
+    maxZoom: 19
+  });
+  
+  var satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+    attribution: '© Esri',
+    maxZoom: 19
+  });
+  
+  osmLayer.addTo(map);
+  L.control.layers({
+    '🌍 Calle': osmLayer,
+    '🛰️ Satélite': satelliteLayer
+  }).addTo(map);
+  
+  var gpsControl = L.Control.extend({
+    options: { position: 'topleft' },
+    onAdd: function(map) {
+      var container = L.DomUtil.create('div', 'leaflet-bar leaflet-control');
+      container.innerHTML = '<button style="width:34px;height:34px;border:none;background:white;cursor:pointer;font-size:18px;border-radius:4px;box-shadow:0 1px 5px rgba(0,0,0,0.65);" title="Obtener mi ubicación">📍</button>';
+      container.onclick = function() {
+        if (navigator.geolocation) {
+          navigator.geolocation.getCurrentPosition(
+            function(pos) {
+              var lat = pos.coords.latitude;
+              var lng = pos.coords.longitude;
+              map.setView([lat, lng], 16);
+              colocarMarcador(lat, lng);
+              showToast('✅ Ubicación obtenida', 'success');
+            },
+            function() {
+              showToast('⚠️ No se pudo obtener ubicación', 'error');
+            }
+          );
+        } else {
+          showToast('⚠️ Tu navegador no soporta GPS', 'error');
+        }
+      };
+      return container;
+    }
+  });
+  map.addControl(new gpsControl());
+  
+  var fullscreenControl = L.Control.extend({
+    options: { position: 'topright' },
+    onAdd: function(map) {
+      var container = L.DomUtil.create('div', 'leaflet-bar leaflet-control');
+      container.innerHTML = '<button style="width:34px;height:34px;border:none;background:white;cursor:pointer;font-size:18px;border-radius:4px;box-shadow:0 1px 5px rgba(0,0,0,0.65);" title="Pantalla completa">⛶</button>';
+      container.onclick = function() {
+        var mapContainer = document.getElementById('map');
+        if (!document.fullscreenElement) {
+          mapContainer.requestFullscreen().catch(function(err) {
+            showToast('⚠️ No se pudo abrir', 'error');
+          });
+        } else {
+          document.exitFullscreen();
+        }
+      };
+      return container;
+    }
+  });
+  map.addControl(new fullscreenControl());
+  
+  map.on('click', function(e) {
+    colocarMarcador(e.latlng.lat, e.latlng.lng);
+  });
+}
+
+function escaparHTML(t) {
+  return String(t == null ? '' : t).replace(/[&<>"']/g, function(c) {
+    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+  });
+}
+
+function construirPopupUbicacion(lat, lng, direccion) {
+  return `
+    <div style="text-align:center;padding:5px;">
+      <strong>📍 Nueva ubicación (sin confirmar)</strong><br>
+      <span style="font-size:12px;color:#666;">${escaparHTML(direccion)}</span><br>
+      <span style="font-size:11px;color:#999;">${lat.toFixed(6)}, ${lng.toFixed(6)}</span><br>
+      <button type="button" onclick="confirmarUbicacion()" style="margin-top:8px;padding:6px 16px;background:#28a745;color:white;border:none;border-radius:6px;cursor:pointer;font-weight:600;">
+        ✅ Confirmar
+      </button>
+      <button type="button" onclick="regresarUbicacion()" style="margin-top:8px;margin-left:6px;padding:6px 16px;background:#6c757d;color:white;border:none;border-radius:6px;cursor:pointer;font-weight:600;">
+        ✖ Regresar
+      </button>
+    </div>
+  `;
+}
+
+// Respalda (una sola vez) la ubicación confirmada antes de empezar a mover/elegir una nueva
+function guardarUbicacionPrevia() {
+  if (ubicacionPrevia !== null) return;
+  var la = document.getElementById('latitud').value;
+  var lo = document.getElementById('longitud').value;
+  ubicacionPrevia = (ubicacionSeleccionada && la && lo)
+    ? { confirmada: true, lat: la, lng: lo }
+    : { confirmada: false };
+}
+
+function crearMarcador(lat, lng) {
+  if (marker) map.removeLayer(marker);
+  marker = L.marker([lat, lng], { draggable: true }).addTo(map);
+  // Al soltar el marcador la nueva posición queda PENDIENTE hasta confirmar
+  marker.on('dragend', function() {
+    var pos = marker.getLatLng();
+    marcarPendiente(pos.lat, pos.lng);
+  });
+}
+
+function marcarPendiente(lat, lng) {
+  guardarUbicacionPrevia();
+  direccionPendiente = '';
+  marker.bindPopup(construirPopupUbicacion(lat, lng, 'Obteniendo dirección...'), { maxWidth: 280, closeOnClick: false }).openPopup();
+  var st = document.getElementById('mapStatus');
+  st.textContent = '⚠️ Ubicación pendiente de confirmar';
+  st.className = 'map-status pending';
+  obtenerDireccionInversa(lat, lng);
+}
+
+// Selección nueva (clic, GPS, link de Google Maps): NO toca el formulario hasta confirmar
+function colocarMarcador(lat, lng) {
+  crearMarcador(lat, lng);
+  marcarPendiente(lat, lng);
+}
+
+// Ubicación ya confirmada (editar negocio, cápsula, restaurar anterior): sin popup de confirmación
+function colocarMarcadorConfirmado(lat, lng) {
+  ubicacionPrevia = null;
+  direccionPendiente = '';
+  crearMarcador(lat, lng);
+  document.getElementById('latitud').value = lat.toFixed(6);
+  document.getElementById('longitud').value = lng.toFixed(6);
+  ubicacionSeleccionada = true;
+  var st = document.getElementById('mapStatus');
+  st.textContent = '✅ Ubicación confirmada: ' + lat.toFixed(4) + ', ' + lng.toFixed(4);
+  st.className = 'map-status confirmed';
+  if (!document.getElementById('direccion').value) obtenerDireccionInversa(lat, lng);
+}
+
+function confirmarUbicacion(lat, lng) {
+  if (!marker) return;
+  if (typeof lat !== 'number' || typeof lng !== 'number') {
+    var pos = marker.getLatLng();
+    lat = pos.lat; lng = pos.lng;
+  }
+  document.getElementById('latitud').value = lat.toFixed(6);
+  document.getElementById('longitud').value = lng.toFixed(6);
+  ubicacionSeleccionada = true;
+  ubicacionPrevia = null;
+  var dir = direccionPendiente;
+  direccionPendiente = '';
+  if (dir) document.getElementById('direccion').value = dir;
+  var st = document.getElementById('mapStatus');
+  st.textContent = '✅ Ubicación confirmada: ' + lat.toFixed(4) + ', ' + lng.toFixed(4);
+  st.className = 'map-status confirmed';
+  marker.closePopup();
+  marker.unbindPopup();
+  if (!dir) obtenerDireccionInversa(lat, lng);
+  showToast('✅ Ubicación confirmada', 'success');
+  if (document.fullscreenElement) document.exitFullscreen();
+}
+
+function regresarUbicacion(silencioso) {
+  var prev = ubicacionPrevia;
+  if (!prev) { if (marker) marker.closePopup(); return; }
+  ubicacionPrevia = null;
+  direccionPendiente = '';
+  var st = document.getElementById('mapStatus');
+  if (prev.confirmada) {
+    var la = parseFloat(prev.lat), lo = parseFloat(prev.lng);
+    colocarMarcadorConfirmado(la, lo);
+    map.setView([la, lo], map.getZoom());
+    st.textContent = '✅ Ubicación anterior conservada';
+    st.className = 'map-status confirmed';
+  } else {
+    document.getElementById('latitud').value = '';
+    document.getElementById('longitud').value = '';
+    ubicacionSeleccionada = false;
+    if (marker) { map.removeLayer(marker); marker = null; }
+    st.textContent = '⚠️ Haz clic en el mapa';
+    st.className = 'map-status pending';
+  }
+  if (!silencioso) {
+    showToast('📍 Ubicación anterior conservada', 'success');
+    if (document.fullscreenElement) document.exitFullscreen();
+  }
+}
+
+function abrirMapaPantallaCompleta() {
+  var mapContainer = document.getElementById('map');
+  if (!document.fullscreenElement) {
+    mapContainer.requestFullscreen().catch(function(err) {
+      showToast('⚠️ No se pudo abrir', 'error');
+    });
+  } else {
+    document.exitFullscreen();
+  }
+}
+
+async function obtenerDireccionInversa(lat, lng) {
+  try {
+    const r = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`);
+    const d = await r.json();
+    if (!d.display_name) return;
+    if (ubicacionPrevia !== null) {
+      // Hay una ubicación pendiente: solo actualizar el popup (si sigue siendo la misma posición)
+      if (marker) {
+        var pos = marker.getLatLng();
+        if (Math.abs(pos.lat - lat) < 1e-9 && Math.abs(pos.lng - lng) < 1e-9) {
+          direccionPendiente = d.display_name;
+          marker.setPopupContent(construirPopupUbicacion(lat, lng, d.display_name));
+        }
+      }
+    } else {
+      document.getElementById('direccion').value = d.display_name;
+      document.getElementById('mapStatus').textContent = '✅ Dirección: ' + d.display_name.substring(0, 60) + '...';
+    }
+  } catch(e) {
+    console.warn('Error geocodificación:', e);
+  }
+}
+
+// confirmada=true: ubicación ya guardada (editar/cápsula). Si no, entra al flujo de confirmación.
+function setUbicacionEnMapa(lat, lng, confirmada) {
+  if (!lat || !lng) return;
+  map.setView([parseFloat(lat), parseFloat(lng)], 16);
+  if (confirmada) colocarMarcadorConfirmado(parseFloat(lat), parseFloat(lng));
+  else colocarMarcador(parseFloat(lat), parseFloat(lng));
+}
+
+// ============================================================
+// GOOGLE MAPS LINK
+// ============================================================
+async function extraerCoordsGoogleMaps(url) {
+  if (!url) return null;
+
+  let cleanUrl = url.trim();
+  if (cleanUrl.toLowerCase().startsWith('geo:')) {
+    cleanUrl = cleanUrl.substring(4);
+  }
+
+  let m = cleanUrl.match(/^(-?\d{1,3}\.\d+)\s*,\s*(-?\d{1,3}\.\d+)$/);
+  if (m) return { lat: parseFloat(m[1]), lng: parseFloat(m[2]) };
+
+  if (/^https:\/\/maps\.app\.goo\.gl\//.test(cleanUrl) || /^https:\/\/goo\.gl\/maps\//.test(cleanUrl)) {
+    try {
+      const response = await fetch(cleanUrl, { method: 'HEAD' });
+      const finalUrl = response.url || cleanUrl;
+      return extraerCoordsDeUrlLarga(finalUrl);
+    } catch (e) {
+      return extraerCoordsDeUrlLarga(cleanUrl);
+    }
+  }
+
+  return extraerCoordsDeUrlLarga(cleanUrl);
+}
+
+function extraerCoordsDeUrlLarga(url) {
+  let m;
+
+  m = url.match(/!3d(-?\d{1,3}\.\d+)!4d(-?\d{1,3}\.\d+)/);
+  if (m) return { lat: parseFloat(m[1]), lng: parseFloat(m[2]) };
+
+  m = url.match(/[?&]q=(-?\d{1,3}\.\d+),(-?\d{1,3}\.\d+)/);
+  if (m) return { lat: parseFloat(m[1]), lng: parseFloat(m[2]) };
+  m = url.match(/[?&]ll=(-?\d{1,3}\.\d+),(-?\d{1,3}\.\d+)/);
+  if (m) return { lat: parseFloat(m[1]), lng: parseFloat(m[2]) };
+
+  m = url.match(/@(-?\d{1,3}\.\d+),(-?\d{1,3}\.\d+)/);
+  if (m) return { lat: parseFloat(m[1]), lng: parseFloat(m[2]) };
+
+  m = url.match(/(-?\d{1,3}\.\d+),\s*(-?\d{1,3}\.\d+)/);
+  if (m) return { lat: parseFloat(m[1]), lng: parseFloat(m[2]) };
+
+  return null;
+}
+  
+async function usarLinkGoogleMaps() {
+  const input = document.getElementById('linkGoogleMaps');
+  const url = (input.value || '').trim();
+  
+  if (!url) {
+    showToast('⚠️ Pega un link primero', 'error');
+    return;
+  }
+
+  showToast('⏳ Buscando coordenadas...', 'success');
+
+  try {
+    const coords = await extraerCoordsGoogleMaps(url);
+    
+    if (!coords) {
+      showToast('❌ No se encontraron coordenadas en el texto', 'error');
+      return;
+    }
+    
+    setUbicacionEnMapa(coords.lat, coords.lng);
+    showToast('✅ Ubicación tomada correctamente', 'success');
+    
+    input.value = '';
+  } catch (e) {
+    showToast('❌ Error al procesar el enlace', 'error');
+  }
+}
+
+// ============================================================
+// FOTOS
+// ============================================================
+// ============================================================
+// TAMAÑO DE IMAGENES (KB) Y LIMITE
+// ============================================================
+// Limite por imagen en caracteres base64 (la celda de la hoja admite 50,000).
+const LIMITE_IMG_CHARS = 45000;
+function esDataUrl(u) { return typeof u === 'string' && u.indexOf('data:') === 0; }
+function kbImagen(u) {
+  if (!esDataUrl(u)) return 0;
+  const i = u.indexOf(',');
+  return Math.round(((u.length - i - 1) * 0.75 / 1024) * 10) / 10;
+}
+function limiteKB() { return Math.round((LIMITE_IMG_CHARS * 0.75 / 1024) * 10) / 10; }
+function imagenExcede(u) { return esDataUrl(u) && u.length > LIMITE_IMG_CHARS; }
+function etiquetaKB(u) {
+  if (!esDataUrl(u)) return '';
+  const ok = !imagenExcede(u);
+  return '<small class="img-kb" style="display:block;margin-top:4px;font-size:11px;font-weight:700;color:' + (ok ? '#00FF88' : '#FF5555') + ';">' + (ok ? '✅ ' : '❌ ') + kbImagen(u) + ' KB / máx ' + limiteKB() + ' KB</small>';
+}
+function mostrarKB(campoId) {
+  const el = document.getElementById(campoId + 'KB');
+  if (!el) return;
+  const u = document.getElementById(campoId).value;
+  el.innerHTML = u ? etiquetaKB(u) : '';
+}
+// Reduce calidad y luego dimensiones hasta entrar en el limite. Devuelve dataUrl o null.
+function comprimirImagen(img, maxDim, calidadIni) {
+  let dim = maxDim;
+  while (dim >= 120) {
+    let w = img.width, h = img.height;
+    if (w > h && w > dim) { h = Math.round(h * dim / w); w = dim; }
+    else if (h >= w && h > dim) { w = Math.round(w * dim / h); h = dim; }
+    const canvas = document.createElement('canvas');
+    canvas.width = w; canvas.height = h;
+    canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+    for (let q = calidadIni; q >= 0.2; q -= 0.1) {
+      const d = canvas.toDataURL('image/jpeg', q);
+      if (d.length <= LIMITE_IMG_CHARS) return d;
+    }
+    dim = Math.round(dim * 0.8);
+  }
+  return null;
+}
+
+// ============================================================
+// FILTRO AL SELECCIONAR IMAGEN (formato, peso original y medidas)
+// ============================================================
+const FILTRO_IMG = {
+  tipos: ['image/jpeg', 'image/png', 'image/webp'],
+  maxOriginalKB: 15360,                       // 15 MB: evita que el celular se trabe
+  minLado: { foto: 200, logo: 80, banner: 300 } // px del lado menor (banner: del lado mayor)
+};
+function validarArchivoImagen(file) {
+  if (!file) return 'No se eligió ningún archivo';
+  const t = (file.type || '').toLowerCase();
+  if (FILTRO_IMG.tipos.indexOf(t) === -1) {
+    const nom = t ? t.split('/').pop().toUpperCase() : 'desconocido';
+    return 'Formato no permitido (' + nom + '). Usa JPG, PNG o WEBP.';
+  }
+  const kb = Math.round(file.size / 1024);
+  if (kb < 1) return 'El archivo está vacío o dañado';
+  if (kb > FILTRO_IMG.maxOriginalKB) return 'Archivo muy pesado (' + kb + ' KB). Máximo ' + FILTRO_IMG.maxOriginalKB + ' KB.';
+  return '';
+}
+function validarMedidasImagen(img, tipo) {
+  const min = FILTRO_IMG.minLado[tipo] || 100;
+  const lado = tipo === 'banner' ? Math.max(img.width, img.height) : Math.min(img.width, img.height);
+  if (lado < min) return 'Imagen muy pequeña (' + img.width + '×' + img.height + ' px). Mínimo ' + min + ' px.';
+  return '';
+}
+
+function generarSlotsFotos() {
+  const grid = document.getElementById('fotosGrid');
+  grid.innerHTML = '';
+  for (let i = 0; i < 4; i++) {
+    const foto = fotosSeleccionadas[i];
+    const card = document.createElement('div');
+    card.className = 'foto-card' + (foto ? ' has-foto' : '');
+    card.style.position = 'relative';
+    card.onclick = function(e) { if (!e.target.classList.contains('btn-remove-foto') && e.target.tagName !== 'TEXTAREA') abrirSelectorFoto(i); };
+    card.innerHTML = foto ? `
+      <button class="btn-remove-foto" onclick="event.stopPropagation();removerFoto(${i})">×</button>
+      <img src="${foto.url}" alt="Foto ${i+1}">
+      ${etiquetaKB(foto.url)}
+      <textarea class="foto-desc" readonly placeholder="Toca para escribir la descripción..." onclick="event.stopPropagation();abrirDescFoto(${i})">${foto.descripcion||''}</textarea>
+      <small class="foto-desc-hint">Usa &amp;: Categoría &amp; link  (o Título &amp; Descripción)</small>
+    ` : `<div class="placeholder">📷</div><div class="foto-label">Foto ${i+1}</div>`;
+    grid.appendChild(card);
+  }
+}
+
+function mostrarMenuFoto(callback) {
+  const overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.8);z-index:5000;display:flex;align-items:flex-end;justify-content:center;';
+  overlay.innerHTML = `
+    <div style="background:#1A1A2E;border-radius:16px 16px 0 0;padding:20px;width:100%;max-width:400px;border:1px solid #7B2FF7;">
+      <button type="button" id="menuFotoCamara" style="width:100%;padding:14px;margin-bottom:10px;background:#7B2FF7;color:white;border:none;border-radius:10px;font-weight:600;font-size:15px;">📷 Tomar foto</button>
+      <button type="button" id="menuFotoGaleria" style="width:100%;padding:14px;margin-bottom:10px;background:#00FF88;color:#0A0E17;border:none;border-radius:10px;font-weight:600;font-size:15px;">🖼️ Galería</button>
+      <button type="button" id="menuFotoCancelar" style="width:100%;padding:14px;background:#2A2A4A;color:#E0E0E0;border:none;border-radius:10px;font-weight:600;font-size:15px;">Cancelar</button>
+    </div>`;
+  document.body.appendChild(overlay);
+  overlay.querySelector('#menuFotoCamara').onclick = function() { document.body.removeChild(overlay); callback(true); };
+  overlay.querySelector('#menuFotoGaleria').onclick = function() { document.body.removeChild(overlay); callback(false); };
+  overlay.querySelector('#menuFotoCancelar').onclick = function() { document.body.removeChild(overlay); };
+  overlay.onclick = function(e) { if (e.target === overlay) document.body.removeChild(overlay); };
+}
+
+function abrirSelectorFoto(index) {
+  mostrarMenuFoto(function(desdeCamara) {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/jpeg,image/png,image/webp';
+    if (desdeCamara) input.capture = 'environment';
+    input.onchange = function(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const errArchivo = validarArchivoImagen(file);
+      if (errArchivo) { showToast('❌ ' + errArchivo, 'error'); return; }
+      const reader = new FileReader();
+      reader.onload = function(ev) {
+        const img = new Image();
+        img.onerror = function() { showToast('❌ No se pudo leer la imagen, elige otra', 'error'); };
+        img.onload = function() {
+          const errMedidas = validarMedidasImagen(img, 'foto');
+          if (errMedidas) { showToast('❌ ' + errMedidas, 'error'); return; }
+          const dataUrl = comprimirImagen(img, 900, 0.7);
+          if (!dataUrl) { showToast('❌ Foto muy grande, elige otra', 'error'); return; }
+          fotosSeleccionadas[index] = { url: dataUrl, descripcion: fotosSeleccionadas[index]?.descripcion || '' };
+          generarSlotsFotos();
+          showToast('📏 Foto ' + (index + 1) + ': ' + Math.round(file.size / 1024) + ' KB → ' + kbImagen(dataUrl) + ' KB', 'success');
+        };
+        img.src = ev.target.result;
+      };
+      reader.readAsDataURL(file);
+    };
+    input.click();
+  });
+}
+function removerFoto(index) { fotosSeleccionadas[index] = null; generarSlotsFotos(); }
+function actualizarDescFoto(index, valor) { if (fotosSeleccionadas[index]) fotosSeleccionadas[index].descripcion = valor; }
+function abrirDescFoto(i) {
+  if (!fotosSeleccionadas[i]) return;
+  const ov = document.createElement('div');
+  ov.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.85);z-index:5500;display:flex;align-items:center;justify-content:center;padding:16px;';
+  ov.innerHTML = '<div style="width:100%;max-width:520px;max-height:92vh;overflow:auto;background:#1A1A2E;border:1px solid #2A2A4A;border-radius:14px;padding:16px;">' +
+    '<div style="font-weight:700;color:#fff;margin-bottom:10px;">📝 Descripción de la foto ' + (i + 1) + '</div>' +
+    '<textarea id="descFotoGrande" placeholder="Escribe aquí la descripción..." style="width:100%;box-sizing:border-box;min-height:40vh;padding:12px;border:1px solid #2A2A4A;border-radius:8px;font-size:16px;line-height:1.5;font-family:inherit;background:#0F0F23;color:#E0E0E0;resize:vertical;"></textarea>' +
+    '<div style="display:flex;gap:10px;margin-top:12px;">' +
+    '<button type="button" id="descFotoNo" style="flex:1;padding:12px;border:0;border-radius:10px;background:#333;color:#ccc;font-weight:700;cursor:pointer;">Cancelar</button>' +
+    '<button type="button" id="descFotoOk" style="flex:1;padding:12px;border:0;border-radius:10px;background:#25D366;color:#fff;font-weight:700;cursor:pointer;">✅ Guardar</button></div></div>';
+  document.body.appendChild(ov);
+  const ta = ov.querySelector('#descFotoGrande');
+  ta.value = fotosSeleccionadas[i].descripcion || '';
+  ta.focus();
+  const cerrar = function() { if (ov.parentNode) ov.parentNode.removeChild(ov); };
+  ov.addEventListener('click', function(e) { if (e.target === ov) cerrar(); });
+  ov.querySelector('#descFotoNo').onclick = cerrar;
+  ov.querySelector('#descFotoOk').onclick = function() {
+    actualizarDescFoto(i, ta.value);
+    cerrar();
+    generarSlotsFotos();
+  };
+}
+// ============================================================
+// CARGAR IMAGEN LOGO/BANNER
+// ============================================================
+function seleccionarImagenLogoBanner(campoId, previewId) {
+  mostrarMenuFoto(function(desdeCamara) {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/jpeg,image/png,image/webp';
+    if (desdeCamara) input.capture = 'environment';
+    input.onchange = function() { cargarImagenPreview(input, campoId, previewId); };
+    input.click();
+  });
+}
+
+function cargarImagenPreview(input, campoId, previewId) {
+  const file = input.files[0];
+  if (!file) return;
+  const errArchivo = validarArchivoImagen(file);
+  if (errArchivo) { showToast('❌ ' + errArchivo, 'error'); return; }
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const img = new Image();
+    img.onerror = function() { showToast('❌ No se pudo leer la imagen, elige otra', 'error'); };
+    img.onload = function() {
+      const errMedidas = validarMedidasImagen(img, campoId);
+      if (errMedidas) { showToast('❌ ' + errMedidas, 'error'); return; }
+      const dataUrl = comprimirImagen(img, 500, 0.6);
+      if (!dataUrl) { showToast('❌ Imagen muy grande, elige otra', 'error'); return; }
+      document.getElementById(campoId).value = dataUrl;
+      document.getElementById(previewId).src = dataUrl;
+      document.getElementById(previewId).style.display = 'block';
+      mostrarKB(campoId);
+      showToast('📏 ' + (campoId === 'logo' ? 'Logo' : 'Banner') + ': ' + Math.round(file.size / 1024) + ' KB → ' + kbImagen(dataUrl) + ' KB', 'success');
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+// ============================================================
+// COMPARTIR EDICIÓN
+// ============================================================
+function compartirEdicionCliente(negocio) {
+  const overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.8);z-index:5000;display:flex;align-items:center;justify-content:center;padding:20px;';
+  overlay.innerHTML = `
+    <div style="background:#1A1A2E;border-radius:16px;padding:24px;width:100%;max-width:380px;border:1px solid #7B2FF7;">
+      <h3 style="margin-bottom:14px;color:#E0E0E0;font-size:16px;">🔗 Compartir edición</h3>
+      <label style="font-size:13px;font-weight:600;color:#AAA;display:block;margin-bottom:6px;">Tiempo de acceso</label>
+      <div style="display:flex;gap:8px;margin-bottom:16px;">
+        <input type="number" id="cantidadTiempo" value="30" min="1" style="flex:1;padding:10px;border:2px solid #2A2A4A;border-radius:8px;font-size:14px;background:#0D1117;color:#E0E0E0;">
+                <select id="unidadTiempo" style="flex:0 0 auto;padding:10px;border:2px solid #2A2A4A;border-radius:8px;font-size:14px;background:#0D1117;color:#E0E0E0;">
+           <option value="minutos" selected>Minutos</option>
+          <option value="horas">Horas</option>
+          <option value="dias">Días</option>
+        </select>
+      </div>
+           <label style="font-size:13px;font-weight:600;color:#AAA;display:block;margin-bottom:6px;">Campos que podrá editar</label>
+      <div id="camposCliente" style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:16px;font-size:13px;color:#E0E0E0;">
+        <label><input type="checkbox" value="descripcion" checked> Descripción</label>
+        <label><input type="checkbox" value="fotos" checked> Fotos</label>
+        <label><input type="checkbox" value="slogan"> Slogan</label>
+        <label><input type="checkbox" value="mision"> Misión</label>
+        <label><input type="checkbox" value="mensaje"> Mensaje emergente</label>
+        <label><input type="checkbox" value="horario"> Horario</label>
+        <label><input type="checkbox" value="contacto"> Contacto</label>
+        <label><input type="checkbox" value="ubicacion"> Ubicación</label>
+        <label><input type="checkbox" value="logo"> Logo y banner</label>
+        <label><input type="checkbox" value="video"> Video</label>
+      </div>
+            <button type="button" id="btnGenerarLinkCliente" style="width:100%;padding:12px;background:#7B2FF7;color:white;border:none;border-radius:10px;font-weight:600;font-size:14px;margin-bottom:8px;">Generar enlace</button>
+            <button type="button" id="btnCancelarLinkCliente" style="width:100%;padding:12px;background:#2A2A4A;color:#E0E0E0;border:none;border-radius:10px;font-weight:600;font-size:14px;">Cancelar</button>
+      </div>`;
+  document.body.appendChild(overlay);
+  overlay.onclick = (e) => { if (e.target === overlay) document.body.removeChild(overlay); };
+  overlay.querySelector('#btnCancelarLinkCliente').onclick = () => document.body.removeChild(overlay);
+  overlay.querySelector('#btnGenerarLinkCliente').onclick = async () => {
+    const cantidad = parseFloat(document.getElementById('cantidadTiempo').value) || 30;
+    const unidad = document.getElementById('unidadTiempo').value;
+    const minutos = Math.round(unidad === 'minutos' ? cantidad : unidad === 'horas' ? cantidad * 60 : cantidad * 1440);
+    const campos = Array.from(document.querySelectorAll('#camposCliente input:checked')).map(c => c.value);
+    if (!campos.length) { showToast('⚠️ Elige al menos un campo', 'error'); return; }
+    showLoading();
+    try {
+      const r = await postViaIframe('crearTokenCliente', negocio.id, { minutos, campos });
+      hideLoading();
+      if (!r.success) { showToast('❌ ' + r.error, 'error'); return; }
+      const link = `${window.location.origin}${window.location.pathname}?editarCliente=${encodeURIComponent(negocio.id)}&t=${r.token}`;
+      document.body.removeChild(overlay);
+      mostrarLinkGenerado(link, negocio.nombre, cantidad, unidad);
+          } catch (e) { hideLoading(); showToast(msgErrorEnvio(e), 'error'); }
+  };
+}
+
+function mostrarLinkGenerado(link, nombre, cantidad, unidad) {
+  const overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.8);z-index:5000;display:flex;align-items:center;justify-content:center;padding:20px;';
+  overlay.innerHTML = `
+    <div style="background:#1A1A2E;border-radius:16px;padding:24px;width:100%;max-width:400px;border:1px solid #00D4FF;">
+      <h3 style="margin-bottom:10px;color:#E0E0E0;font-size:16px;">✅ Enlace generado</h3>
+      <p style="font-size:13px;color:#AAA;margin-bottom:12px;">Válido por ${cantidad} ${unidad}</p>
+      <textarea readonly style="width:100%;padding:10px;border:2px solid #2A2A4A;border-radius:8px;font-size:12px;min-height:70px;margin-bottom:12px;font-family:monospace;background:#0D1117;color:#E0E0E0;">${link}</textarea>
+      <div style="display:flex;gap:8px;margin-bottom:8px;">
+        <button type="button" id="btnCopiarLink" style="flex:1;padding:12px;background:#00FF88;color:#0A0E17;border:none;border-radius:10px;font-weight:600;">📋 Copiar</button>
+        <button type="button" id="btnWhatsappLink" style="flex:1;padding:12px;background:#25D366;color:white;border:none;border-radius:10px;font-weight:600;">💬 WhatsApp</button>
+      </div>
+      <button type="button" id="btnCerrarLinkModal" style="width:100%;padding:12px;background:#2A2A4A;color:#E0E0E0;border:none;border-radius:10px;font-weight:600;">Cerrar</button>
+    </div>`;
+  document.body.appendChild(overlay);
+  overlay.onclick = (e) => { if (e.target === overlay) document.body.removeChild(overlay); };
+  overlay.querySelector('#btnCerrarLinkModal').onclick = () => document.body.removeChild(overlay);
+  overlay.querySelector('#btnCopiarLink').onclick = async () => {
+    try { await navigator.clipboard.writeText(link); showToast('✅ Enlace copiado', 'success'); }
+    catch(e) { showToast('⚠️ No se pudo copiar', 'error'); }
+  };
+  overlay.querySelector('#btnWhatsappLink').onclick = () => {
+    const texto = `Hola${nombre ? ' ' + nombre : ''}, aquí puedes editar tu negocio: ${link}`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(texto)}`, '_blank');
+  };
+}
+// ============================================================
+// MODO CLIENTE
+// ============================================================
+function verificarModoClienteEdicion() {
+  const params = new URLSearchParams(window.location.search);
+  const idCliente = params.get('editarCliente');
+  if (!idCliente) return false;
+  const t = params.get('t') || '';
+  window.tokenCliente = t;
+  document.body.classList.add('modo-cliente-edicion');
+  document.querySelector('.header').style.display = 'none';
+  document.querySelector('.toolbar').style.display = 'none';
+  document.querySelector('.sheet-list').style.display = 'none';
+  document.querySelector('.fab-admin').style.display = 'none';
+  const fl = document.querySelector('.fab-left'); if (fl) fl.style.display = 'none';
+  if (!t) { mostrarPantallaExpirada(); return true; }
+  showLoading();
+  callAPI('clienteGet', { t }).then(result => {
+    hideLoading();
+    if (!result.success || !result.negocio || result.negocio.id !== idCliente) { mostrarPantallaExpirada(); return; }
+    negocios = [result.negocio];
+    abrirModalEdicionCliente(result.negocio, result.exp, (result.campos || []).join(','));
+  }).catch(() => { hideLoading(); mostrarPantallaExpirada(); });
+  return true;
+}
+
+function aplicarCamposCliente(sel) {
+  const PERMITIDOS = {
+    descripcion: ['descripcion'], slogan: ['slogan'], mision: ['mision'],
+    mensaje: ['mensajeEmergente'], horario: ['horario'],
+    contacto: ['telefono', 'whatsapp', 'correo', 'urlFacebook']
+  };
+  const ids = [];
+  sel.forEach(k => (PERMITIDOS[k] || []).forEach(i => ids.push(i)));
+  document.querySelectorAll('#formNegocio .form-section').forEach(sec => {
+    const h = ((sec.querySelector('h3') || {}).textContent || '');
+    let ver = false;
+    if (sec.querySelector('#fotosGrid')) ver = sel.includes('fotos');
+    else if (h.includes('Video')) ver = sel.includes('video');
+    else if (h.includes('Logo')) ver = sel.includes('logo');
+    else if (h.includes('Ubicación')) ver = sel.includes('ubicacion');
+    else if (h.includes('Datos Básicos') || h.includes('Contacto')) {
+      sec.querySelectorAll('.form-group').forEach(g => {
+        const campo = g.querySelector('input,textarea,select');
+        const ok = campo && ids.includes(campo.id);
+        g.style.display = ok ? '' : 'none';
+        if (ok) ver = true;
+      });
+    }
+    sec.style.display = ver ? '' : 'none';
+  });
+}
+
+function abrirModalEdicionCliente(negocio, exp, campos) {
+  abrirModalEditar(negocio.id);
+  if (campos) { window.camposCliente = campos.split(','); aplicarCamposCliente(window.camposCliente); }
+  document.getElementById('modalTitle').textContent = '✏️ Editar negocio';
+  document.getElementById('btnGuardar').textContent = '💾 Guardar cambios';
+  const capsula = document.querySelector('#modalOverlay .modal > div');
+  if (capsula && capsula.querySelector('#capsulaInput')) capsula.style.display = 'none';
+  const banner = document.createElement('div');
+  banner.id = 'clienteEdicionBanner';
+  banner.style.cssText = 'background:#2A2A4A;color:#00D4FF;padding:12px 16px;border-radius:10px;margin-bottom:18px;font-size:13px;font-weight:600;text-align:center;';
+  const modal = document.querySelector('#modalOverlay .modal');
+  modal.insertBefore(banner, modal.firstChild);
+  window.modoClienteExp = exp;
+  actualizarBannerTiempoCliente();
+  window.intervalClienteEdicion = setInterval(actualizarBannerTiempoCliente, 30000);
+  const formBotones = document.getElementById('formBotones');
+  if (formBotones) {
+    formBotones.style.position = 'static';
+    formBotones.style.flexDirection = 'column';
+    const btnCancelar = formBotones.querySelector('.btn-warning');
+    if (btnCancelar) btnCancelar.style.display = 'none';
+    const btnGuardar = document.getElementById('btnGuardar');
+    if (btnGuardar) {
+      btnGuardar.style.width = '100%';
+      btnGuardar.style.minHeight = '54px';
+      btnGuardar.style.fontSize = '17px';
+      btnGuardar.style.background = '#00FF88';
+      btnGuardar.style.color = '#0A0E17';
+    }
+  }
+}
+function actualizarBannerTiempoCliente() {
+  const banner = document.getElementById('clienteEdicionBanner');
+  if (!banner) return;
+  const restante = window.modoClienteExp - Date.now();
+  if (restante <= 0) {
+    banner.style.background = '#FF0040';
+    banner.style.color = 'white';
+    banner.textContent = '⏰ El tiempo expiró';
+    document.getElementById('btnGuardar').disabled = true;
+    document.querySelectorAll('#formNegocio input, #formNegocio textarea, #formNegocio select').forEach(el => el.disabled = true);
+    clearInterval(window.intervalClienteEdicion);
+    return;
+  }
+  const minutos = Math.floor(restante / 60000);
+  const segundos = Math.floor((restante % 60000) / 1000);
+  banner.textContent = `⏳ Tiempo restante: ${minutos}min ${segundos}seg`;
+}
+
+function mostrarPantallaExpirada() {
+  document.body.innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px;background:#0A0E17;">
+      <div style="text-align:center;max-width:360px;">
+        <div style="font-size:50px;margin-bottom:16px;">⏰</div>
+        <h2 style="color:#E0E0E0;margin-bottom:10px;">Enlace no disponible</h2>
+        <p style="color:#AAA;font-size:14px;">Este enlace ha expirado.</p>
+      </div>
+    </div>`;
+}
+
+// ============================================================
+// ABRIR MODALES
+// ============================================================
+// ID mas alto de los negocios cargados (compara por la parte numerica del ID)
+function idMasAlto() {
+  let max = null;
+  (negocios || []).forEach(function (n) {
+    const m = String(n && n.id != null ? n.id : '').match(/\d+/g);
+    if (!m) return;
+    const v = parseInt(m[m.length - 1], 10);
+    if (!isNaN(v) && (max === null || v > max)) max = v;
+  });
+  return max;
+}
+function idMasAltoSufijo() {
+  const max = idMasAlto();
+  return max === null ? '' : ' &' + max + '()';
+}
+
+function abrirModalNuevo() {
+  document.getElementById('modalTitle').textContent = '➕ Nuevo Negocio';
+  document.getElementById('btnGuardar').textContent = '💾 Guardar Negocio';
+  document.getElementById('editId').value = '';
+  detenerVerificacionVideo();
+  document.getElementById('formNegocio').reset();
+  document.getElementById('activo').value = 'true';
+  document.getElementById('rol').value = 'Admin';
+  // Nombre propuesto: "&<ID mas alto>()" para completarlo o borrarlo
+  document.getElementById('nombre').value = idMasAltoSufijo();
+  fotosSeleccionadas = [null, null, null, null];
+  ubicacionSeleccionada = false;
+  ubicacionPrevia = null;
+  direccionPendiente = '';
+  document.getElementById('latitud').value = '';
+  document.getElementById('longitud').value = '';
+  document.getElementById('mapStatus').textContent = '⚠️ Haz clic en el mapa';
+  document.getElementById('mapStatus').className = 'map-status pending';
+  if (marker) { map.removeLayer(marker); marker = null; }
+  generarSlotsFotos();
+  document.getElementById('video').value = '';
+  actualizarIndicadorVideo();
+  document.getElementById('logo').value = '';
+  document.getElementById('banner').value = '';
+  document.getElementById('logoPreview').style.display = 'none';
+  document.getElementById('bannerPreview').style.display = 'none';
+  mostrarKB('logo'); mostrarKB('banner');
+  document.getElementById('modalOverlay').classList.add('active');
+  setTimeout(() => { if (map) map.invalidateSize(); }, 300);
+}
+
+function abrirModalEditar(id) {
+  const negocio = negocios.find(n => n.id === id);
+  if (!negocio) { showToast('Negocio no encontrado', 'error'); return; }
+  document.getElementById('modalTitle').textContent = '✏️ Editar Negocio';
+  document.getElementById('btnGuardar').textContent = '💾 Actualizar';
+  document.getElementById('editId').value = id;
+  document.getElementById('nombre').value = negocio.nombre || '';
+  document.getElementById('slogan').value = negocio.slogan || '';
+  document.getElementById('descripcion').value = negocio.descripcion || '';
+  document.getElementById('mision').value = negocio.mision || '';
+  document.getElementById('mensajeEmergente').value = negocio.mensajeEmergente || '';
+  document.getElementById('ubicacion').value = negocio.ubicacion || '';
+  document.getElementById('direccion').value = negocio.direccion || '';
+  document.getElementById('latitud').value = negocio.latitud || '';
+  document.getElementById('longitud').value = negocio.longitud || '';
+  document.getElementById('telefono').value = negocio.telefono || '';
+  document.getElementById('whatsapp').value = negocio.whatsapp || '';
+  document.getElementById('correo').value = negocio.correo || '';
+  document.getElementById('horario').value = negocio.horario || '';
+  document.getElementById('rol').value = negocio.rol || 'Admin';
+  document.getElementById('urlFacebook').value = negocio.urlFacebook || '';
+  document.getElementById('Urlexterna').value = negocio.Urlexterna || '';
+  document.getElementById('activo').value = negocio.activo ? 'true' : 'false';
+  cargarCandadoEnForm(negocio.candado);
+  document.getElementById('duenoMensaje').value = negocio.duenoMensaje || '';
+  document.getElementById('duenoTelefono').value = negocio.duenoTelefono || '';
+  document.getElementById('duenoCorreo').value = negocio.duenoCorreo || '';
+  fotosSeleccionadas = [null, null, null, null];
+  if (negocio.fotos) negocio.fotos.forEach((f, i) => { if (i < 4 && f && f.url) fotosSeleccionadas[i] = { url: f.url, descripcion: f.descripcion || '' }; });
+  document.getElementById('logo').value = negocio.logo || '';
+  if (negocio.logo) { document.getElementById('logoPreview').src = negocio.logo; document.getElementById('logoPreview').style.display = 'block'; }
+  else { document.getElementById('logoPreview').style.display = 'none'; }
+  document.getElementById('banner').value = negocio.banner || '';
+  if (negocio.banner) { document.getElementById('bannerPreview').src = negocio.banner; document.getElementById('bannerPreview').style.display = 'block'; }
+  else { document.getElementById('bannerPreview').style.display = 'none'; }
+  mostrarKB('logo'); mostrarKB('banner');
+  document.getElementById('video').value = negocio.video || '';
+  actualizarIndicadorVideo();
+  iniciarVerificacionVideo(id);
+  if (negocio.latitud && negocio.longitud) { setUbicacionEnMapa(negocio.latitud, negocio.longitud, true); ubicacionSeleccionada = true; }
+  else { ubicacionSeleccionada = false; document.getElementById('mapStatus').textContent = '⚠️ Haz clic en el mapa'; document.getElementById('mapStatus').className = 'map-status pending'; }
+  generarSlotsFotos();
+  document.getElementById('modalOverlay').classList.add('active');
+  setTimeout(() => { if (map) map.invalidateSize(); }, 300);
+}
+
+function cerrarModal() { if (ubicacionPrevia) regresarUbicacion(true); detenerVerificacionVideo(); document.getElementById('modalOverlay').classList.remove('active'); }
+
+// ============================================================
+// DETALLE
+// ============================================================
+let detailMapInstance = null;
+let detailMapMarker = null;
+
+function abrirDetalle(id) {
+  const negocio = negocios.find(n => n.id === id);
+  if (!negocio) return;
+  document.getElementById('detailBanner').style.backgroundImage = negocio.banner ? `url('${negocio.banner}')` : 'none';
+  if (negocio.logo) {
+    document.getElementById('detailLogoImg').src = negocio.logo;
+    document.getElementById('detailLogoImg').style.display = 'block';
+    document.getElementById('detailLogoPlaceholder').style.display = 'none';
+  } else {
+    document.getElementById('detailLogoImg').style.display = 'none';
+    document.getElementById('detailLogoPlaceholder').style.display = 'flex';
+  }
+  document.getElementById('detailNombre').textContent = negocio.nombre || '';
+  document.getElementById('detailDescripcion').textContent = negocio.descripcion || '';
+  const sloganEl = document.getElementById('detailSlogan');
+  sloganEl.textContent = negocio.slogan ? '✨ ' + negocio.slogan : '';
+  sloganEl.style.display = negocio.slogan ? 'block' : 'none';
+  const fotos = (negocio.fotos || []).filter(f => f && f.url);
+  const galleryEl = document.getElementById('detailGallery');
+  galleryEl.innerHTML = fotos.map(f => `<img src="${f.url}">`).join('');
+  galleryEl.style.display = fotos.length ? 'grid' : 'none';
+  const contactos = [
+    ['📞 Teléfono', negocio.telefono],
+    ['💬 WhatsApp', negocio.whatsapp],
+    ['🕐 Horario', negocio.horario],
+    ['✉️ Correo', negocio.correo],
+    ['📘 Facebook', negocio.urlFacebook],
+    ['📍 Dirección', negocio.direccion || negocio.ubicacion]
+  ].filter(([, valor]) => valor);
+  document.getElementById('detailContact').innerHTML = contactos.map(([label, valor]) => `
+    <div class="detail-contact-item"><div class="dc-label">${label}</div><div class="dc-valor">${valor}</div></div>
+  `).join('');
+  const tieneMapa = negocio.latitud && negocio.longitud;
+  document.getElementById('detailBtnMapa').style.display = tieneMapa ? 'inline-flex' : 'none';
+  document.getElementById('detailBtnMapa').onclick = () => abrirMapaPopup(negocio);
+  const tieneVideo = !!negocio.video;
+  const btnVideo = document.getElementById('detailBtnVideo');
+  btnVideo.style.display = tieneVideo ? 'inline-flex' : 'none';
+  if (tieneVideo) btnVideo.onclick = () => abrirVideoPopup(negocio.video);
+  document.getElementById('detailBtnLanding').onclick = () => { cerrarDetalle(); previsualizarLanding(negocio.id); };
+  document.getElementById('detailBtnEditar').onclick = () => { cerrarDetalle(); abrirModalEditar(negocio.id); };
+  document.getElementById('detailBtnCompartirEdicion').onclick = () => compartirEdicionCliente(negocio);
+  document.getElementById('detailBtnEliminar').onclick = () => eliminarNegocio(negocio.id);
+  document.getElementById('detailOverlay').classList.add('active');
+}
+
+function cerrarDetalle() { document.getElementById('detailOverlay').classList.remove('active'); }
+
+function abrirMapaPopup(negocio) {
+  document.getElementById('detailMapDireccion').textContent = negocio.direccion || negocio.ubicacion || '';
+  document.getElementById('detailBtnComoLlegar').href = `https://www.google.com/maps/dir/?api=1&destination=${negocio.latitud},${negocio.longitud}`;
+  document.getElementById('mapPopupOverlay').classList.add('active');
+  setTimeout(() => {
+    if (!detailMapInstance) {
+      detailMapInstance = L.map('detailMap');
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap', maxZoom: 19 }).addTo(detailMapInstance);
+    }
+    const lat = parseFloat(negocio.latitud), lng = parseFloat(negocio.longitud);
+    detailMapInstance.setView([lat, lng], 16);
+    if (detailMapMarker) detailMapInstance.removeLayer(detailMapMarker);
+    detailMapMarker = L.marker([lat, lng]).addTo(detailMapInstance).bindPopup(negocio.nombre || '📍').openPopup();
+    detailMapInstance.invalidateSize();
+  }, 200);
+}
+
+function cerrarMapaPopup() { document.getElementById('mapPopupOverlay').classList.remove('active'); }
+
+// ============================================================
+// GUARDAR
+// ============================================================
+function postViaIframe(action, id, datos, targetUrl) {
+   let tokenAdmin = null;
+  if (!window.tokenCliente) {
+    tokenAdmin = getAdminToken();
+    if (tokenAdmin === null) return Promise.reject(new Error('CANCELADO'));
+  }
+  return new Promise((resolve, reject) => {
+    let resuelto = false;
+    function onMessage(e) {
+      if (resuelto) return;
+      if (e.data && typeof e.data === 'object' && 'success' in e.data) {
+        resuelto = true;
+        window.removeEventListener('message', onMessage);
+        resolve(e.data);
+      }
+    }
+    window.addEventListener('message', onMessage);
+    document.getElementById('hf_action').value = action;
+    document.getElementById('hf_id').value = id || '';
+    document.getElementById('hf_datos').value = JSON.stringify(Object.assign({}, datos, window.tokenCliente ? { tokenCliente: window.tokenCliente } : {  token: tokenAdmin }));    const form = document.getElementById('hiddenSaveForm');
+    form.action = targetUrl || APPS_SCRIPT_URL;
+    form.submit();
+    setTimeout(() => {
+      if (!resuelto) {
+        resuelto = true;
+        window.removeEventListener('message', onMessage);
+        reject(new Error('Timeout'));
+      }
+    }, 30000);
+  });
+}
+
+async function guardarNegocio(event) {
+  event.preventDefault();
+  if (window.modoClienteExp && Date.now() > window.modoClienteExp) {
+    showToast('⏰ El tiempo expiró', 'error');
+    return;
+  }
+  if (ubicacionPrevia) { showToast('⚠️ Confirma o regresa la ubicación del mapa', 'error'); return; }
+    if (!ubicacionSeleccionada && !(window.camposCliente && !window.camposCliente.includes('ubicacion'))) { showToast('⚠️ Selecciona ubicación', 'error'); return; }
+    const editId = document.getElementById('editId').value;
+  const btnGuardar = document.getElementById('btnGuardar');
+  btnGuardar.disabled = true;
+  btnGuardar.textContent = '⏳ Guardando...';
+  const prevNeg = negocios.find(n => n.id === editId) || {};
+  const datos = {
+    usuario: document.getElementById('nombre').value.trim().toLowerCase().replace(/\s+/g, '_'),
+    password: Math.random().toString(36).substring(2, 10),
+    nombre: document.getElementById('nombre').value.trim(),
+    slogan: document.getElementById('slogan').value.trim(),
+    descripcion: document.getElementById('descripcion').value.trim(),
+    mision: document.getElementById('mision').value.trim(),
+    mensajeEmergente: document.getElementById('mensajeEmergente').value.trim(),
+    ubicacion: document.getElementById('ubicacion').value.trim(),
+    direccion: document.getElementById('direccion').value.trim(),
+    latitud: document.getElementById('latitud').value,
+    longitud: document.getElementById('longitud').value,
+    telefono: document.getElementById('telefono').value.trim(),
+    whatsapp: document.getElementById('whatsapp').value.trim(),
+    correo: document.getElementById('correo').value.trim(),
+    horario: document.getElementById('horario').value.trim(),
+    rol: document.getElementById('rol').value,
+    urlFacebook: document.getElementById('urlFacebook').value.trim(),
+    Urlexterna: document.getElementById('Urlexterna').value.trim(),
+    activo: document.getElementById('activo').value === 'true',
+    candado: valorCandado(),
+    fotos: fotosSeleccionadas.filter(f => f && f.url),
+    logo: document.getElementById('logo').value,
+    banner: document.getElementById('banner').value,
+    video: document.getElementById('video').value,
+    duenoMensaje: document.getElementById('duenoMensaje').value.trim(),
+    duenoTelefono: document.getElementById('duenoTelefono').value.trim(),
+    duenoCorreo: document.getElementById('duenoCorreo').value.trim(),
+    colorPrimario: (prevNeg.colorPrimario || '#7B2FF7'),
+    colorSecundario: (prevNeg.colorSecundario || '#FF00E5'),
+    colorAcento: (prevNeg.colorAcento || '#00D4FF'),
+    fuenteLanding: (prevNeg.fuenteLanding || "'Segoe UI',system-ui,sans-serif"),
+    plantillaLanding: (prevNeg.plantillaLanding || 'futurista')
+  };
+  if (!datos.nombre || !datos.nombre.replace(/&\s*\d*\s*(\(\s*\d*\s*\))?/g, '').trim()) {
+    showToast('❌ El nombre es obligatorio', 'error');
+    btnGuardar.disabled = false;
+    btnGuardar.textContent = '💾 Guardar Negocio';
+    return;
+  }
+  // --- Tamaño de cada imagen antes de enviar ---
+  const resumenKB = [];
+  const excedidas = [];
+  const revisar = function(nombre, u) {
+    if (!esDataUrl(u)) return;
+    resumenKB.push(nombre + ' ' + kbImagen(u) + ' KB');
+    if (imagenExcede(u)) excedidas.push(nombre + ' (' + kbImagen(u) + ' KB)');
+  };
+  revisar('Logo', datos.logo);
+  revisar('Banner', datos.banner);
+  datos.fotos.forEach(function(f, k) { revisar('Foto ' + (k + 1), f.url); });
+  if (resumenKB.length) console.log('📏 Tamaños:', resumenKB.join(' · '));
+  if (excedidas.length) {
+    showToast('❌ Muy pesadas (máx ' + limiteKB() + ' KB): ' + excedidas.join(', ') + '. Vuelve a elegirlas.', 'error');
+    btnGuardar.disabled = false;
+    btnGuardar.textContent = '💾 Guardar Negocio';
+    return;
+  }
+  if (resumenKB.length) showToast('📏 ' + resumenKB.join(' · '), 'success');
+  showToast('🔒 Candado enviado: ' + datos.candado, 'success');
+    console.log('📤 ENVIANDO:', datos.mensajeEmergente, '|', datos.Urlexterna, '| editId=', editId);
+  showLoading();
+  try {
+    const action = window.tokenCliente ? 'editarNegocioCliente' : (editId ? 'editarNegocio' : 'agregarNegocio');    const result = await postViaIframe(action, editId, datos);
+    hideLoading();
+    btnGuardar.disabled = false;
+    btnGuardar.textContent = '💾 Guardar Negocio';
+    if (result.success) {
+      showToast(editId ? '✅ Negocio actualizado' : '✅ Negocio creado', 'success');
+      if (!editId && result.id) {
+        document.getElementById('editId').value = result.id;
+      }
+          if (window.tokenCliente) { showToast('✅ Cambios guardados', 'success'); }
+      else { cerrarModal(); cargarNegocios(); }    } else {
+      showToast('❌ Error: ' + result.error, 'error');
+    }
+  } catch(e) {
+    hideLoading();
+    btnGuardar.disabled = false;
+    btnGuardar.textContent = '💾 Guardar Negocio';
+    showToast(msgErrorEnvio(e), 'error');
+    }
+}
+
+// ============================================================
+// ELIMINAR
+// ============================================================
+async function eliminarNegocio(id) {
+  if (!confirm('⚠️ ¿Eliminar?')) return;
+   const tokenAdmin = getAdminToken();
+  if (tokenAdmin === null) { showToast('🔒 Clave cancelada: no se eliminó nada', 'error'); return; }
+  showLoading();
+  try {
+const result = await callAPI('eliminarNegocio', { id, token: tokenAdmin });
+    
+    hideLoading();
+    if (result.success) { showToast('✅ Eliminado', 'success'); cargarNegocios(); }
+    else showToast('❌ Error: ' + result.error, 'error');
+    } catch(e) { hideLoading(); showToast(msgErrorEnvio(e), 'error'); }
+  }
+
+// ============================================================
+// LANDING PAGE - ESTILO FINO
+// ============================================================
+function getPlantillaOverridesCSS(plantilla, colorPrimario, colorSecundario, colorAcento) {
+  // Base "fina" para todas las plantillas. Solo cambian pequeños detalles.
+  if (plantilla === 'clasico') {
+    return `
+      body{background:#F6F1E7;color:#3B2A1A}
+      .l-wrap{background:#FFFDF8;border-color:#E4D9C3}
+      .l-name,.l-sec-title{font-family:Georgia,'Times New Roman',serif}
+      .l-contact-item{background:#FAF5EA}
+    `;
+  }
+  if (plantilla === 'minimalista') {
+    return `
+      .l-gallery{grid-template-columns:1fr}
+      .l-gallery-item img{height:220px}
+    `;
+  }
+  return '';
+}
+
+function construirLandingHTML(n, plantillaOverride) {
+  const plantilla = plantillaOverride || n.plantillaLanding || 'futurista';
+  const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const whatsappDigits = String(n.whatsapp || '').replace(/\D/g, '');
+  const telDigits = String(n.telefono || '').replace(/\D/g, '');
+  const duenoWhatsappDigits = String(n.duenoTelefono || '').replace(/\D/g, '');
+  const fotos = (n.fotos || []).filter(f => f && f.url);
+  const tieneMapa = n.latitud && n.longitud;
+  const colorPrimario = n.colorPrimario || '#7B2FF7';
+  const colorSecundario = n.colorSecundario || '#FF00E5';
+  const colorAcento = n.colorAcento || '#00D4FF';
+  const fuenteLanding = n.fuenteLanding || "'Segoe UI',system-ui,sans-serif";
+  const descParts = (n.descripcion || '').split('&');
+  const descCorta = descParts[0].trim() || '';
+  const descLarga = descParts[1] ? descParts[1].trim() : descCorta;
+  const LIMITE_DESC_FOTO = 90;
+
+  // ---------- Galería ----------
+  const galeriaHTML = fotos.length ? `
+    <section class="l-gallery">${fotos.map((f, i) => {
+      const partes = (f.descripcion || '').split('&').map(s => s.trim());
+      const titulo = partes[0] || 'Foto';
+      // Si una parte es un link (Categoría & link), la foto se vuelve tarjeta de categoría
+      const esLink = p => /^(https?:\/\/\S+|www\.\S+|([a-z0-9-]+\.)+[a-z]{2,}(\/\S*)?)$/i.test(p);
+      let linkCat = '';
+      const resto = [];
+      partes.slice(1).forEach(p => {
+        if (!linkCat && esLink(p)) linkCat = /^https?:\/\//i.test(p) ? p : 'https://' + p;
+        else if (p) resto.push(p);
+      });
+      const descLargaFoto = resto.join(' ');
+      let dCorta = descLargaFoto, dResto = '';
+      if (descLargaFoto.length > LIMITE_DESC_FOTO) {
+        let corte = descLargaFoto.lastIndexOf(' ', LIMITE_DESC_FOTO);
+        if (corte === -1) corte = LIMITE_DESC_FOTO;
+        dCorta = descLargaFoto.substring(0, corte);
+        dResto = descLargaFoto.substring(corte);
+      }
+      if (linkCat) {
+        return `
+        <figure class="l-gallery-item l-gallery-cat">
+          <a class="l-cat-link" href="${esc(linkCat)}" target="_blank" rel="noopener">
+            <img src="${esc(f.url)}" alt="${esc(titulo)}">
+            <div class="l-gallery-info">
+              <div class="l-gallery-titulo">${esc(titulo)}</div>
+              ${descLargaFoto ? `<p class="l-gallery-desc">${esc(descLargaFoto)}</p>` : ''}
+              <span class="l-cat-go">Ver categoría →</span>
+            </div>
+          </a>
+        </figure>`;
+      }
+      return `
+        <figure class="l-gallery-item">
+          <img src="${esc(f.url)}" alt="${esc(titulo)}" onclick="lOpenLightbox(${i})">
+          <figcaption class="l-gallery-info">
+            <div class="l-gallery-titulo">${esc(titulo)}</div>
+            ${descLargaFoto ? `<p class="l-gallery-desc"><span>${esc(dCorta)}</span><span id="lDescResto${i}" style="display:none;">${esc(dResto)}</span>${dResto ? ` <button class="l-vermas-btn" onclick="lToggleDescFoto(${i})">Ver más</button>` : ''}</p>` : ''}
+          </figcaption>
+        </figure>`;
+    }).join('')}</section>` : '';
+
+  // ---------- URL externa (Nombre & URL) ----------
+  let urlExternaHTML = '';
+  const urlExternaRaw = (n.Urlexterna || n.urlexterna || '').trim();
+  if (urlExternaRaw) {
+    let idx = urlExternaRaw.indexOf('&');
+    if (idx === -1) idx = urlExternaRaw.indexOf('|');
+    if (idx === -1) idx = urlExternaRaw.indexOf(';');
+    const nombreExt = idx !== -1 ? urlExternaRaw.substring(0, idx).trim() : '';
+    let urlExt = idx !== -1 ? urlExternaRaw.substring(idx + 1).trim() : urlExternaRaw;
+    if (urlExt && !/^https?:\/\//i.test(urlExt)) urlExt = 'https://' + urlExt;
+    if (/^https?:\/\//i.test(urlExt)) {
+      urlExternaHTML = `
+        <section class="l-section l-externo">
+          <a class="l-link-card" href="${esc(urlExt)}" target="_blank" rel="noopener">
+            <span class="l-link-label">${esc(nombreExt || 'Enlace externo')}</span>
+            <span class="l-link-arrow">→</span>
+          </a>
+        </section>`;
+    }
+  }
+
+  // ---------- Video ----------
+  let videoEmbedUrl = '';
+  if (n.video && n.video.trim() !== '') {
+    const link = n.video.trim();
+    if (link.includes('/d/')) {
+      const fid = link.match(/\/d\/([a-zA-Z0-9_-]+)/);
+      if (fid) videoEmbedUrl = 'https://drive.google.com/file/d/' + fid[1] + '/preview';
+    } else if (link.includes('youtube.com') || link.includes('youtu.be')) {
+      const m = link.match(/(?:v=|youtu\.be\/|\/shorts\/|\/embed\/)([a-zA-Z0-9_-]{11})/);
+      videoEmbedUrl = (m && m[1]) ? 'https://www.youtube.com/embed/' + m[1] + '?rel=0' : link;
+    } else {
+      videoEmbedUrl = link;
+    }
+  }
+  const videoHTML = videoEmbedUrl ? `
+    <section class="l-section">
+      <a class="l-link-card" href="${esc(videoEmbedUrl)}" target="_blank" rel="noopener">
+        <span class="l-link-label">Ver video</span>
+        <span class="l-link-arrow">→</span>
+      </a>
+    </section>` : '';
+
+  // ---------- Mapa ----------
+  const mapaHTML = tieneMapa ? `
+    <section class="l-section">
+      <h2 class="l-sec-title">Ubicación</h2>
+      <div class="l-map-card"><iframe loading="lazy" src="https://www.openstreetmap.org/export/embed.html?bbox=${parseFloat(n.longitud) - 0.006}%2C${parseFloat(n.latitud) - 0.006}%2C${parseFloat(n.longitud) + 0.006}%2C${parseFloat(n.latitud) + 0.006}&layer=mapnik&marker=${n.latitud}%2C${n.longitud}"></iframe></div>
+      <p class="l-direccion">${esc(n.direccion || n.ubicacion || '')}</p>
+    </section>` : '';
+
+  // ---------- Contacto ----------
+  const contactoItems = [
+    ['Teléfono', n.telefono],
+    ['WhatsApp', n.whatsapp],
+    ['Horario', n.horario],
+    ['Correo', n.correo]
+  ].filter(([, v]) => v);
+  const contactoBotones = [
+    whatsappDigits ? `<a href="https://wa.me/${whatsappDigits}" class="l-btn l-btn-main" target="_blank" rel="noopener">WhatsApp</a>` : '',
+    telDigits ? `<a href="tel:${telDigits}" class="l-btn">Llamar</a>` : '',
+    tieneMapa ? `<a href="https://www.google.com/maps/dir/?api=1&destination=${n.latitud},${n.longitud}" class="l-btn" target="_blank" rel="noopener">Cómo llegar</a>` : '',
+    n.urlFacebook ? `<a href="${esc(n.urlFacebook)}" class="l-btn" target="_blank" rel="noopener">Facebook</a>` : ''
+  ].join('');
+
+  const fotosJS = JSON.stringify(fotos.map(f => ({ url: f.url, descripcion: f.descripcion || '' }))).replace(/</g, '\\u003c');
+  const msgJS = JSON.stringify(String(n.mensajeEmergente || n.slogan || '')).replace(/</g, '\\u003c');
+  const nombreJS = JSON.stringify(String(n.nombre || '')).replace(/</g, '\\u003c');
+
+  const footerHTML = `
+    <footer>
+      ${n.duenoMensaje ? `<p class="l-footer-msg">${esc(n.duenoMensaje)}</p>` : ''}
+      ${(duenoWhatsappDigits || n.duenoCorreo) ? `<div class="l-footer-contact">
+        ${duenoWhatsappDigits ? `<a href="https://wa.me/${duenoWhatsappDigits}" target="_blank" rel="noopener">${esc(n.duenoTelefono)}</a>` : ''}
+        ${n.duenoCorreo ? `<a href="mailto:${esc(n.duenoCorreo)}">${esc(n.duenoCorreo)}</a>` : ''}
+      </div>` : ''}
+      <p class="l-footer-brand">FrontPage Express · prototipowebapp@gmail.com</p>
+    </footer>`;
+
+  return `<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>${esc(n.nombre || 'Negocio')} | ${esc(n.slogan || 'I.A.')}</title>
+<meta name="description" content="${esc(descLarga.substring(0, 155))}">
+<meta property="og:title" content="${esc(n.nombre || 'Negocio')}">
+<meta property="og:description" content="${esc(descLarga.substring(0, 155))}">
+${n.banner ? `<meta property="og:image" content="${esc(n.banner)}">` : ''}
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:${fuenteLanding};color:#222;background:#F5F5F3;line-height:1.65;padding:20px 14px;font-weight:400;-webkit-font-smoothing:antialiased}
+.l-wrap{max-width:560px;margin:0 auto;background:#fff;border:1px solid #E8E8E4;border-radius:14px;overflow:hidden}
+.l-banner{height:150px;background:${colorPrimario};${n.banner ? `background-image:url('${n.banner}');background-size:cover;background-position:center;` : ''}}
+.l-head{padding:0 24px;margin-top:-34px;display:flex;align-items:flex-end;gap:14px}
+.l-logo{width:68px;height:68px;border-radius:50%;object-fit:cover;border:3px solid #fff;background:#fff;flex-shrink:0}
+.l-logo-ph{width:68px;height:68px;border-radius:50%;border:3px solid #fff;background:#EEE;flex-shrink:0}
+.l-name{font-size:22px;font-weight:600;letter-spacing:-.2px;color:#111;padding-bottom:4px}
+.l-slogan{padding:10px 24px 0;font-size:14px;color:${colorPrimario};font-weight:500}
+.l-desc{padding:10px 24px 0;font-size:14px;color:#555;font-weight:300}
+.l-section{padding:22px 24px 0}
+.l-sec-title{font-size:12px;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;color:#888;margin-bottom:10px}
+.l-sec-text{font-size:14px;color:#444;font-weight:300}
+.l-gallery{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;padding:22px 24px 0}
+.l-gallery-item{margin:0;border:1px solid #EDEDE9;border-radius:10px;overflow:hidden;background:#fff}
+.l-gallery-item img{width:100%;height:140px;object-fit:cover;cursor:pointer;display:block}
+.l-gallery-info{padding:8px 10px 10px}
+.l-gallery-titulo{font-size:13px;font-weight:600;color:#222}
+.l-gallery-desc{font-size:12px;color:#777;font-weight:300;line-height:1.5}
+.l-cat-link{display:block;text-decoration:none;color:inherit}
+.l-gallery-cat{transition:border-color .2s}
+.l-gallery-cat:hover{border-color:${colorPrimario}}
+.l-cat-go{display:inline-block;margin-top:6px;font-size:12px;font-weight:600;color:${colorPrimario}}
+.l-vermas-btn{background:none;border:none;color:${colorPrimario};font-weight:600;font-size:12px;cursor:pointer}
+.l-link-card{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border:1px solid #E8E8E4;border-radius:10px;text-decoration:none;color:#222;font-size:14px;font-weight:500;transition:border-color .2s}
+.l-link-card:hover{border-color:${colorPrimario}}
+.l-link-arrow{color:${colorPrimario}}
+.l-contact-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:22px 24px 0}
+.l-contact-item{background:#FAFAF8;border-radius:8px;padding:10px 12px}
+.l-contact-item .cl{font-size:10px;letter-spacing:1px;text-transform:uppercase;color:#999;font-weight:600}
+.l-contact-item .cv{font-size:13.5px;color:#222;margin-top:2px;word-break:break-word}
+.l-map-card{border-radius:10px;overflow:hidden;border:1px solid #E8E8E4}
+.l-map-card iframe{width:100%;height:240px;border:0;display:block}
+.l-direccion{margin-top:8px;font-size:13px;color:#777;font-weight:300}
+.l-btn-group{display:flex;flex-wrap:wrap;gap:10px;padding:22px 24px 0}
+.l-btn{flex:1;min-width:120px;text-align:center;padding:12px 16px;border-radius:999px;border:1px solid #D9D9D4;color:#222;background:#fff;font-weight:500;font-size:13.5px;text-decoration:none;transition:all .2s}
+.l-btn:hover{border-color:${colorPrimario};color:${colorPrimario}}
+.l-btn-main{background:${colorPrimario};border-color:${colorPrimario};color:#fff}
+.l-btn-main:hover{color:#fff;opacity:.9}
+.l-share-section{margin-top:26px;padding:22px 24px;text-align:center;border-top:1px solid #EEE}
+.l-qr-img{width:120px;height:120px;border-radius:8px;border:1px solid #E8E8E4;padding:6px;cursor:pointer}
+.l-qr-caption{font-size:12px;color:#999;margin-top:6px}
+.l-qr-caption span{color:${colorPrimario};cursor:pointer;font-weight:500}
+footer{background:#FAFAF8;border-top:1px solid #EEE;text-align:center;padding:18px 20px;font-size:12px;color:#888}
+.l-footer-msg{color:#444;font-weight:500;font-size:13px;margin-bottom:8px}
+.l-footer-contact{margin-bottom:8px}
+.l-footer-contact a{color:#555;text-decoration:none;font-size:12.5px;margin:0 8px}
+.l-footer-brand{font-size:11px;color:#AAA}
+.l-popup-mensaje{position:fixed;left:50%;bottom:-120px;transform:translateX(-50%);background:#222;color:#fff;padding:12px 38px 12px 18px;border-radius:10px 10px 0 0;font-size:13px;text-align:center;max-width:92%;z-index:4000;transition:bottom .5s ease}
+.l-popup-mensaje.mostrar{bottom:0}
+.l-popup-cerrar{position:absolute;top:6px;right:10px;background:none;border:none;color:#fff;font-size:16px;cursor:pointer}
+.l-lightbox{display:none;position:fixed;inset:0;background:rgba(255,255,255,.97);z-index:5000;align-items:center;justify-content:center;flex-direction:column;padding:20px}
+.l-lightbox.active{display:flex}
+.l-lightbox img{max-width:100%;max-height:75vh;border-radius:8px}
+.l-lightbox-cap{color:#444;font-size:13px;margin-top:14px;text-align:center}
+.l-lightbox-back{margin-top:20px;background:#222;color:#fff;border:none;padding:10px 24px;border-radius:999px;font-weight:500;cursor:pointer}
+@media(max-width:480px){.l-contact-grid{grid-template-columns:1fr}}
+${getPlantillaOverridesCSS(plantilla, colorPrimario, colorSecundario, colorAcento)}
+</style></head><body>
+<div class="l-wrap plantilla-${plantilla}">
+  <div class="l-banner"></div>
+  <div class="l-head">
+    ${n.logo ? `<img class="l-logo" src="${esc(n.logo)}" alt="Logo">` : `<div class="l-logo-ph"></div>`}
+    <h1 class="l-name">${esc(n.nombre || '')}</h1>
+  </div>
+  ${n.slogan ? `<p class="l-slogan">${esc(n.slogan)}</p>` : ''}
+  ${descLarga ? `<p class="l-desc">${esc(descLarga)}</p>` : ''}
+  ${n.mision ? `<section class="l-section"><h2 class="l-sec-title">Nuestra misión</h2><p class="l-sec-text">${esc(n.mision)}</p></section>` : ''}
+  ${galeriaHTML}
+  ${videoHTML}
+  ${urlExternaHTML}
+  ${contactoItems.length ? `<div class="l-contact-grid">${contactoItems.map(([label, valor]) => `<div class="l-contact-item"><div class="cl">${label}</div><div class="cv">${esc(valor)}</div></div>`).join('')}</div>` : ''}
+  ${mapaHTML}
+  <div class="l-btn-group">${contactoBotones}</div>
+  <section class="l-share-section">
+    <img class="l-qr-img" id="lQrImg" alt="QR" onclick="compartirQRWhatsApp()">
+    <p class="l-qr-caption"><span onclick="compartirQRWhatsApp()">Escanea para compartir</span></p>
+  </section>
+  ${footerHTML}
+</div>
+<div class="l-lightbox" id="lLightbox">
+  <img id="lLightboxImg" src="" alt="">
+  <p class="l-lightbox-cap" id="lLightboxCap"></p>
+  <button class="l-lightbox-back" onclick="lCloseLightbox()">← Volver</button>
+</div>
+<script>
+(function(){
+  var lFotos = ${fotosJS};
+  window.lOpenLightbox = function(i){
+    var f = lFotos[i]; if(!f) return;
+    document.getElementById('lLightboxImg').src = f.url;
+    var partes = (f.descripcion||'').split('&');
+    document.getElementById('lLightboxCap').textContent = partes[1] ? partes[1].trim() : (partes[0].trim() || '');
+    document.getElementById('lLightbox').classList.add('active');
+  };
+  window.lCloseLightbox = function(){ document.getElementById('lLightbox').classList.remove('active'); };
+  window.lToggleDescFoto = function(i){
+    var r = document.getElementById('lDescResto' + i);
+    if (r) r.style.display = r.style.display === 'none' ? 'inline' : 'none';
+  };
+  document.getElementById('lLightbox').addEventListener('click', function(e){ if (e.target === this) lCloseLightbox(); });
+  var currentUrl = window.location.href;
+  var qrImg = document.getElementById('lQrImg');
+  if (qrImg) qrImg.src = 'https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=' + encodeURIComponent(currentUrl);
+  window.compartirQRWhatsApp = function(){
+    window.open('https://wa.me/?text=' + encodeURIComponent(${nombreJS} + ': ' + currentUrl), '_blank');
+  };
+  var msg = ${msgJS};
+  if (msg) {
+    var popup = document.createElement('div');
+    popup.className = 'l-popup-mensaje';
+    var sp = document.createElement('span'); sp.textContent = msg;
+    var bt = document.createElement('button'); bt.className = 'l-popup-cerrar'; bt.textContent = '×';
+    popup.appendChild(sp); popup.appendChild(bt);
+    document.body.appendChild(popup);
+    function mostrar(){ popup.classList.add('mostrar'); setTimeout(function(){ popup.classList.remove('mostrar'); }, 3000); }
+    bt.onclick = function(){ popup.classList.remove('mostrar'); };
+    setTimeout(mostrar, 2000);
+    setInterval(mostrar, 15000);
+  }
+})();
+<\/script>
+</body></html>`;
+}
+
+// ============================================================
+// SITEMAP
+// ============================================================
+function generarSitemapLanding(n) {
+  const slug = (n.nombre || 'negocio').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+  const url = `https://proyectosolaronline.github.io/${slug}/`;
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>${url}</loc><lastmod>${new Date().toISOString().split('T')[0]}</lastmod><changefreq>weekly</changefreq><priority>1.0</priority></url>
+</urlset>`;
+}
+
+// ============================================================
+// PREVIEW (se ve igual que la página ya publicada)
+// ============================================================
+let negocioPreviewActual = null;
+
+function previsualizarLanding(id) {
+  const negocio = negocios.find(n => n.id === id);
+  if (!negocio) return;
+  negocioPreviewActual = negocio;
+  currentPreviewHTML = construirLandingHTML(negocio);
+  currentPreviewNombre = (negocio.nombre || 'negocio').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'') + '.html';
+  currentPreviewId = negocio.id || '';
+  document.getElementById('previewTitle').textContent = negocio.nombre || 'Landing';
+  document.getElementById('previewOverlay').classList.add('active');
+  document.getElementById('previewFrame').srcdoc = currentPreviewHTML;
+  showToast('✅ Vista previa generada', 'success');
+}
+
+function cerrarPreview() {
+  document.getElementById('previewOverlay').classList.remove('active');
+  document.getElementById('previewFrame').srcdoc = '';
+}
+
+function descargarHTML() {
+  if (!currentPreviewHTML) return;
+  const blob = new Blob([currentPreviewHTML], { type: 'text/html' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = currentPreviewNombre;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 3000);
+  showToast('✅ Descargado', 'success');
+}
+
+async function publicarEnGitHub() {
+  if (!currentPreviewHTML) { showToast('❌ No hay preview', 'error'); return; }
+  const btn = document.getElementById('btnPublicarGitHub');
+  btn.disabled = true;
+  btn.textContent = '⏳ Publicando...';
+  showLoading();
+  const negocio = negocios.find(n => n.id === currentPreviewId);
+  const sitemapXML = negocio ? generarSitemapLanding(negocio) : '';
+  try {
+    const result = await postViaIframe('publicarGitHub', currentPreviewId, {
+      nombreArchivo: currentPreviewNombre,
+      html: currentPreviewHTML,
+      sitemap: sitemapXML,
+      nombreSitemap: 'sitemap.xml'
+    }, GITHUB_PUBLISH_URL);
+    hideLoading();
+    btn.disabled = false;
+    btn.textContent = '🚀 Publicar';
+    if (result.success) showToast('✅ Publicado en GitHub', 'success');
+    else showToast('❌ Error: ' + result.error, 'error');
+  } catch(e) {
+    hideLoading();
+    btn.disabled = false;
+    btn.textContent = '🚀 Publicar';
+        showToast(msgErrorEnvio(e), 'error');
+     }
+}
+
+function showToast(mensaje, tipo = 'success') {
+  document.querySelectorAll('.toast').forEach(t => t.remove());
+  const toast = document.createElement('div');
+  toast.className = `toast toast-${tipo}`;
+  toast.textContent = mensaje;
+  document.body.appendChild(toast);
+  setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 300); }, 3500);
+}
+
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    if (document.getElementById('previewOverlay').classList.contains('active')) cerrarPreview();
+    else if (document.getElementById('mapPopupOverlay').classList.contains('active')) cerrarMapaPopup();
+    else if (document.getElementById('detailOverlay').classList.contains('active')) cerrarDetalle();
+    else if (document.getElementById('modalOverlay').classList.contains('active')) cerrarModal();
+  }
+});
+
+document.getElementById('previewOverlay').addEventListener('click', function(e) { if (e.target === this) cerrarPreview(); });
+document.getElementById('detailOverlay').addEventListener('click', function(e) { if (e.target === this) cerrarDetalle(); });
+document.getElementById('mapPopupOverlay').addEventListener('click', function(e) { if (e.target === this) cerrarMapaPopup(); });
+
+// ============================================================
+// CAPSULA WHATSAPP
+// ============================================================
+function procesarCapsulaPegada() {
+    const texto = document.getElementById('capsulaInput').value.trim();
+    const status = document.getElementById('capsulaStatus');
+    if (!texto) { status.innerHTML = '⚠️ Pega el texto primero'; return; }
+    status.innerHTML = '⏳ Procesando...';
+    try {
+        const datos = parsearTextoPlano(texto);
+        if (!datos || Object.keys(datos).length === 0) {
+            status.innerHTML = '⚠️ No se pudieron extraer datos';
+            return;
+        }
+        cargarDatosEnFormulario(datos);
+        status.innerHTML = '✅ Datos cargados correctamente';
+        showToast('✅ Datos procesados', 'success');
+    } catch(e) {
+        status.innerHTML = '❌ Error al procesar';
+        showToast('❌ Error', 'error');
+    }
+}
+
+function parsearTextoPlano(texto) {
+    const datos = {};
+    const mapeo = {
+        'nombre': ['nombre', 'negocio'], 
+        'slogan': ['slogan', 'eslogan'],
+        'descripcion': ['descripcion'], 
+        'mision': ['mision', 'misión'],
+        'mensajeEmergente': ['mensajeemergente', 'mensaje emergente'],
+        'ubicacion': ['ubicacion', 'referencia'], 
+        'direccion': ['direccion', 'calle'],
+        'latitud': ['latitud'], 
+        'longitud': ['longitud'],
+        'telefono': ['telefono', 'teléfono'], 
+        'whatsapp': ['whatsapp'],
+        'correo': ['correo', 'email'], 
+        'horario': ['horario'],
+        'rol': ['rol'], 
+        'urlFacebook': ['urlfacebook', 'facebook'],
+        'Urlexterna': ['urlexterna', 'url externa', 'enlace', 'link', 'sitio web', 'web', 'urlexterno', 'url externo'],
+        'activo': ['activo']
+    };
+    const lineas = texto.split('\n');
+    for (const linea of lineas) {
+        const match = linea.trim().match(/^([^:=\n]+)[:=]\s*(.+)/);
+        if (match) {
+            const clave = match[1].trim().toLowerCase();
+            const valor = match[2].trim();
+            for (const [campo, alias] of Object.entries(mapeo)) {
+                if (alias.some(a => a.toLowerCase() === clave)) { datos[campo] = valor; break; }
+            }
+        }
+    }
+    return datos;
+}
+
+function cargarDatosEnFormulario(datos) {
+    document.getElementById('nombre').value = datos.nombre || '';
+    document.getElementById('slogan').value = datos.slogan || '';
+    document.getElementById('descripcion').value = datos.descripcion || '';
+    document.getElementById('mision').value = datos.mision || '';
+    document.getElementById('mensajeEmergente').value = datos.mensajeEmergente || '';
+    document.getElementById('ubicacion').value = datos.ubicacion || '';
+    document.getElementById('direccion').value = datos.direccion || '';
+    document.getElementById('latitud').value = datos.latitud || '';
+    document.getElementById('longitud').value = datos.longitud || '';
+    document.getElementById('telefono').value = datos.telefono || '';
+    document.getElementById('whatsapp').value = datos.whatsapp || '';
+    document.getElementById('correo').value = datos.correo || '';
+    document.getElementById('horario').value = datos.horario || '';
+    document.getElementById('rol').value = datos.rol || 'Usuario';
+    document.getElementById('urlFacebook').value = datos.urlFacebook || '';
+    document.getElementById('Urlexterna').value = datos.Urlexterna || '';
+    document.getElementById('activo').value = 'true';
+    if (datos.latitud && datos.longitud) {
+        setUbicacionEnMapa(datos.latitud, datos.longitud, true);
+    }
+    ubicacionSeleccionada = true;
+}
+
+function limpiarCapsulaInput() {
+    document.getElementById('capsulaInput').value = '';
+    document.getElementById('capsulaStatus').innerHTML = '';
+}
+
+// ============================================================
+// RECIBIR NOTIFICACIÓN DESDE video.html
+// ============================================================
+window.addEventListener('message', function(e) {
+  if (e.data && e.data.action === 'videoActualizado') {
+    const idActual = document.getElementById('editId').value;
+    const modalAbierto = document.getElementById('modalOverlay').classList.contains('active');
+    if (modalAbierto && idActual === e.data.storeId) {
+      callAPI('video.get', { storeId: idActual }).then(function(result) {
+        if (result && result.ok) {
+          document.getElementById('video').value = result.videoUrl || '';
+          actualizarIndicadorVideo();
+          showToast('✅ Video actualizado', 'success');
+        }
+      });
+    } else {
+      cargarNegocios();
+    }
+  }
+});
+// ============================================================
+// CIERRE POR INACTIVIDAD (1 minuto) Y REGRESO A URL ORIGEN
+// ============================================================
+const INACTIVIDAD_MS = 60000;
+// Pon aquí la URL exacta a la que debe regresar. Si la dejas vacía usa
+// document.referrer y, si tampoco existe, la raíz del sitio.
+const URL_ORIGEN = '';
+let _timerInactividad = null;
+
+function cerrarPorInactividad() {
+  // No cerrar mientras se guarda o publica
+  if (document.getElementById('loadingOverlay').classList.contains('active')) {
+    reiniciarInactividad();
+    return;
+  }
+  negocios = [];
+  detenerVerificacionVideo();
+  document.body.innerHTML = '';
+
+  const destino = URL_ORIGEN || document.referrer || (location.origin + '/');
+
+  // Si otra pestaña abrió esta, se cierra y el usuario queda en la de origen
+  if (window.opener && !window.opener.closed) {
+    try { window.close(); } catch (e) {}
+  }
+  // Si no se pudo cerrar, regresa a la URL de origen (sin dejar "Atrás" al panel)
+  location.replace(destino);
+}
+function reiniciarInactividad() {
+  clearTimeout(_timerInactividad);
+  _timerInactividad = setTimeout(cerrarPorInactividad, INACTIVIDAD_MS);
+}
+
+if (ACCESO_OK && !ES_MODO_CLIENTE) {
+  ['mousemove', 'mousedown', 'keydown', 'touchstart', 'scroll', 'click', 'input']
+    .forEach(function (ev) {
+      document.addEventListener(ev, reiniciarInactividad, { passive: true, capture: true });
+    });
+  reiniciarInactividad();
+}
+
+  console.log('✅ Sistema I.A. Futurista activo');
+</script>
+<a href="https://proyectosolaronline.github.io/NegociosHtml/tu-negocio-online.html" target="_blank" class="fab-left" aria-label="Negocio Online">
+  🏪
+  <span class="fab-tooltip-left">Negocio Online</span>
+</a>
+
+<style>
+.fab-left {
+  position: fixed;
+  bottom: 20px;
+  left: 20px;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #7B2FF7 0%, #FF00E5 50%, #00D4FF 100%);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+  text-decoration: none;
+  box-shadow: 0 0 30px rgba(123, 47, 247, 0.6), 0 0 60px rgba(0, 212, 255, 0.4);
+  z-index: 99999;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  animation: pulse-left 2s infinite;
+}
+@keyframes pulse-left {
+  0% { box-shadow: 0 0 30px rgba(123, 47, 247, 0.6), 0 0 60px rgba(0, 212, 255, 0.4); }
+  50% { box-shadow: 0 0 50px rgba(123, 47, 247, 0.9), 0 0 80px rgba(0, 212, 255, 0.6); }
+  100% { box-shadow: 0 0 30px rgba(123, 47, 247, 0.6), 0 0 60px rgba(0, 212, 255, 0.4); }
+}
+.fab-left:hover {
+  transform: translateY(-4px) scale(1.05);
+}
+.fab-left:active {
+  transform: translateY(0) scale(0.97);
+}
+.fab-left .fab-tooltip-left {
+  position: absolute;
+  left: 70px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: #222;
+  color: white;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+.fab-left:hover .fab-tooltip-left {
+  opacity: 1;
+}
+@media (max-width: 768px) {
+  .fab-left {
+    bottom: 16px;
+    left: 16px;
+    width: 54px;
+    height: 54px;
+    font-size: 22px;
+  }
+  .fab-left .fab-tooltip-left {
+    display: none;
+  }
+}
+</style>
+
+<button id="btnGenerarLandingFloat" onclick="lanzarGeneradorDesdePreview()">
+  <span class="icon-btn">🚀</span>
+  <span class="spinner-btn"></span>
+  <span class="txt-btn">Generar Landing</span>
+</button>
+<style>
+#btnGenerarLandingFloat{
+  position:fixed;
+  bottom:calc(24px + env(safe-area-inset-bottom));
+  left:50%;
+  transform:translateX(-50%);
+  z-index:3999; /* detrás del popup emergente (4000) */
+  padding:10px 22px;
+  border:none;
+  border-radius:24px;
+  background:linear-gradient(135deg,#00FF88,#00D4FF);
+  color:#0A0E17;
+  font-weight:700;
+  font-size:13px;
+  font-family:'Segoe UI',system-ui,sans-serif;
+  cursor:pointer;
+  box-shadow:0 0 20px rgba(0,255,136,0.6),0 4px 15px rgba(0,0,0,0.3);
+  transition:transform .2s,opacity .3s;
+  display:none;
+  align-items:center;
+  gap:8px;
+}
+#btnGenerarLandingFloat.visible{display:flex}
+#btnGenerarLandingFloat:hover{transform:translateX(-50%) translateY(-3px)}
+#btnGenerarLandingFloat:active{transform:translateX(-50%) scale(0.95)}
+#btnGenerarLandingFloat.procesando{
+  background:linear-gradient(135deg,#7B2FF7,#00D4FF);
+  color:#fff;
+  cursor:wait;
+  pointer-events:none;
+}
+#btnGenerarLandingFloat .spinner-btn{
+  display:none;
+  width:14px;
+  height:14px;
+  border:2px solid rgba(255,255,255,0.3);
+  border-top-color:#00FF88;
+  border-radius:50%;
+  animation:spinBtn .8s linear infinite;
+}
+#btnGenerarLandingFloat.procesando .spinner-btn{display:inline-block}
+#btnGenerarLandingFloat.procesando .icon-btn{display:none}
+@keyframes spinBtn{to{transform:rotate(360deg)}}
+</style>
+<script>
+(function(){
+  function chequearPreview(){
+    var overlay = document.getElementById('previewOverlay');
+    var btn = document.getElementById('btnGenerarLandingFloat');
+    if (!overlay || !btn) return;
+    if (overlay.classList.contains('active')) {
+      btn.classList.add('visible');
+    } else {
+      btn.classList.remove('visible');
+      btn.classList.remove('procesando');
+      btn.innerHTML = '<span class="icon-btn">🚀</span><span class="spinner-btn"></span><span class="txt-btn">Generar Landing</span>';
+    }
+  }
+  document.addEventListener('DOMContentLoaded', function(){
+    var overlay = document.getElementById('previewOverlay');
+    if (!overlay) return;
+    new MutationObserver(chequearPreview).observe(overlay, { attributes: true, attributeFilter: ['class'] });
+    chequearPreview();
+  });
+})();
+
+function lanzarGeneradorDesdePreview() {
+  var btn = document.getElementById('btnGenerarLandingFloat');
+  var negocio = negocios.find(function(n){ return n.id === currentPreviewId; });
+  if (!negocio) { showToast('❌ No hay negocio seleccionado', 'error'); return; }
+  if (!negocio.logo || !negocio.banner) { showToast('⚠️ Necesita logo y banner', 'error'); return; }
+
+  btn.classList.add('procesando');
+  btn.innerHTML = '<span class="icon-btn">🚀</span><span class="spinner-btn"></span><span class="txt-btn">Procesando landing...</span>';
+
+  setTimeout(function(){
+    try { localStorage.setItem('landingData', JSON.stringify(negocio)); }
+    catch(e) {
+      showToast('❌ No se pudo guardar', 'error');
+      restaurarBoton();
+      return;
+    }
+    var v = window.open('generar-landing.html', '_blank');
+    if (!v) {
+      showToast('⚠️ Permite ventanas emergentes', 'error');
+      restaurarBoton();
+      return;
+    }
+    showToast('✅ Landing lista para personalizar', 'success');
+    setTimeout(restaurarBoton, 2500);
+  }, 600);
+}
+
+function restaurarBoton() {
+  var btn = document.getElementById('btnGenerarLandingFloat');
+  if (!btn) return;
+  btn.classList.remove('procesando');
+  btn.innerHTML = '<span class="icon-btn">🚀</span><span class="spinner-btn"></span><span class="txt-btn">Generar Landing</span>';
+}
+</script>
+  
+</body>
+</html>
