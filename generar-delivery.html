@@ -1425,10 +1425,10 @@ window.copiarLinkPagina = function(btn){
   if(bannerQR){
     bannerQR.addEventListener('click', function(){
       var t = Date.now();
-      qrTaps = qrTaps.filter(function(x){ return t - x < 1500; });
+      qrTaps = qrTaps.filter(function(x){ return t - x < 600; });
       qrTaps.push(t);
-      if(qrTaps.length >= 3){ qrTaps = []; window.abrirQRImprimir(); }
-    });
+      if(qrTaps.length >= 2){ qrTaps = []; window.abrirQRImprimir(); }
+      });
   }
 
   var msgRaw = '${escJS(mensajeEmergente)}';
