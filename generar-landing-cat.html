@@ -876,6 +876,29 @@ footer .footer-slogan{color:#888;font-size:12px}
 .legal-ico.visible{opacity:.8;transform:scale(1);pointer-events:auto}
 .legal-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:6000;align-items:center;justify-content:center;padding:20px}
 .legal-modal.active{display:flex}
+/* ===== Pantalla oculta: imprimir QR (2 toques en el banner) ===== */
+.banner{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+#qrPrintOv{position:fixed;inset:0;z-index:6000;background:rgba(5,8,15,.92);display:none;align-items:center;justify-content:center;padding:16px}
+#qrPrintOv.activo{display:flex}
+#qrPrintOv .qp-card{background:#fff;color:#111;border-radius:20px;padding:24px 20px;max-width:360px;width:100%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.6)}
+#qrPrintOv .qp-nombre{font-size:20px;font-weight:800;margin:0 0 4px;color:#111}
+#qrPrintOv .qp-sub{font-size:13px;color:#555;margin:0 0 14px}
+#qrPrintOv .qp-qr{width:100%;max-width:300px;height:auto;aspect-ratio:1/1;display:block;margin:0 auto;background:#fff}
+#qrPrintOv .qp-url{font-size:11px;color:#777;margin:12px 0 0;word-break:break-all}
+#qrPrintOv .qp-btns{display:flex;gap:10px;margin-top:18px}
+#qrPrintOv .qp-btns button{flex:1;padding:12px 10px;border-radius:12px;border:0;font-size:14px;font-weight:700;cursor:pointer}
+#qrPrintOv .qp-imp{background:#111;color:#fff}
+#qrPrintOv .qp-cerrar{background:#E9E9EE;color:#333}
+@media print{
+  body.qr-imprimiendo>*:not(#qrPrintOv){display:none!important}
+  body.qr-imprimiendo{background:#fff!important}
+  body.qr-imprimiendo #qrPrintOv{display:flex!important;position:static;background:#fff;padding:0}
+  body.qr-imprimiendo #qrPrintOv .qp-card{box-shadow:none;max-width:none;width:100%;padding:0}
+  body.qr-imprimiendo #qrPrintOv .qp-nombre{font-size:34px}
+  body.qr-imprimiendo #qrPrintOv .qp-sub{font-size:18px}
+  body.qr-imprimiendo #qrPrintOv .qp-qr{max-width:15cm;width:100%}
+  body.qr-imprimiendo #qrPrintOv .qp-btns{display:none!important}
+}
 .legal-box{max-width:420px;width:100%;max-height:80vh;overflow:auto;background:#1a1a1a;color:#ddd;border-radius:14px;padding:20px;font-size:12px;line-height:1.6;text-align:left}
 .legal-box h3{font-size:14px;margin-bottom:10px;color:#fff}
 .legal-box p{margin-bottom:8px}
@@ -910,6 +933,18 @@ ${fh}
 <section class="promo-final"><p>🌐 ¿Quieres una página como esta totalmente <strong>gratis</strong>? Solo pagas la administración de contenido.</p><a href="mailto:prototipowebapp@gmail.com?subject=Quiero%20mi%20p%C3%A1gina%20web%20gratis">📧 Escríbenos a prototipowebapp@gmail.com</a></section>
 <div class="lightbox" id="lLightbox"><img id="lLightboxImg" src="" alt=""><p class="lightbox-cap" id="lLightboxCap"></p><button class="lightbox-back" onclick="lCloseLightbox()">← Volver</button></div>
 <div class="legal-modal" id="legalModal"><div class="legal-box"><h3>⚖️ Aviso legal</h3><p>El contenido de esta página (textos, imágenes, videos y datos) es proporcionado por <strong>${escHTML(nombreLimpio)}</strong> bajo su exclusiva responsabilidad. Los productos y servicios aquí ofrecidos son lícitos y están permitidos por la legislación aplicable. Esta página no promueve ni permite la venta de productos o servicios ilegales, prohibidos o que requieran autorización que no se tenga.</p><p>Precios, disponibilidad, promociones y características pueden cambiar sin previo aviso. Las marcas e imágenes mencionadas pertenecen a sus respectivos dueños. Si detectas contenido inapropiado o que infrinja derechos, escríbenos a <a href="mailto:prototipowebapp@gmail.com?subject=Reporte%20de%20contenido">prototipowebapp@gmail.com</a>.</p><button type="button" onclick="legalCerrar()">Entendido</button></div></div>
+<div id="qrPrintOv" role="dialog" aria-label="Imprimir QR">
+  <div class="qp-card">
+    <h2 class="qp-nombre">${escHTML(nombreLimpio)}</h2>
+    <p class="qp-sub">Escanea el QR y haz tu pedido</p>
+    <img id="qpImg" class="qp-qr" alt="QR ${escHTML(nombreLimpio)}">
+    <p class="qp-url">${escHTML(cu)}</p>
+    <div class="qp-btns">
+      <button type="button" class="qp-imp" onclick="imprimirQR()">🖨️ Imprimir</button>
+      <button type="button" class="qp-cerrar" onclick="cerrarQRImprimir()">Cerrar</button>
+    </div>
+  </div>
+</div>
 <script>
 (function(){
   var splash = document.getElementById('splash');
