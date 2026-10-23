@@ -482,8 +482,7 @@ async function importarAlCatalogo(n) {
       info('✅ Catálogo verificado: ' + (j.nuevo ? 'negocio nuevo' : 'actualizado') + ' · ' + v.productos + ' producto(s) · ' + v.duenos + ' dueño(s)');
       return true;
     }
-    info('⚠️ Catálogo: se enviaron los datos pero no se pudo confirmar. Revisa NegociosMaster y la columna activo');
-    return false;
+    info('⚠️ Catálogo: no se pudo confirmar → ' + JSON.stringify(v || 'sin respuesta').slice(0, 150));    return false;
   }  info('❌ Catálogo: ' + ((j && j.error) || 'error desconocido'));
   if (/clave/i.test((j && j.error) || '')) { try { localStorage.removeItem('catalogoClave'); } catch (e) {} }}
   function mostrarToast(m) {
