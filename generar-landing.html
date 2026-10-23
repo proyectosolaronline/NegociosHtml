@@ -784,8 +784,7 @@ const ca = n.colorAcento || (pl === 'futurista' ? '#5BB8D4' : '#00D4FF');
        const correoOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(n.correo || '').trim());
     const idCatalogo = String(n.id || n.negocio_id || carp).toLowerCase().replace(/[^\w-]/g, '-');
   const urlCatalogo = CATALOGO_URL ? CATALOGO_URL + '?negocio=' + encodeURIComponent(idCatalogo) : '';
-    const cb = (urlCatalogo && !btnsOcultos.cat ? …
-                (wd && !btnsOcultos.wa ? '<a href="https://wa.me/' + wd + '" class="btn-link btn-whatsapp" target="_blank">💬 WhatsApp</a>' : '') +   (td && !btnsOcultos.call ?  '<a href="tel:' + td + '" class="btn-link btn-call">📞 Llamar</a>' : '') +
+  const cb = (urlCatalogo && !btnsOcultos.cat ? '<a href="' + escHTML(urlCatalogo) + '" class="btn-link btn-catalogo">🛍️ Ver catálogo</a>' : '') +                (wd && !btnsOcultos.wa ? '<a href="https://wa.me/' + wd + '" class="btn-link btn-whatsapp" target="_blank">💬 WhatsApp</a>' : '') +   (td && !btnsOcultos.call ?  '<a href="tel:' + td + '" class="btn-link btn-call">📞 Llamar</a>' : '') +
     (tm && !btnsOcultos.maps ? '<a href="https://www.google.com/maps/dir/?api=1&destination=' + n.latitud + ',' + n.longitud + '" class="btn-link btn-maps" target="_blank">🧭 Cómo llegar</a>' : '') +
     (n.urlFacebook && !btnsOcultos.fb ? '<a href="' + escHTML(n.urlFacebook) + '" class="btn-link btn-facebook" target="_blank">📘 Facebook</a>' : '') +
       (correoOk && !btnsOcultos.mail ? '<button type="button" class="btn-link btn-correo" onclick="correoContacto()">✉️ Escribir por correo</button>' : '');
