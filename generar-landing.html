@@ -228,6 +228,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;color:#00FF41;f
   <span class="badge" id="previewBadge">👁️ Vista Previa</span>
   <div class="actions">
     <button class="btn" onclick="procesarSitemapRobots()" aria-label="Sitemap y robots">🗺️ SEO</button>
+        <button class="btn" id="btnProbarCatalogo">🛍️ Probar catálogo</button>
     <button class="btn" id="btnDescargar">⬇️ Descargar</button>
     <button class="btn btn-success" id="btnPublicar">🚀 Publicar</button>
     <button class="btn btn-danger" id="btnCerrar" aria-label="Cerrar">✖</button>
@@ -471,8 +472,19 @@ async function importarAlCatalogo(n) {
   let j;
   try { j = await r.json(); }
   catch (e) { info('❌ Catálogo: Apps Script no respondió. Publica una nueva versión de la implementación con el Code.gs nuevo'); return; }
-  if (j && j.success) { info('🛍️ Datos enviados al catálogo' + (j.nuevo ? ' (negocio nuevo)' : ' (actualizado)')); return; }
-  info('❌ Catálogo: ' + ((j && j.error) || 'error desconocido'));
+  if (j && j.success) {
+    let v = null;
+    try {
+      const rv = await fetch(CATALOGO_URL, { method: 'POST', body: JSON.stringify({ accion: 'verificarNegocio', clave: clave, negocio_id: datos.negocio_id }) });
+      v = await rv.json();
+    } catch (e) {}
+    if (v && v.success && v.existe && v.activo) {
+      info('✅ Catálogo verificado: ' + (j.nuevo ? 'negocio nuevo' : 'actualizado') + ' · ' + v.productos + ' producto(s) · ' + v.duenos + ' dueño(s)');
+      return true;
+    }
+    info('⚠️ Catálogo: se enviaron los datos pero no se pudo confirmar. Revisa NegociosMaster y la columna activo');
+    return false;
+  }  info('❌ Catálogo: ' + ((j && j.error) || 'error desconocido'));
   if (/clave/i.test((j && j.error) || '')) { try { localStorage.removeItem('catalogoClave'); } catch (e) {} }}
   function mostrarToast(m) {
   document.querySelectorAll('.toast').forEach(x => x.remove());
@@ -707,7 +719,15 @@ function actualizarBotonesPlantilla(a) { document.querySelectorAll('.plantilla-b
 
 document.getElementById('btnCerrar').onclick = () => { try { localStorage.removeItem('landingData'); } catch(e) {} window.close(); setTimeout(() => { window.location.href = 'about:blank'; }, 200); };
 document.getElementById('btnDescargar').onclick = () => { if (!currentPreviewHTML) return; descargarTexto(currentPreviewHTML, currentPreviewNombre, 'text/html'); mostrarToast('✅ HTML descargado'); };
-document.getElementById('btnPublicar').onclick = () => {
+document.getElementById('btnProbarCatalogo').onclick = async () => {
+  if (!negocioActual) return;
+  const w = window.open('', '_blank');
+  const ok = await importarAlCatalogo(negocioActual);
+  const id = String(negocioActual.id || negocioActual.negocio_id || nombreCarpeta(negocioActual.nombre)).toLowerCase().replace(/[^\w-]/g, '-');
+  if (ok && w) { w.location = CATALOGO_URL + '?negocio=' + encodeURIComponent(id); }
+  else if (w) { w.close(); }
+};
+  document.getElementById('btnPublicar').onclick = () => {
   if (!currentPreviewHTML || !negocioActual) return;
   const carp = currentPreviewSlug;
   const bt = document.getElementById('btnPublicar');
