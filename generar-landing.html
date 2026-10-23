@@ -458,16 +458,22 @@ async function importarAlCatalogo(n) {
     logo: n.logo || '', banner: n.banner || '',
     activo: n.activo === undefined ? true : n.activo
   };
+    function info(m) {
+    window.estadoCatalogo = m;
+    mostrarToast(m);
+    try { const s = document.getElementById('linkModalSub'); if (s) s.textContent = String(s.textContent).split(' · ')[0] + ' · ' + m; } catch (e) {}
+  }
+  window.estadoCatalogo = '⏳ Enviando datos al catálogo...';
+  let r;
   try {
-    const r = await fetch(CATALOGO_URL, { method: 'POST', body: JSON.stringify({ accion: 'importarNegocio', clave: clave, datos: datos }) });
-    const j = await r.json();
-    if (j.success) mostrarToast('🛍️ Datos enviados al catálogo');
-    else {
-      mostrarToast('❌ Catálogo: ' + (j.error || 'error'));
-      if (/clave/i.test(j.error || '')) { try { localStorage.removeItem('catalogoClave'); } catch (e) {} }
-    }
-  } catch (e) { mostrarToast('❌ Catálogo: no se pudo enviar'); }
-}
+    r = await fetch(CATALOGO_URL, { method: 'POST', body: JSON.stringify({ accion: 'importarNegocio', clave: clave, datos: datos }) });
+  } catch (e) { info('❌ Catálogo: no se pudo conectar con Apps Script'); return; }
+  let j;
+  try { j = await r.json(); }
+  catch (e) { info('❌ Catálogo: Apps Script no respondió. Publica una nueva versión de la implementación con el Code.gs nuevo'); return; }
+  if (j && j.success) { info('🛍️ Datos enviados al catálogo' + (j.nuevo ? ' (negocio nuevo)' : ' (actualizado)')); return; }
+  info('❌ Catálogo: ' + ((j && j.error) || 'error desconocido'));
+  if (/clave/i.test((j && j.error) || '')) { try { localStorage.removeItem('catalogoClave'); } catch (e) {} }}
   function mostrarToast(m) {
   document.querySelectorAll('.toast').forEach(x => x.remove());
   const e = document.createElement('div');
@@ -706,12 +712,13 @@ document.getElementById('btnPublicar').onclick = () => {
   const carp = currentPreviewSlug;
   const bt = document.getElementById('btnPublicar');
   bt.disabled = true; bt.textContent = '> Publicando...';
+  importarAlCatalogo(negocioActual);
   const dt = { nombreArchivo: currentPreviewNombre, html: currentPreviewHTML, sitemap: construirSitemapXML(carp), nombreSitemap: 'sitemap.xml', robots: construirRobotsTxt(carp), nombreRobots: 'robots.txt', slug: carp, nombreNegocio: nombreVisible(negocioActual.nombre) };
   function om(e) {
     if (e.data && typeof e.data === 'object' && 'success' in e.data) {
       window.removeEventListener('message', om);
       bt.disabled = false; bt.textContent = '🚀 Publicar';
-         if (e.data.success) { urlPublicada = (e.data.url || (GITHUB_PAGES_BASE + '/' + encodeURIComponent(carp) + '/')).trim(); mostrarToast('🚀 Publicado'); mostrarModalLink(urlPublicada, nombreVisible(negocioActual.nombre)); importarAlCatalogo(negocioActual); }
+         if (e.data.success) { urlPublicada = (e.data.url || (GITHUB_PAGES_BASE + '/' + encodeURIComponent(carp) + '/')).trim(); mostrarToast('🚀 Publicado'); mostrarModalLink(urlPublicada, nombreVisible(negocioActual.nombre));}
       else mostrarToast('❌ Error: ' + (e.data.error || 'desconocido'));
     }
   }
@@ -727,6 +734,7 @@ document.getElementById('btnPublicar').onclick = () => {
 function mostrarModalLink(u, n) {
   document.getElementById('linkBox').textContent = u;
   document.getElementById('linkModalSub').textContent = n ? 'Landing de "' + n + '"' : 'Tu landing está en línea';
+    if (window.estadoCatalogo) document.getElementById('linkModalSub').textContent += ' · ' + window.estadoCatalogo;
   document.getElementById('linkAbrir').href = u;
   document.getElementById('linkCompartir').href = 'https://wa.me/?text=' + encodeURIComponent('Mira la landing de ' + (n || 'nuestro negocio') + ': ' + u);
   document.getElementById('linkModal').classList.add('show');
