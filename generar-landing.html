@@ -247,6 +247,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;color:#00FF41;f
   <button type="button" data-k="call" data-t="Llamar" onclick="toggleBoton('call')"></button>
   <button type="button" data-k="maps" data-t="Cómo llegar" onclick="toggleBoton('maps')"></button>
   <button type="button" data-k="fb" data-t="Facebook" onclick="toggleBoton('fb')"></button>
+    <button type="button" data-k="cat" data-t="Catálogo" onclick="toggleBoton('cat')"></button>
   <button type="button" data-k="tel" data-t="Número de teléfono" onclick="toggleBoton('tel')"></button>
   <button type="button" data-k="wan" data-t="Número de WhatsApp" onclick="toggleBoton('wan')"></button>
   <b>🎨 Color del botón</b>
@@ -316,8 +317,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;color:#00FF41;f
 const GITHUB_PUBLISH_URL = 'https://script.google.com/macros/s/AKfycbwh4EBEepNZrWVibk7L4jq3KZHx9ly_tFsF7OjFDInt6GS-gjdiQcWVrd83tzLNp-aKSw/exec';
 const GITHUB_USER = 'proyectosolaronline';
 const GITHUB_PAGES_BASE = 'https://' + GITHUB_USER + '.github.io';
-const CATALOGO_URL = 'https://script.google.com/macros/s/AKfycbzGhO5vd6-p1hYqSgmLKbomXlCmspjMyf4Ky3J_H4Pg2WGZJLr3XfDySS1EFSMlEvgNJQ/exec';
-let negocioActual = null;
+const CATALOGO_URL = 'https://script.google.com/macros/s/AKfycbzGhO5vd6-p1hYqSgmLKbomXlCmspjMyf4Ky3J_H4Pg2WGZJLr3XfDySS1EFSMlEvgNJQ/exec';let negocioActual = null;
 let btnsOcultos = {};
 let btnCfg = {}, btnSel = 'wa';
 const BTN_CLS = { wa: '.btn-whatsapp', call: '.btn-call', maps: '.btn-maps', fb: '.btn-facebook' };
@@ -439,7 +439,36 @@ function escHTML(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, c => 
 function escJS(s){ return String(s == null ? '' : s).replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/</g, '\\x3C').replace(/[\n\r]/g, ' '); }
 function esperar(ms) { return new Promise(r => setTimeout(r, ms)); }
 function setProgress(p, t) { document.getElementById('progressFill').style.width = p + '%'; document.getElementById('progressText').textContent = t; }
-function mostrarToast(m) {
+async function importarAlCatalogo(n) {
+  if (!CATALOGO_URL || !n) return;
+  let clave = '';
+  try { clave = localStorage.getItem('catalogoClave') || ''; } catch (e) {}
+  if (!clave) {
+    clave = (prompt('Clave de importación del catálogo (se guarda en este navegador):') || '').trim();
+    if (!clave) { mostrarToast('Catálogo: no se enviaron los datos (falta la clave)'); return; }
+    try { localStorage.setItem('catalogoClave', clave); } catch (e) {}
+  }
+  const carpeta = nombreCarpeta(n.nombre);
+  const datos = {
+    negocio_id: String(n.id || n.negocio_id || carpeta).toLowerCase().replace(/[^\w-]/g, '-'),
+    nombre: nombreVisible(n.nombre), slogan: n.slogan || '', descripcion: n.descripcion || '',
+    direccion: n.direccion || n.ubicacion || '', horario: n.horario || '',
+    telefono: n.telefono || '', whatsapp: n.whatsapp || '',
+    latitud: n.latitud || '', longitud: n.longitud || '',
+    logo: n.logo || '', banner: n.banner || '',
+    activo: n.activo === undefined ? true : n.activo
+  };
+  try {
+    const r = await fetch(CATALOGO_URL, { method: 'POST', body: JSON.stringify({ accion: 'importarNegocio', clave: clave, datos: datos }) });
+    const j = await r.json();
+    if (j.success) mostrarToast('🛍️ Datos enviados al catálogo');
+    else {
+      mostrarToast('❌ Catálogo: ' + (j.error || 'error'));
+      if (/clave/i.test(j.error || '')) { try { localStorage.removeItem('catalogoClave'); } catch (e) {} }
+    }
+  } catch (e) { mostrarToast('❌ Catálogo: no se pudo enviar'); }
+}
+  function mostrarToast(m) {
   document.querySelectorAll('.toast').forEach(x => x.remove());
   const e = document.createElement('div');
   e.className = 'toast'; e.textContent = m; document.body.appendChild(e);
@@ -682,7 +711,7 @@ document.getElementById('btnPublicar').onclick = () => {
     if (e.data && typeof e.data === 'object' && 'success' in e.data) {
       window.removeEventListener('message', om);
       bt.disabled = false; bt.textContent = '🚀 Publicar';
-      if (e.data.success) { urlPublicada = (e.data.url || (GITHUB_PAGES_BASE + '/' + encodeURIComponent(carp) + '/')).trim(); mostrarToast('🚀 Publicado'); mostrarModalLink(urlPublicada, nombreVisible(negocioActual.nombre)); }
+         if (e.data.success) { urlPublicada = (e.data.url || (GITHUB_PAGES_BASE + '/' + encodeURIComponent(carp) + '/')).trim(); mostrarToast('🚀 Publicado'); mostrarModalLink(urlPublicada, nombreVisible(negocioActual.nombre)); importarAlCatalogo(negocioActual); }
       else mostrarToast('❌ Error: ' + (e.data.error || 'desconocido'));
     }
   }
@@ -755,8 +784,8 @@ const ca = n.colorAcento || (pl === 'futurista' ? '#5BB8D4' : '#00D4FF');
        const correoOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(n.correo || '').trim());
     const idCatalogo = String(n.id || n.negocio_id || carp).toLowerCase().replace(/[^\w-]/g, '-');
   const urlCatalogo = CATALOGO_URL ? CATALOGO_URL + '?negocio=' + encodeURIComponent(idCatalogo) : '';
-  const cb = (urlCatalogo ? '<a href="' + escHTML(urlCatalogo) + '" class="btn-link btn-catalogo">🛍️ Ver catálogo</a>' : '') +
-   (wd && !btnsOcultos.wa ? '<a href="https://wa.me/' + wd + '" class="btn-link btn-whatsapp" target="_blank">💬 WhatsApp</a>' : '') +   (td && !btnsOcultos.call ?  '<a href="tel:' + td + '" class="btn-link btn-call">📞 Llamar</a>' : '') +
+    const cb = (urlCatalogo && !btnsOcultos.cat ? …
+                (wd && !btnsOcultos.wa ? '<a href="https://wa.me/' + wd + '" class="btn-link btn-whatsapp" target="_blank">💬 WhatsApp</a>' : '') +   (td && !btnsOcultos.call ?  '<a href="tel:' + td + '" class="btn-link btn-call">📞 Llamar</a>' : '') +
     (tm && !btnsOcultos.maps ? '<a href="https://www.google.com/maps/dir/?api=1&destination=' + n.latitud + ',' + n.longitud + '" class="btn-link btn-maps" target="_blank">🧭 Cómo llegar</a>' : '') +
     (n.urlFacebook && !btnsOcultos.fb ? '<a href="' + escHTML(n.urlFacebook) + '" class="btn-link btn-facebook" target="_blank">📘 Facebook</a>' : '') +
       (correoOk && !btnsOcultos.mail ? '<button type="button" class="btn-link btn-correo" onclick="correoContacto()">✉️ Escribir por correo</button>' : '');
