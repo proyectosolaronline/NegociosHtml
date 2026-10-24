@@ -440,8 +440,21 @@ function escHTML(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, c => 
 function escJS(s){ return String(s == null ? '' : s).replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/</g, '\\x3C').replace(/[\n\r]/g, ' '); }
 function esperar(ms) { return new Promise(r => setTimeout(r, ms)); }
 function setProgress(p, t) { document.getElementById('progressFill').style.width = p + '%'; document.getElementById('progressText').textContent = t; }
-async function importarAlCatalogo(n) {
+function correoValido(c){ return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(c||'').trim()); }
+function asegurarCorreoDueno(n){
+  let c = String(n.correoDueno || n.correo || '').trim().toLowerCase();
+  while (!correoValido(c)) {
+    const r = prompt('Falta el correo del dueño (recibirá las solicitudes de registro de clientes).\nEscríbelo para continuar:', c);
+    if (r === null) return false; // canceló
+    c = r.trim().toLowerCase();
+  }
+  n.correoDueno = c;
+  try { localStorage.setItem('landingData', JSON.stringify(n)); } catch(e) {}
+  return true;
+}
+  async function importarAlCatalogo(n) {
   if (!CATALOGO_URL || !n) return;
+    if (!asegurarCorreoDueno(n)) { mostrarToast('Catálogo: no se enviaron los datos (falta el correo del dueño)'); return false; }
   let clave = '';
   try { clave = localStorage.getItem('catalogoClave') || ''; } catch (e) {}
   if (!clave) {
@@ -457,6 +470,7 @@ async function importarAlCatalogo(n) {
     telefono: n.telefono || '', whatsapp: n.whatsapp || '',
     latitud: n.latitud || '', longitud: n.longitud || '',
     logo: n.logo || '', banner: n.banner || '',
+    correo: n.correoDueno,
     activo: true
   };
     function info(m) {
@@ -728,7 +742,8 @@ document.getElementById('btnProbarCatalogo').onclick = async () => {
 };
   document.getElementById('btnPublicar').onclick = () => {
   if (!currentPreviewHTML || !negocioActual) return;
-  const carp = currentPreviewSlug;
+    if (!asegurarCorreoDueno(negocioActual)) { mostrarToast('Falta el correo del dueño: no se publicó'); return; }
+    const carp = currentPreviewSlug;
   const bt = document.getElementById('btnPublicar');
   bt.disabled = true; bt.textContent = '> Publicando...';
   importarAlCatalogo(negocioActual);
