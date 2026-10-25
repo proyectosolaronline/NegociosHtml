@@ -1106,26 +1106,77 @@ function lAjustar(){
 }
   window.lGirar = function(){ lRot = (lRot + 90) % 360; lAjustar(); };
   window.lCloseLightbox = function(){ document.getElementById('lLightbox').classList.remove('active'); lRot = 0; lAjustar(); };
-  window.lToggleDescFoto = function(i){ var r = document.getElementById('lDescResto' + i); if(r) r.style.display = r.style.display === 'none' ? 'inline' : 'none'; };  window.abrirQRImprimir = function(){
+  window.lToggleDescFoto = function(i){ var r = document.getElementById('lDescResto' + i); if(r) r.style.display = r.style.display === 'none' ? 'inline' : 'none'; }; 
+  // ===== QR DINÁMICO: visible + compartir + imprimir =====
+  // URL real de la página (siempre correcta, sin hardcodear)
+  var URL_ACTUAL = window.location.href;
+
+  // 1) QR visible en la sección "Escanea para compartir"
+  (function generarQrVisible(){
+    var img = document.getElementById('lQrImg');
+    if(!img) return;
+    img.src = 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&margin=10&data=' + encodeURIComponent(URL_ACTUAL);
+    img.dataset.url = URL_ACTUAL;
+  })();
+
+  // 2) Compartir el link (móvil: share nativo / PC: copia al portapapeles)
+  window.compartirQR = function(){
+    if(navigator.share){
+      navigator.share({
+        title: '${escJS(nombreLimpio)}',
+        text: 'Mira la página de ${escJS(nombreLimpio)}',
+        url: URL_ACTUAL
+      }).catch(function(){});
+    } else if(navigator.clipboard){
+      navigator.clipboard.writeText(URL_ACTUAL).then(function(){
+        alert('📋 Link copiado: ' + URL_ACTUAL);
+      }).catch(function(){
+        prompt('Copia este link:', URL_ACTUAL);
+      });
+    } else {
+      prompt('Copia este link:', URL_ACTUAL);
+    }
+  };
+
+  // 3) QR grande del overlay (doble-tap en el banner superior)
+  window.abrirQRImprimir = function(){
     var ov = document.getElementById('qrPrintOv');
     var im = document.getElementById('qpImg');
-    if(im && !im.getAttribute('src')) im.src = 'https://api.qrserver.com/v1/create-qr-code/?size=600x600&margin=10&data=' + encodeURIComponent(u);
+    if(im){
+      im.src = 'https://api.qrserver.com/v1/create-qr-code/?size=600x600&margin=10&data=' + encodeURIComponent(URL_ACTUAL);
+    }
     if(ov) ov.classList.add('activo');
   };
+
+  // 4) Cerrar el overlay del QR grande
   window.cerrarQRImprimir = function(){
     var ov = document.getElementById('qrPrintOv');
     if(ov) ov.classList.remove('activo');
   };
+
+  // 5) Imprimir el QR grande
   window.imprimirQR = function(){
     var im = document.getElementById('qpImg');
     function lanzar(){
       document.body.classList.add('qr-imprimiendo');
       setTimeout(function(){ window.print(); }, 150);
     }
-    if(im && im.complete && im.naturalWidth) lanzar(); else if(im) im.onload = lanzar; else lanzar();
+    if(im && im.complete && im.naturalWidth) lanzar();
+    else if(im) im.onload = lanzar;
+    else lanzar();
   };
-  window.addEventListener('afterprint', function(){ document.body.classList.remove('qr-imprimiendo'); });
-  document.addEventListener('keydown', function(e){ if(e.key === 'Escape') window.cerrarQRImprimir(); });
+
+  // 6) Reset al cerrar diálogo de impresión
+  window.addEventListener('afterprint', function(){
+    document.body.classList.remove('qr-imprimiendo');
+  });
+
+  // 7) ESC cierra el overlay del QR grande
+  document.addEventListener('keydown', function(e){
+    if(e.key === 'Escape') window.cerrarQRImprimir();
+  });
+
+  // 8) Doble-tap en el banner abre el QR grande
   var qrTaps = [];
   var bannerQR = document.querySelector('.banner');
   if(bannerQR){
