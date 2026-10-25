@@ -318,8 +318,44 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;color:#00FF41;f
 const GITHUB_PUBLISH_URL = 'https://script.google.com/macros/s/AKfycbwh4EBEepNZrWVibk7L4jq3KZHx9ly_tFsF7OjFDInt6GS-gjdiQcWVrd83tzLNp-aKSw/exec';
 const GITHUB_USER = 'proyectosolaronline';
 const GITHUB_PAGES_BASE = 'https://' + GITHUB_USER + '.github.io';
-const CATALOGO_URL = 'https://script.google.com/macros/s/AKfycbzGhO5vd6-p1hYqSgmLKbomXlCmspjMyf4Ky3J_H4Pg2WGZJLr3XfDySS1EFSMlEvgNJQ/exec';let negocioActual = null;
-let btnsOcultos = {};
+const CATALOGO_URL = 'https://script.google.com/macros/s/AKfycbzGhO5vd6-p1hYqSgmLKbomXlCmspjMyf4Ky3J_H4Pg2WGZJLr3XfDySS1EFSMlEvgNJQ/exec';
+
+/* ===== Repos de GitHub (misma lógica que index.html): un repo por negocio ===== */
+const claveRepo = s => String(s || '').toLowerCase().replace(/\.html$/, '').replace(/^-+|-+$/g, '');
+let slugRepo = '';
+
+async function listarRepos() {
+  let todos = [];
+  for (let p = 1; p <= 5; p++) {
+    const r = await fetch('https://api.github.com/users/' + GITHUB_USER + '/repos?per_page=100&page=' + p);
+    if (!r.ok) throw new Error('GitHub API ' + r.status);
+    const lote = await r.json();
+    todos = todos.concat(lote.map(x => ({ name: x.name, key: claveRepo(x.name) })));
+    if (lote.length < 100) break;
+  }
+  return todos;
+}
+async function resolverRepo(n) {
+  const base = nombreCarpeta(n.nombre);
+  try {
+    const repo = (await listarRepos()).find(r => r.key === claveRepo(base));
+    if (repo) return { nombre: repo.name, existe: true };
+  } catch (e) { console.warn('No se pudo listar repos:', e); }
+  return { nombre: base.toLowerCase(), existe: false };
+}
+function obtenerTokenAdmin() {
+  let t = '';
+  try { t = localStorage.getItem('adminToken') || ''; } catch (e) {}
+  if (!t) {
+    t = (prompt('Clave de administrador para publicar (se guarda en este navegador):') || '').trim();
+    if (t) { try { localStorage.setItem('adminToken', t); } catch (e) {} }
+  }
+  return t;
+}
+function olvidarTokenAdmin() { try { localStorage.removeItem('adminToken'); } catch (e) {} }
+
+let negocioActual = null;
+  let btnsOcultos = {};
 let btnCfg = {}, btnSel = 'wa';
 const BTN_CLS = { wa: '.btn-whatsapp', call: '.btn-call', maps: '.btn-maps', fb: '.btn-facebook' };
 const BTN_DEF = { wa: '#25D366', call: '#7B2FF7', maps: '#4285F4', fb: '#1877F2' };
@@ -546,15 +582,17 @@ document.getElementById('seoModal').addEventListener('click', e => { if (e.targe
 document.getElementById('btnPublicarSeo').onclick = () => {
   if (!negocioActual) { mostrarToast('⚠️ Aún no hay datos'); return; }
   const carp = currentPreviewSlug || nombreCarpeta(negocioActual.nombre);
+   const token = obtenerTokenAdmin();
+  if (!token) { mostrarToast('Falta la clave de administrador'); return; }
   const bt = document.getElementById('btnPublicarSeo');
   bt.disabled = true; bt.textContent = '> Publicando SEO...';
-  const dt = { slug: carp, nombreNegocio: nombreVisible(negocioActual.nombre), sitemap: document.getElementById('seoSitemapTxt').value, nombreSitemap: 'sitemap.xml', robots: document.getElementById('seoRobotsTxt').value, nombreRobots: 'robots.txt' };
+  const dt = { token: token, slug: carp, nombreNegocio: nombreVisible(negocioActual.nombre), sitemap: document.getElementById('seoSitemapTxt').value, nombreSitemap: 'sitemap.xml' };
   function om(e) {
     if (e.data && typeof e.data === 'object' && 'success' in e.data) {
       window.removeEventListener('message', om);
       bt.disabled = false; bt.textContent = '🚀 Publicar sitemap + robots en GitHub';
-      mostrarToast(e.data.success ? '🚀 SEO publicado en GitHub' : '❌ Error: ' + (e.data.error || 'desconocido'));
-    }
+      if (!e.data.success && /autorizado/i.test(e.data.error || '')) olvidarTokenAdmin();
+      mostrarToast(e.data.success ? '🚀 Sitemap publicado en GitHub' : '❌ Error: ' + (e.data.error || 'desconocido'));    }
   }
   window.addEventListener('message', om);
   document.getElementById('hf_action').value = 'publicarSEO';
@@ -700,7 +738,7 @@ async function animarElemento(el, idx, total, hand, folderRow) {
 
 function finalizarConstruccion() {
   currentPreviewHTML = construirLandingHTML(negocioActual, plantillaActual);
-  currentPreviewSlug = nombreCarpeta(negocioActual.nombre);
+  currentPreviewSlug = nombreCarpeta(negocioActual.nombre).toLowerCase();
   currentPreviewNombre = currentPreviewSlug + '.html';
   document.getElementById('previewFrame').srcdoc = currentPreviewHTML;
   const b = document.getElementById('builder');
@@ -740,23 +778,49 @@ document.getElementById('btnProbarCatalogo').onclick = async () => {
   if (ok && w) { w.location = CATALOGO_URL + '?negocio=' + encodeURIComponent(id); }
   else if (w) { w.close(); }
 };
-  document.getElementById('btnPublicar').onclick = () => {
+    document.getElementById('btnPublicar').onclick = async () => {
   if (!currentPreviewHTML || !negocioActual) return;
-    if (!asegurarCorreoDueno(negocioActual)) { mostrarToast('Falta el correo del dueño: no se publicó'); return; }
-    const carp = currentPreviewSlug;
+  if (!asegurarCorreoDueno(negocioActual)) { mostrarToast('Falta el correo del dueño: no se publicó'); return; }
+  const token = obtenerTokenAdmin();
+  if (!token) { mostrarToast('Falta la clave de administrador: no se publicó'); return; }
+
   const bt = document.getElementById('btnPublicar');
-  bt.disabled = true; bt.textContent = '> Publicando...';
+  bt.disabled = true; bt.textContent = '> Buscando repo...';
+
+  const { nombre: carp, existe } = await resolverRepo(negocioActual);
+  if (existe && !confirm('Ya existe el repositorio "' + carp + '".\n¿Actualizarlo con esta landing?')) {
+    bt.disabled = false; bt.textContent = '🚀 Publicar'; return;
+  }
+  slugRepo = carp;
+  currentPreviewSlug = carp;
+  currentPreviewNombre = carp + '.html';
+  currentPreviewHTML = construirLandingHTML(negocioActual, plantillaActual);
+
+  bt.textContent = '> Publicando...';
   importarAlCatalogo(negocioActual);
-  const dt = { nombreArchivo: currentPreviewNombre, html: currentPreviewHTML, sitemap: construirSitemapXML(carp), nombreSitemap: 'sitemap.xml', robots: construirRobotsTxt(carp), nombreRobots: 'robots.txt', slug: carp, nombreNegocio: nombreVisible(negocioActual.nombre) };
+  const dt = {
+    token: token,
+    nombreArchivo: currentPreviewNombre,
+    repo: carp,
+    html: currentPreviewHTML,
+    sitemap: construirSitemapXML(carp), nombreSitemap: 'sitemap.xml',
+    slug: carp, nombreNegocio: nombreVisible(negocioActual.nombre)
+  };
   function om(e) {
     if (e.data && typeof e.data === 'object' && 'success' in e.data) {
       window.removeEventListener('message', om);
       bt.disabled = false; bt.textContent = '🚀 Publicar';
-         if (e.data.success) { urlPublicada = (e.data.url || (GITHUB_PAGES_BASE + '/' + encodeURIComponent(carp) + '/')).trim(); mostrarToast('🚀 Publicado'); mostrarModalLink(urlPublicada, nombreVisible(negocioActual.nombre));}
-      else mostrarToast('❌ Error: ' + (e.data.error || 'desconocido'));
+      if (e.data.success) {
+        urlPublicada = (e.data.url || (GITHUB_PAGES_BASE + '/' + encodeURIComponent(carp) + '/')).trim();
+        mostrarToast(e.data.creado ? '🚀 Repo nuevo creado y publicado' : '🚀 Publicado');
+        mostrarModalLink(urlPublicada, nombreVisible(negocioActual.nombre));
+      } else {
+        if (/autorizado/i.test(e.data.error || '')) olvidarTokenAdmin();
+        mostrarToast('❌ Error: ' + (e.data.error || 'desconocido'));
+      }
     }
   }
-  window.addEventListener('message', om);
+    window.addEventListener('message', om);
   document.getElementById('hf_action').value = 'publicarGitHub';
   document.getElementById('hf_id').value = '';
   document.getElementById('hf_datos').value = JSON.stringify(dt);
@@ -803,7 +867,7 @@ const ca = n.colorAcento || (pl === 'futurista' ? '#5BB8D4' : '#00D4FF');
   const dl = dp[1] ? dp[1].trim() : dc;
   const st = ((nombreLimpio || 'Negocio') + (n.slogan ? ' - ' + n.slogan : '')).substring(0, 65);
   const sd = (dl || dc || (nombreLimpio || 'Negocio') + ' en ' + (n.direccion || n.ubicacion || 'México')).replace(/\s+/g, ' ').substring(0, 158);
-  const carp = nombreCarpeta(n.nombre);
+  const carp = slugRepo || nombreCarpeta(n.nombre).toLowerCase();
   const oi = n.banner || n.logo || '';
   const cu = GITHUB_PAGES_BASE + '/' + encodeURIComponent(carp) + '/';
   const galeriaHTML = ft.length ? '<section class="gallery" id="lGaleria">' + ft.map((f, i) => {
