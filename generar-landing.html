@@ -318,7 +318,8 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;color:#00FF41;f
 const GITHUB_PUBLISH_URL = 'https://script.google.com/macros/s/AKfycbwh4EBEepNZrWVibk7L4jq3KZHx9ly_tFsF7OjFDInt6GS-gjdiQcWVrd83tzLNp-aKSw/exec';
 const GITHUB_USER = 'proyectosolaronline';
 const GITHUB_PAGES_BASE = 'https://' + GITHUB_USER + '.github.io';
-const CATALOGO_URL = 'https://script.google.com/macros/s/AKfycbzGhO5vd6-p1hYqSgmLKbomXlCmspjMyf4Ky3J_H4Pg2WGZJLr3XfDySS1EFSMlEvgNJQ/exec';
+const DIRECTORIO_URL = 'https://proyectosolaronline.github.io/Directorio-negocios/';
+  const CATALOGO_URL = 'https://script.google.com/macros/s/AKfycbzGhO5vd6-p1hYqSgmLKbomXlCmspjMyf4Ky3J_H4Pg2WGZJLr3XfDySS1EFSMlEvgNJQ/exec';
 
 /* ===== Repos de GitHub (misma lógica que index.html): un repo por negocio ===== */
 const claveRepo = s => String(s || '').toLowerCase().replace(/\.html$/, '').replace(/^-+|-+$/g, '');
@@ -1049,6 +1050,42 @@ footer .footer-slogan{color:#888;font-size:12px}
 .max-width:100%;max-height:68vh;border-radius:12px;border:3px solid ${ca};color:#0A0E17;border:none;padding:14px 30px;border-radius:12px;font-weight:700;cursor:pointer;font-size:15px}
 @media(min-width:640px){.contact-grid{grid-template-columns:1fr 1fr}.btns-group{flex-direction:row;flex-wrap:wrap}.btn-link{flex:1;min-width:140px}}
 ${ov}
+/* ===== Botón flotante al directorio con destello cada 10 s ===== */
+.fab-directorio{position:fixed;bottom:calc(18px + env(safe-area-inset-bottom));right:16px;z-index:4500;display:flex;align-items:center;gap:8px;padding:12px 18px;border-radius:999px;background:linear-gradient(135deg,${cp},${cs});color:#fff;font-family:inherit;font-size:13px;font-weight:800;letter-spacing:-0.01em;text-decoration:none;box-shadow:0 8px 28px rgba(0,0,0,.45), 0 0 0 1px rgba(255,255,255,.15), inset 0 1px 0 rgba(255,255,255,.25);transition:transform .2s var(--ease), box-shadow .3s var(--ease);-webkit-tap-highlight-color:transparent;overflow:hidden}
+.fab-directorio:active{transform:scale(.95)}
+.fab-directorio .fab-ico{font-size:16px;line-height:1;display:inline-block;animation:warningPulse 1.6s ease-in-out infinite}
+.fab-directorio .fab-txt{white-space:nowrap;position:relative;z-index:2}
+
+/* Destello: barrido de luz que cruza el botón */
+.fab-directorio::before{content:'';position:absolute;top:0;bottom:0;left:-60%;width:45%;background:linear-gradient(100deg,transparent 0%,rgba(255,255,255,.65) 50%,transparent 100%);transform:skewX(-20deg);pointer-events:none;z-index:1;opacity:0}
+.fab-directorio.destello::before{animation:destelloFab 1.1s ease-out}
+@keyframes destelloFab{
+  0%{left:-60%;opacity:0}
+  10%{opacity:1}
+  60%{left:120%;opacity:1}
+  70%{opacity:0}
+  100%{left:120%;opacity:0}
+}
+
+/* Pulso de brillo externo (halo) */
+.fab-directorio.destello{animation:pulsoFab 1.1s ease-out}
+@keyframes pulsoFab{
+  0%{box-shadow:0 8px 28px rgba(0,0,0,.45), 0 0 0 1px rgba(255,255,255,.15), inset 0 1px 0 rgba(255,255,255,.25)}
+  40%{box-shadow:0 8px 28px rgba(0,0,0,.45), 0 0 0 4px rgba(255,255,255,.35), 0 0 26px 6px rgba(255,255,255,.55), inset 0 1px 0 rgba(255,255,255,.35)}
+  100%{box-shadow:0 8px 28px rgba(0,0,0,.45), 0 0 0 1px rgba(255,255,255,.15), inset 0 1px 0 rgba(255,255,255,.25)}
+}
+
+/* Pulso del icono warning */
+@keyframes warningPulse{
+  0%,100%{transform:scale(1);filter:drop-shadow(0 0 0 rgba(255,200,0,0))}
+  50%{transform:scale(1.15);filter:drop-shadow(0 0 6px rgba(255,200,0,.9))}
+}
+@media(prefers-reduced-motion:reduce){
+  .fab-directorio .fab-ico{animation:none}
+  .fab-directorio.destello::before{animation:none}
+  .fab-directorio.destello{animation:none}
+}
+@media(max-width:380px){.fab-directorio{padding:10px 14px;font-size:12px;bottom:calc(14px + env(safe-area-inset-bottom));right:12px}}
 </style></head><body>
 <div id="splash"${pl === 'futurista' ? ' class="espacial"' : ''}>
   ${pl === 'futurista' ? '<canvas id="splashStars"></canvas>' : ''}
@@ -1514,15 +1551,47 @@ var CONSTRUCCION = {
   setTimeout(pedir, 2500);
   setInterval(pedir, 20000);
 })();
+/* ===== Destello del botón directorio cada 10 s ===== */
+(function destelloDirectorio(){
+  var fab = document.getElementById('fabDirectorio');
+  if(!fab) return;
+  var reducir = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if(reducir) return;
+  function lanzar(){
+    fab.classList.remove('destello');
+    void fab.offsetWidth;
+    fab.classList.add('destello');
+    setTimeout(function(){ fab.classList.remove('destello'); }, 1200);
+  }
+  setTimeout(function(){
+    lanzar();
+    setInterval(lanzar, 10000);
+  }, 3000);
+})();
+/* ===== Destello del botón directorio cada 10 s ===== */
+(function destelloDirectorio(){
+  var fab = document.getElementById('fabDirectorio');
+  if(!fab) return;
+  var reducir = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if(reducir) return;
+  function lanzar(){
+    fab.classList.remove('destello');
+    void fab.offsetWidth;
+    fab.classList.add('destello');
+    setTimeout(function(){ fab.classList.remove('destello'); }, 1200);
+  }
+  setTimeout(function(){
+    lanzar();
+    setInterval(lanzar, 10000);
+  }, 3000);
+})();
 <\/script>
 </body></html>`;
 }
 
- 
 console.log('✅ Generador de landing activo');
-  /* ===== AVISO DE VERSIÓN (cambia solo el texto de VERSION_GENERADOR en cada cambio) ===== */
 (function () {
-  const VERSION_GENERADOR = 'v1 - publica en repo nuevo (V2)';   // <-- CAMBIA ESTE TEXTO EN CADA CAMBIO
+  const VERSION_GENERADOR = 'v1 - publica en repo nuevo (V2)';
   const SEGUNDOS = 5;
   function mostrarVersion() {
     const d = document.createElement('div');
