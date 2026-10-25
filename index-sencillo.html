@@ -2197,6 +2197,7 @@ async function publicarEnGitHub() {
   try {
     const result = await postViaIframe('publicarGitHub', currentPreviewId, {
       nombreArchivo: currentPreviewNombre,
+      repo: currentPreviewNombre.replace(/\.html$/, ''),
       html: currentPreviewHTML,
       sitemap: sitemapXML,
       nombreSitemap: 'sitemap.xml'
@@ -2204,7 +2205,7 @@ async function publicarEnGitHub() {
     hideLoading();
     btn.disabled = false;
     btn.textContent = '🚀 Publicar';
-    if (result.success) showToast('✅ Publicado en GitHub', 'success');
+    if (result.success) showToast('✅ Publicado: ' + (result.url || ''), 'success');
     else showToast('❌ Error: ' + result.error, 'error');
   } catch(e) {
     hideLoading();
