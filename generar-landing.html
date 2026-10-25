@@ -962,10 +962,8 @@ footer .footer-slogan{color:#888;font-size:12px}
 .legal-box button{display:block;width:100%;margin-top:12px;padding:11px;border:0;border-radius:10px;background:${ca};color:#111;font-weight:700;font-size:14px;cursor:pointer}
 .lightbox{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.95);z-index:5000;align-items:center;justify-content:center;flex-direction:column;padding:20px}
 .lightbox.active{display:flex}
-.lightbox img{max-width:100%;max-height:75vh;border-radius:12px;border:3px solid ${ca}}
-.lightbox-cap{color:#fff;font-size:14px;margin-top:16px;text-align:center;max-width:90vw}
+.lightbox img{max-width:100%;max-height:75vh;border-radius:12px;border:3px solid ${ca};transform-origin:center center;transition:transform .25s ease, max-width .25s ease, max-height .25s ease;object-fit:contain;background:#000}.lightbox-cap{color:#fff;font-size:14px;margin-top:16px;text-align:center;max-width:90vw}
 .lightbox-back{margin-top:24px;background:${ca};color:#0A0E17;border:none;padding:14px 30px;border-radius:12px;font-weight:700;cursor:pointer;font-size:15px}
-.lightbox img{transition:transform .25s ease}
 @media(min-width:640px){.contact-grid{grid-template-columns:1fr 1fr}.btns-group{flex-direction:row;flex-wrap:wrap}.btn-link{flex:1;min-width:140px}}
 ${ov}
 </style></head><body>
@@ -1066,9 +1064,46 @@ if(cvS && splash){
       cont.style.display = lFotos.length ? '' : 'none';
     }catch(e){}
   };
-window.lOpenLightbox = function(i){ var f = lFotos[i]; if(!f) return; lRot = 0; lAjustar(); document.getElementById('lLightboxImg').src = f.url; var s = lCorte(i); var cap = document.getElementById('lLightboxCap'); cap.textContent = (s.prev || '📸') + ' '; if(s.hayMas){ var m = document.createElement('button'); m.className = 'vermas-btn'; m.textContent = 'Ver más'; m.onclick = function(e){ e.stopPropagation(); lVerMas(i); }; cap.appendChild(m); } document.getElementById('lLightbox').classList.add('active'); };
-  var lRot = 0;
-  function lAjustar(){ var im = document.getElementById('lLightboxImg'); if(!im) return; var lado = (lRot % 180 !== 0); im.style.maxWidth = lado ? '60vh' : '100%'; im.style.maxHeight = lado ? '90vw' : '75vh'; im.style.transform = 'rotate(' + lRot + 'deg)'; }
+window.lOpenLightbox = function(i){
+  var f = lFotos[i];
+  if(!f || !f.url) return;
+  var im = document.getElementById('lLightboxImg');
+  var cont = document.getElementById('lLightbox');
+  lRot = 0;
+  lAjustar();
+  im.onerror = function(){
+    alert('No se pudo cargar la imagen. Intenta con otra foto.');
+    cont.classList.remove('active');
+  };
+  im.onload = function(){
+    cont.classList.add('active');
+  };
+  im.src = f.url;
+  var s = lCorte(i);
+  var cap = document.getElementById('lLightboxCap');
+  cap.textContent = (s.prev || '📸') + ' ';
+  if(s.hayMas){
+    var m = document.createElement('button');
+    m.className = 'vermas-btn';
+    m.textContent = 'Ver más';
+    m.onclick = function(e){ e.stopPropagation(); lVerMas(i); };
+    cap.appendChild(m);
+  }
+};  var lRot = 0;
+function lAjustar(){
+  var im = document.getElementById('lLightboxImg');
+  if(!im) return;
+  var lado = (lRot % 180 !== 0);
+  if(lado){
+    im.style.maxWidth = '70vh';
+    im.style.maxHeight = '85vw';
+  } else {
+    im.style.maxWidth = '100%';
+    im.style.maxHeight = '75vh';
+  }
+  im.style.transform = 'rotate(' + lRot + 'deg)';
+  im.style.transformOrigin = 'center center';
+}
   window.lGirar = function(){ lRot = (lRot + 90) % 360; lAjustar(); };
   window.lCloseLightbox = function(){ document.getElementById('lLightbox').classList.remove('active'); lRot = 0; lAjustar(); };
   window.lToggleDescFoto = function(i){ var r = document.getElementById('lDescResto' + i); if(r) r.style.display = r.style.display === 'none' ? 'inline' : 'none'; };  window.abrirQRImprimir = function(){
