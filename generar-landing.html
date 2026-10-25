@@ -960,20 +960,17 @@ footer .footer-slogan{color:#888;font-size:12px}
 .legal-box p{margin-bottom:8px}
 .legal-box a{color:${ca};font-weight:700}
 .legal-box button{display:block;width:100%;margin-top:12px;padding:11px;border:0;border-radius:10px;background:${ca};color:#111;font-weight:700;font-size:14px;cursor:pointer}
-.lightbox{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.95);z-index:5000;align-items:center;justify-content:center;flex-direction:column;padding:20px}
+.lightbox{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.95);z-index:5000;align-items:center;justify-content:center;flex-direction:column;padding:20px;overflow-y:auto}
 .lightbox.active{display:flex}
-.lightbox img{max-width:100%;max-height:75vh;border-radius:12px;border:3px solid ${ca};transform-origin:center center;transition:transform .25s ease, max-width .25s ease, max-height .25s ease;object-fit:contain;background:#000}.lightbox-cap{color:#fff;font-size:14px;margin-top:16px;text-align:center;max-width:90vw}
-.lightbox-back{margin-top:24px;background:${ca};color:#0A0E17;border:none;padding:14px 30px;border-radius:12px;font-weight:700;cursor:pointer;font-size:15px}
-@media(min-width:640px){.contact-grid{grid-template-columns:1fr 1fr}.btns-group{flex-direction:row;flex-wrap:wrap}.btn-link{flex:1;min-width:140px}}
-${ov}
-</style></head><body>
-<div id="splash"${pl === 'futurista' ? ' class="espacial"' : ''}>
-  ${pl === 'futurista' ? '<canvas id="splashStars"></canvas>' : ''}
-  ${n.logo ? '<img class="splash-logo" src="' + escHTML(n.logo) + '" alt="Logo ' + escHTML(nombreLimpio) + '">' : ''}
-  <h1 class="splash-nombre">${escHTML(nombreLimpio)}</h1>
-  ${n.slogan ? '<p class="splash-slogan">' + escHTML(n.slogan) + '</p>' : ''}
-  <div class="splash-loader"></div>
-</div>
+.lightbox-inner{position:relative;display:flex;flex-direction:column;align-items:center;max-width:100%}
+.lightbox img{max-width:100%;max-height:68vh;border-radius:12px;border:3px solid ${ca};transform-origin:center center;transition:transform .25s ease, max-width .25s ease, max-height .25s ease;object-fit:contain;background:#000;display:block}
+.lightbox-cap{color:#fff;font-size:14px;margin-top:14px;text-align:center;max-width:90vw}
+.lightbox-ctrl{background:${ca};color:#0A0E17;border:none;border-radius:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;box-shadow:0 4px 14px rgba(0,0,0,.5);transition:transform .15s, box-shadow .15s}
+.lightbox-ctrl:active{transform:scale(0.94)}
+.lightbox-ctrl:hover{box-shadow:0 6px 20px rgba(0,0,0,.7)}
+.lightbox-girar{position:absolute;top:12px;right:12px;width:44px;height:44px;font-size:22px;line-height:1;z-index:2;border-radius:50%;background:rgba(0,0,0,.7);color:#fff;border:2px solid ${ca}}
+.lightbox-girar:hover{background:${ca};color:#0A0E17}
+.lightbox-volver{margin-top:20px;padding:14px 30px;font-size:15px;min-height:48px}
 <div class="banner"><button type="button" class="legal-ico" id="legalIco" onclick="legalAbrir()" aria-label="Aviso legal">⚖️</button></div>
 ${dl ? '<p class="desc">' + escHTML(dl) + '</p>' : ''}
 ${n.mision ? '<section class="section"><h2>🎯 Nuestra Misión</h2><p style="color:#AAA">' + escHTML(n.mision) + '</p></section>' : ''}
@@ -986,8 +983,14 @@ ${mapaHTML}
 <section class="qr-section"><img class="qr-img" id="lQrImg" alt="QR" onclick="compartirQR()"><p class="qr-caption"><span onclick="compartirQR()">📱 Escanea para compartir</span></p></section>
 ${fh}
 <section class="promo-final"><p>🌐 ¿Quieres una página como esta totalmente <strong>gratis</strong>? Solo pagas la administración de contenido.</p><a href="mailto:prototipowebapp@gmail.com?subject=Quiero%20mi%20p%C3%A1gina%20web%20gratis">📧 Escríbenos a prototipowebapp@gmail.com</a></section>
-<div class="lightbox" id="lLightbox"><img id="lLightboxImg" src="" alt=""><p class="lightbox-cap" id="lLightboxCap"></p><div style="display:flex;gap:10px;margin-top:24px"><button class="lightbox-back" style="margin-top:0" onclick="lGirar()">⟳ Girar</button><button class="lightbox-back" style="margin-top:0" onclick="lCloseLightbox()">← Volver</button></div></div><div class="legal-modal" id="legalModal"><div class="legal-box"><h3>⚖️ Aviso legal</h3><p>El contenido de esta página (textos, imágenes, videos y datos) es proporcionado por <strong>${escHTML(nombreLimpio)}</strong> bajo su exclusiva responsabilidad. Los productos y servicios aquí ofrecidos son lícitos y están permitidos por la legislación aplicable. Esta página no promueve ni permite la venta de productos o servicios ilegales, prohibidos o que requieran autorización que no se tenga.</p><p>Precios, disponibilidad, promociones y características pueden cambiar sin previo aviso. Las marcas e imágenes mencionadas pertenecen a sus respectivos dueños. Si detectas contenido inapropiado o que infrinja derechos, escríbenos a <a href="mailto:prototipowebapp@gmail.com?subject=Reporte%20de%20contenido">prototipowebapp@gmail.com</a>.</p><button type="button" onclick="legalCerrar()">Entendido</button></div></div>
-<div id="qrPrintOv" role="dialog" aria-label="Imprimir QR">
+<div class="lightbox" id="lLightbox">
+  <div class="lightbox-inner">
+    <button type="button" class="lightbox-ctrl lightbox-girar" onclick="lGirar()" aria-label="Girar imagen">⟳</button>
+    <img id="lLightboxImg" src="" alt="">
+    <p class="lightbox-cap" id="lLightboxCap"></p>
+  </div>
+  <button type="button" class="lightbox-ctrl lightbox-volver" onclick="lCloseLightbox()" aria-label="Volver">← Volver</button>
+</div><div id="qrPrintOv" role="dialog" aria-label="Imprimir QR">
   <div class="qp-card">
     <h2 class="qp-nombre">${escHTML(nombreLimpio)}</h2>
     <p class="qp-sub">Escanea el QR y haz tu pedido</p>
