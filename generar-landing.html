@@ -825,10 +825,13 @@ document.getElementById('btnProbarCatalogo').onclick = async () => {
     if (e.data && typeof e.data === 'object' && 'success' in e.data) {
       window.removeEventListener('message', om);
       bt.disabled = false; bt.textContent = '🚀 Publicar';
+            if (e.data.success && !(typeof e.data.creado === 'boolean' && String(e.data.url || '').indexOf('/' + carp + '/') !== -1)) {
+        alert('⚠️ El servidor NO publicó en un repo nuevo.\nURL devuelta: ' + (e.data.url || '(ninguna)') + '\nEn Apps Script sigue corriendo una función publicarEnGitHub vieja.');
+        return;
+      }
       if (e.data.success) {
         try { localStorage.removeItem('repos_cache'); } catch (err) {}
-        urlPublicada = (e.data.url || (GITHUB_PAGES_BASE + '/' + encodeURIComponent(carp) + '/')).trim();
-        mostrarToast(e.data.creado ? '🚀 Repo nuevo creado y publicado' : '🚀 Publicado');
+        urlPublicada = String(e.data.url).trim();        mostrarToast(e.data.creado ? '🚀 Repo nuevo creado y publicado' : '🚀 Publicado');
         mostrarModalLink(urlPublicada, nombreVisible(negocioActual.nombre));
       } else {
         if (/autorizado/i.test(e.data.error || '')) olvidarTokenAdmin();
