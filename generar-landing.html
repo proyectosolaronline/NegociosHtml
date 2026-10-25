@@ -1055,7 +1055,8 @@ ${ov}
 .fab-directorio:active{transform:scale(.95)}
 .fab-directorio .fab-ico{font-size:16px;line-height:1;display:inline-block;animation:warningPulse 1.6s ease-in-out infinite}
 .fab-directorio .fab-txt{white-space:nowrap;position:relative;z-index:2}
-
+.fab-directorio{opacity:0;visibility:hidden;transition:opacity .4s ease, visibility .4s ease}
+.fab-directorio.visible{opacity:1;visibility:visible}
 /* Destello: barrido de luz que cruza el botón */
 .fab-directorio::before{content:'';position:absolute;top:0;bottom:0;left:-60%;width:45%;background:linear-gradient(100deg,transparent 0%,rgba(255,255,255,.65) 50%,transparent 100%);transform:skewX(-20deg);pointer-events:none;z-index:1;opacity:0}
 .fab-directorio.destello::before{animation:destelloFab 1.1s ease-out}
@@ -1556,21 +1557,19 @@ var CONSTRUCCION = {
   setTimeout(pedir, 2500);
   setInterval(pedir, 20000);
 })();
-/* ===== Destello del botón directorio cada 10 s ===== */
-(function destelloDirectorio(){
+/* ===== Mostrar el botón directorio 3 s y ocultarlo, cada 10 s ===== */
+(function mostrarBotonDirectorio(){
   var fab = document.getElementById('fabDirectorio');
   if(!fab) return;
-  var reducir = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  if(reducir) return;
-  function lanzar(){
-    fab.classList.remove('destello');
-    void fab.offsetWidth;
-    fab.classList.add('destello');
-    setTimeout(function(){ fab.classList.remove('destello'); }, 1200);
+  function mostrar(){
+    fab.classList.add('visible');
+    setTimeout(function(){
+      fab.classList.remove('visible');
+    }, 3000);
   }
   setTimeout(function(){
-    lanzar();
-    setInterval(lanzar, 10000);
+    mostrar();
+    setInterval(mostrar, 10000);
   }, 3000);
 })();
 <\/script>
@@ -1579,7 +1578,7 @@ var CONSTRUCCION = {
 
 console.log('✅ Generador de landing activo');
 (function () {
-  const VERSION_GENERADOR = 'v2 - publica en repo nuevo (V2)';
+  const VERSION_GENERADOR = 'v3 ok - publica en repo nuevo (V2)';
   const SEGUNDOS = 5;
   function mostrarVersion() {
     const d = document.createElement('div');
