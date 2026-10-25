@@ -119,10 +119,8 @@ footer .footer-slogan{color:#888;font-size:12px}
 .legal-box button{display:block;width:100%;margin-top:12px;padding:11px;border:0;border-radius:10px;background:#5BB8D4;color:#111;font-weight:700;font-size:14px;cursor:pointer}
 .lightbox{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.95);z-index:5000;align-items:center;justify-content:center;flex-direction:column;padding:20px}
 .lightbox.active{display:flex}
-.lightbox img{max-width:100%;max-height:75vh;border-radius:12px;border:3px solid #5BB8D4}
-.lightbox-cap{color:#fff;font-size:14px;margin-top:16px;text-align:center;max-width:90vw}
+.lightbox img{max-width:100%;max-height:75vh;border-radius:12px;border:3px solid #5BB8D4;transform-origin:center center;transition:transform .25s ease, max-width .25s ease, max-height .25s ease;object-fit:contain;background:#000}.lightbox-cap{color:#fff;font-size:14px;margin-top:16px;text-align:center;max-width:90vw}
 .lightbox-back{margin-top:24px;background:#5BB8D4;color:#0A0E17;border:none;padding:14px 30px;border-radius:12px;font-weight:700;cursor:pointer;font-size:15px}
-.lightbox img{transition:transform .25s ease}
 @media(min-width:640px){.contact-grid{grid-template-columns:1fr 1fr}.btns-group{flex-direction:row;flex-wrap:wrap}.btn-link{flex:1;min-width:140px}}
 
 </style></head><body>
@@ -223,31 +221,119 @@ if(cvS && splash){
       cont.style.display = lFotos.length ? '' : 'none';
     }catch(e){}
   };
-window.lOpenLightbox = function(i){ var f = lFotos[i]; if(!f) return; lRot = 0; lAjustar(); document.getElementById('lLightboxImg').src = f.url; var s = lCorte(i); var cap = document.getElementById('lLightboxCap'); cap.textContent = (s.prev || '📸') + ' '; if(s.hayMas){ var m = document.createElement('button'); m.className = 'vermas-btn'; m.textContent = 'Ver más'; m.onclick = function(e){ e.stopPropagation(); lVerMas(i); }; cap.appendChild(m); } document.getElementById('lLightbox').classList.add('active'); };
-  var lRot = 0;
-  function lAjustar(){ var im = document.getElementById('lLightboxImg'); if(!im) return; var lado = (lRot % 180 !== 0); im.style.maxWidth = lado ? '60vh' : '100%'; im.style.maxHeight = lado ? '90vw' : '75vh'; im.style.transform = 'rotate(' + lRot + 'deg)'; }
+window.lOpenLightbox = function(i){
+  var f = lFotos[i];
+  if(!f || !f.url) return;
+  var im = document.getElementById('lLightboxImg');
+  var cont = document.getElementById('lLightbox');
+  lRot = 0;
+  lAjustar();
+  im.onerror = function(){
+    alert('No se pudo cargar la imagen. Intenta con otra foto.');
+    cont.classList.remove('active');
+  };
+  im.onload = function(){
+    cont.classList.add('active');
+  };
+  im.src = f.url;
+  var s = lCorte(i);
+  var cap = document.getElementById('lLightboxCap');
+  cap.textContent = (s.prev || '📸') + ' ';
+  if(s.hayMas){
+    var m = document.createElement('button');
+    m.className = 'vermas-btn';
+    m.textContent = 'Ver más';
+    m.onclick = function(e){ e.stopPropagation(); lVerMas(i); };
+    cap.appendChild(m);
+  }
+};  var lRot = 0;
+function lAjustar(){
+  var im = document.getElementById('lLightboxImg');
+  if(!im) return;
+  var lado = (lRot % 180 !== 0);
+  if(lado){
+    im.style.maxWidth = '70vh';
+    im.style.maxHeight = '85vw';
+  } else {
+    im.style.maxWidth = '100%';
+    im.style.maxHeight = '75vh';
+  }
+  im.style.transform = 'rotate(' + lRot + 'deg)';
+  im.style.transformOrigin = 'center center';
+}
   window.lGirar = function(){ lRot = (lRot + 90) % 360; lAjustar(); };
   window.lCloseLightbox = function(){ document.getElementById('lLightbox').classList.remove('active'); lRot = 0; lAjustar(); };
-  window.lToggleDescFoto = function(i){ var r = document.getElementById('lDescResto' + i); if(r) r.style.display = r.style.display === 'none' ? 'inline' : 'none'; };  window.abrirQRImprimir = function(){
+  window.lToggleDescFoto = function(i){ var r = document.getElementById('lDescResto' + i); if(r) r.style.display = r.style.display === 'none' ? 'inline' : 'none'; }; 
+  // ===== QR DINÁMICO: visible + compartir + imprimir =====
+  // URL real de la página (siempre correcta, sin hardcodear)
+  var URL_ACTUAL = window.location.href;
+
+  // 1) QR visible en la sección "Escanea para compartir"
+  (function generarQrVisible(){
+    var img = document.getElementById('lQrImg');
+    if(!img) return;
+    img.src = 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&margin=10&data=' + encodeURIComponent(URL_ACTUAL);
+    img.dataset.url = URL_ACTUAL;
+  })();
+
+  // 2) Compartir el link (móvil: share nativo / PC: copia al portapapeles)
+  window.compartirQR = function(){
+    if(navigator.share){
+      navigator.share({
+        title: 'Lexda accesorios celulares queretaro',
+        text: 'Mira la página de Lexda accesorios celulares queretaro',
+        url: URL_ACTUAL
+      }).catch(function(){});
+    } else if(navigator.clipboard){
+      navigator.clipboard.writeText(URL_ACTUAL).then(function(){
+        alert('📋 Link copiado: ' + URL_ACTUAL);
+      }).catch(function(){
+        prompt('Copia este link:', URL_ACTUAL);
+      });
+    } else {
+      prompt('Copia este link:', URL_ACTUAL);
+    }
+  };
+
+  // 3) QR grande del overlay (doble-tap en el banner superior)
+  window.abrirQRImprimir = function(){
     var ov = document.getElementById('qrPrintOv');
     var im = document.getElementById('qpImg');
-    if(im && !im.getAttribute('src')) im.src = 'https://api.qrserver.com/v1/create-qr-code/?size=600x600&margin=10&data=' + encodeURIComponent(u);
+    if(im){
+      im.src = 'https://api.qrserver.com/v1/create-qr-code/?size=600x600&margin=10&data=' + encodeURIComponent(URL_ACTUAL);
+    }
     if(ov) ov.classList.add('activo');
   };
+
+  // 4) Cerrar el overlay del QR grande
   window.cerrarQRImprimir = function(){
     var ov = document.getElementById('qrPrintOv');
     if(ov) ov.classList.remove('activo');
   };
+
+  // 5) Imprimir el QR grande
   window.imprimirQR = function(){
     var im = document.getElementById('qpImg');
     function lanzar(){
       document.body.classList.add('qr-imprimiendo');
       setTimeout(function(){ window.print(); }, 150);
     }
-    if(im && im.complete && im.naturalWidth) lanzar(); else if(im) im.onload = lanzar; else lanzar();
+    if(im && im.complete && im.naturalWidth) lanzar();
+    else if(im) im.onload = lanzar;
+    else lanzar();
   };
-  window.addEventListener('afterprint', function(){ document.body.classList.remove('qr-imprimiendo'); });
-  document.addEventListener('keydown', function(e){ if(e.key === 'Escape') window.cerrarQRImprimir(); });
+
+  // 6) Reset al cerrar diálogo de impresión
+  window.addEventListener('afterprint', function(){
+    document.body.classList.remove('qr-imprimiendo');
+  });
+
+  // 7) ESC cierra el overlay del QR grande
+  document.addEventListener('keydown', function(e){
+    if(e.key === 'Escape') window.cerrarQRImprimir();
+  });
+
+  // 8) Doble-tap en el banner abre el QR grande
   var qrTaps = [];
   var bannerQR = document.querySelector('.banner');
   if(bannerQR){
