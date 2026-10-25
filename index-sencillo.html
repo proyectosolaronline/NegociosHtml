@@ -2205,8 +2205,7 @@ async function publicarEnGitHub() {
     hideLoading();
     btn.disabled = false;
     btn.textContent = '🚀 Publicar';
-    if (result.success) showToast('✅ Publicado: ' + (result.url || ''), 'success');
-    else showToast('❌ Error: ' + result.error, 'error');
+  if (result.success) { showToast('✅ Publicado en GitHub', 'success'); alert('Publicado en:\n' + (result.url || 'SIN URL: el servidor es la versión vieja')); }
   } catch(e) {
     hideLoading();
     btn.disabled = false;
