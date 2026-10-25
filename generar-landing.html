@@ -1120,6 +1120,11 @@ ${fh}
     </div>
   </div>
 </div>
+<a href="${DIRECTORIO_URL}" target="_blank" rel="noopener" class="fab-directorio" id="fabDirectorio" aria-label="Visitar directorio de negocios registrados">
+  <span class="fab-ico">⚠️</span>
+  <span class="fab-txt">Visitar directorio de negocios registrados</span>
+</a>
+
 <script>
 (function(){
   var splash = document.getElementById('splash');
@@ -1550,23 +1555,6 @@ var CONSTRUCCION = {
   }
   setTimeout(pedir, 2500);
   setInterval(pedir, 20000);
-})();
-/* ===== Destello del botón directorio cada 10 s ===== */
-(function destelloDirectorio(){
-  var fab = document.getElementById('fabDirectorio');
-  if(!fab) return;
-  var reducir = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  if(reducir) return;
-  function lanzar(){
-    fab.classList.remove('destello');
-    void fab.offsetWidth;
-    fab.classList.add('destello');
-    setTimeout(function(){ fab.classList.remove('destello'); }, 1200);
-  }
-  setTimeout(function(){
-    lanzar();
-    setInterval(lanzar, 10000);
-  }, 3000);
 })();
 /* ===== Destello del botón directorio cada 10 s ===== */
 (function destelloDirectorio(){
