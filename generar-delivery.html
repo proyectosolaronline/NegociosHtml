@@ -307,6 +307,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;color:#00FF41;f
 const GITHUB_PUBLISH_URL = 'https://script.google.com/macros/s/AKfycbwh4EBEepNZrWVibk7L4jq3KZHx9ly_tFsF7OjFDInt6GS-gjdiQcWVrd83tzLNp-aKSw/exec';
 const GITHUB_USER = 'proyectosolaronline';
 const GITHUB_PAGES_BASE = 'https://' + GITHUB_USER + '.github.io';
+  const DIRECTORIO_URL = 'https://proyectosolaronline.github.io/Directorio-negocios/';
 
 let negocioActual = null;
 let currentPreviewHTML = '';
@@ -1184,6 +1185,21 @@ ${ov}
   body.qr-imprimiendo #qrPrintOv .qp-edad{font-size:16px;margin-top:24px}
   @page{margin:12mm}
 }
+/* ===== Botón flotante al directorio con destello cada 10 s ===== */
+.fab-directorio{position:fixed;bottom:calc(18px + env(safe-area-inset-bottom));right:16px;z-index:4500;display:flex;align-items:center;gap:8px;padding:12px 18px;border-radius:999px;background:linear-gradient(135deg,${cp},${cs});color:#fff;font-family:inherit;font-size:13px;font-weight:800;letter-spacing:-0.01em;text-decoration:none;box-shadow:0 8px 28px rgba(0,0,0,.45), 0 0 0 1px rgba(255,255,255,.15), inset 0 1px 0 rgba(255,255,255,.25);transition:transform .2s var(--ease), box-shadow .3s var(--ease);-webkit-tap-highlight-color:transparent;overflow:hidden}
+.fab-directorio:active{transform:scale(.95)}
+.fab-directorio .fab-ico{font-size:16px;line-height:1;display:inline-block;animation:warningPulse 1.6s ease-in-out infinite}
+.fab-directorio .fab-txt{white-space:nowrap;position:relative;z-index:2}
+.fab-directorio{opacity:0;visibility:hidden;transition:opacity .4s ease, visibility .4s ease}
+.fab-directorio.visible{opacity:1;visibility:visible}
+@media(prefers-reduced-motion:reduce){
+  .fab-directorio .fab-ico{animation:none}
+}
+@media(max-width:380px){.fab-directorio{padding:10px 14px;font-size:12px;bottom:calc(14px + env(safe-area-inset-bottom));right:12px}}
+@keyframes warningPulse{
+  0%,100%{transform:scale(1);filter:drop-shadow(0 0 0 rgba(255,200,0,0))}
+  50%{transform:scale(1.15);filter:drop-shadow(0 0 6px rgba(255,200,0,.9))}
+}
 </style></head><body>
 <div id="splash">
   ${pl === 'futurista' ? '<canvas id="splashStars"></canvas>' : ''}
@@ -1318,6 +1334,10 @@ ${tm ? ('<div class="ubi-modal" id="mapaNegocioModal" onclick="if(event.target==
   </div>
   </div>
 <div class="legal-modal" id="legalModal"><div class="legal-box"><h3>⚖️ Aviso legal</h3><p>El contenido de esta página (textos, imágenes, videos y datos) es proporcionado por <strong>${escHTML(nombreLimpio)}</strong> bajo su exclusiva responsabilidad. Los productos y servicios aquí ofrecidos son lícitos y están permitidos por la legislación aplicable. Esta página no promueve ni permite la venta de productos o servicios ilegales, prohibidos o que requieran autorización que no se tenga.</p><p>Precios, disponibilidad, promociones, tiempos de entrega y características pueden cambiar sin previo aviso. Las marcas e imágenes mencionadas pertenecen a sus respectivos dueños. Si detectas contenido inapropiado o que infrinja derechos, escríbenos a <a href="mailto:prototipowebapp@gmail.com?subject=Reporte%20de%20contenido">prototipowebapp@gmail.com</a>.</p><button type="button" onclick="legalCerrar()">Entendido</button></div></div>
+<a href="${DIRECTORIO_URL}" target="_blank" rel="noopener" class="fab-directorio" id="fabDirectorio" aria-label="Visitar directorio de negocios registrados">
+  <span class="fab-ico">⚠️</span>
+  <span class="fab-txt">Visitar directorio de negocios registrados</span>
+</a>
 <script>
 (function(){
   var splash = document.getElementById('splash'), cvS = document.getElementById('splashStars');
@@ -2768,6 +2788,21 @@ var CONSTRUCCION = {
 actualizarTodosBadges();
 actualizarBotonUnico();
 actualizarResumen();
+/* ===== Mostrar el botón directorio 3 s y ocultarlo, cada 10 s ===== */
+(function mostrarBotonDirectorio(){
+  var fab = document.getElementById('fabDirectorio');
+  if(!fab) return;
+  function mostrar(){
+    fab.classList.add('visible');
+    setTimeout(function(){
+      fab.classList.remove('visible');
+    }, 3000);
+  }
+  setTimeout(function(){
+    mostrar();
+    setInterval(mostrar, 10000);
+  }, 3000);
+})();
 <\/script>
 </body></html>`;
 }
