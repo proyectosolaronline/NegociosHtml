@@ -4,6 +4,7 @@
 <title>Chamarras , cintos de piel Queretaro - En san vicente si es piel </title>
 <meta name="description" content="Productos de piel genuina , chamarras, bolsas ,carteras, cintos..">
 <meta name="robots" content="index, follow, max-image-preview:large">
+<meta name="negocio-id" content="neg-0008">
 <meta name="google-site-verification" content="AQUI_AGREGA_EL_VERIFICADOR_GOOGLE">
 <meta name="theme-color" content="#6B4FA0">
 <meta name="author" content="Chamarras , cintos de piel Queretaro">
@@ -68,6 +69,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;color:#E0E0E0;background:#0A0E1
 .btn-maps{background:#4285F4;color:#fff}
 .btn-facebook{background:#1877F2;color:#fff}
 .btn-correo{background:#475569;color:#fff;border:0;cursor:pointer;font-family:inherit}
+.btn-catalogo{background:linear-gradient(135deg,#6B4FA0,#A0689A);color:#fff}
 .qr-section{padding:30px 16px 24px;text-align:center}
 .qr-img{width:160px;height:160px;border-radius:12px;border:4px solid #5BB8D4;padding:8px;cursor:pointer;background:#fff}
 .qr-caption{font-size:13px;color:#888;margin-top:12px}
@@ -87,6 +89,29 @@ footer .footer-slogan{color:#888;font-size:12px}
 .legal-ico.visible{opacity:.8;transform:scale(1);pointer-events:auto}
 .legal-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:6000;align-items:center;justify-content:center;padding:20px}
 .legal-modal.active{display:flex}
+/* ===== Pantalla oculta: imprimir QR (2 toques en el banner) ===== */
+.banner{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+#qrPrintOv{position:fixed;inset:0;z-index:6000;background:rgba(5,8,15,.92);display:none;align-items:center;justify-content:center;padding:16px}
+#qrPrintOv.activo{display:flex}
+#qrPrintOv .qp-card{background:#fff;color:#111;border-radius:20px;padding:24px 20px;max-width:360px;width:100%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.6)}
+#qrPrintOv .qp-nombre{font-size:20px;font-weight:800;margin:0 0 4px;color:#111}
+#qrPrintOv .qp-sub{font-size:13px;color:#555;margin:0 0 14px}
+#qrPrintOv .qp-qr{width:100%;max-width:300px;height:auto;aspect-ratio:1/1;display:block;margin:0 auto;background:#fff}
+#qrPrintOv .qp-url{font-size:11px;color:#777;margin:12px 0 0;word-break:break-all}
+#qrPrintOv .qp-btns{display:flex;gap:10px;margin-top:18px}
+#qrPrintOv .qp-btns button{flex:1;padding:12px 10px;border-radius:12px;border:0;font-size:14px;font-weight:700;cursor:pointer}
+#qrPrintOv .qp-imp{background:#111;color:#fff}
+#qrPrintOv .qp-cerrar{background:#E9E9EE;color:#333}
+@media print{
+  body.qr-imprimiendo>*:not(#qrPrintOv){display:none!important}
+  body.qr-imprimiendo{background:#fff!important}
+  body.qr-imprimiendo #qrPrintOv{display:flex!important;position:static;background:#fff;padding:0}
+  body.qr-imprimiendo #qrPrintOv .qp-card{box-shadow:none;max-width:none;width:100%;padding:0}
+  body.qr-imprimiendo #qrPrintOv .qp-nombre{font-size:34px}
+  body.qr-imprimiendo #qrPrintOv .qp-sub{font-size:18px}
+  body.qr-imprimiendo #qrPrintOv .qp-qr{max-width:15cm;width:100%}
+  body.qr-imprimiendo #qrPrintOv .qp-btns{display:none!important}
+}
 .legal-box{max-width:420px;width:100%;max-height:80vh;overflow:auto;background:#1a1a1a;color:#ddd;border-radius:14px;padding:20px;font-size:12px;line-height:1.6;text-align:left}
 .legal-box h3{font-size:14px;margin-bottom:10px;color:#fff}
 .legal-box p{margin-bottom:8px}
@@ -94,8 +119,7 @@ footer .footer-slogan{color:#888;font-size:12px}
 .legal-box button{display:block;width:100%;margin-top:12px;padding:11px;border:0;border-radius:10px;background:#5BB8D4;color:#111;font-weight:700;font-size:14px;cursor:pointer}
 .lightbox{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.95);z-index:5000;align-items:center;justify-content:center;flex-direction:column;padding:20px}
 .lightbox.active{display:flex}
-.lightbox img{max-width:100%;max-height:75vh;border-radius:12px;border:3px solid #5BB8D4}
-.lightbox-cap{color:#fff;font-size:14px;margin-top:16px;text-align:center;max-width:90vw}
+.lightbox img{max-width:100%;max-height:75vh;border-radius:12px;border:3px solid #5BB8D4;transform-origin:center center;transition:transform .25s ease, max-width .25s ease, max-height .25s ease;object-fit:contain;background:#000}.lightbox-cap{color:#fff;font-size:14px;margin-top:16px;text-align:center;max-width:90vw}
 .lightbox-back{margin-top:24px;background:#5BB8D4;color:#0A0E17;border:none;padding:14px 30px;border-radius:12px;font-weight:700;cursor:pointer;font-size:15px}
 @media(min-width:640px){.contact-grid{grid-template-columns:1fr 1fr}.btns-group{flex-direction:row;flex-wrap:wrap}.btn-link{flex:1;min-width:140px}}
 .btn-maps{background:linear-gradient(135deg,#D97706,#f207e9)!important;color:#fff!important}
@@ -115,12 +139,23 @@ footer .footer-slogan{color:#888;font-size:12px}
 <section class="section" id="lExterno"><div class="externo-card"><a id="lExternoBtn" href="https://proyectosolaronline.github.io/bienestar-emocional-terapeutas-en-queretaro/" target="_blank" rel="noopener" class="externo-btn" style="background:linear-gradient(135deg,#6B4FA0,#A0689A)">Visitar Bienestar Emocional ?</a></div></section>
 <div class="contact-grid"><div class="contact-item"><div class="cl">🕐 Horario</div><div class="cv">Lunes a sabados</div></div></div>
 <section class="section"><h2>📍 Encuéntranos</h2><div class="map-card"><iframe loading="lazy" src="https://www.openstreetmap.org/export/embed.html?bbox=-100.356494%2C20.738074%2C-100.344494%2C20.750074&layer=mapnik&marker=20.744074%2C-100.350494"></iframe></div><p class="direccion">San Vicente Ferrer, El Marqués, Querétaro, México</p></section>
-<div class="btns-group"><a href="https://www.google.com/maps/dir/?api=1&destination=20.744074,-100.350494" class="btn-link btn-maps" target="_blank">🧭 Cómo llegar</a></div>
+<div class="btns-group"><a href="https://script.google.com/macros/s/AKfycbzGhO5vd6-p1hYqSgmLKbomXlCmspjMyf4Ky3J_H4Pg2WGZJLr3XfDySS1EFSMlEvgNJQ/exec?negocio=neg-0008" class="btn-link btn-catalogo">🛍️ Ver catálogo</a><a href="https://www.google.com/maps/dir/?api=1&destination=20.744074,-100.350494" class="btn-link btn-maps" target="_blank">🧭 Cómo llegar</a></div>
 <section class="qr-section"><img class="qr-img" id="lQrImg" alt="QR" onclick="compartirQR()"><p class="qr-caption"><span onclick="compartirQR()">📱 Escanea para compartir</span></p></section>
 <footer><p class="footer-nombre" style="color:#5BB8D4">⚡ Chamarras , cintos de piel Queretaro</p><p class="footer-slogan">En san vicente si es piel yo me encargo !!!</p></footer>
 <section class="promo-final"><p>🌐 ¿Quieres una página como esta totalmente <strong>gratis</strong>? Solo pagas la administración de contenido.</p><a href="mailto:prototipowebapp@gmail.com?subject=Quiero%20mi%20p%C3%A1gina%20web%20gratis">📧 Escríbenos a prototipowebapp@gmail.com</a></section>
-<div class="lightbox" id="lLightbox"><img id="lLightboxImg" src="" alt=""><p class="lightbox-cap" id="lLightboxCap"></p><button class="lightbox-back" onclick="lCloseLightbox()">← Volver</button></div>
-<div class="legal-modal" id="legalModal"><div class="legal-box"><h3>⚖️ Aviso legal</h3><p>El contenido de esta página (textos, imágenes, videos y datos) es proporcionado por <strong>Chamarras , cintos de piel Queretaro</strong> bajo su exclusiva responsabilidad. Los productos y servicios aquí ofrecidos son lícitos y están permitidos por la legislación aplicable. Esta página no promueve ni permite la venta de productos o servicios ilegales, prohibidos o que requieran autorización que no se tenga.</p><p>Precios, disponibilidad, promociones y características pueden cambiar sin previo aviso. Las marcas e imágenes mencionadas pertenecen a sus respectivos dueños. Si detectas contenido inapropiado o que infrinja derechos, escríbenos a <a href="mailto:prototipowebapp@gmail.com?subject=Reporte%20de%20contenido">prototipowebapp@gmail.com</a>.</p><button type="button" onclick="legalCerrar()">Entendido</button></div></div>
+<div class="lightbox" id="lLightbox"><img id="lLightboxImg" src="" alt=""><p class="lightbox-cap" id="lLightboxCap"></p><div style="display:flex;gap:10px;margin-top:24px"><button class="lightbox-back" style="margin-top:0" onclick="lGirar()">⟳ Girar</button><button class="lightbox-back" style="margin-top:0" onclick="lCloseLightbox()">← Volver</button></div></div><div class="legal-modal" id="legalModal"><div class="legal-box"><h3>⚖️ Aviso legal</h3><p>El contenido de esta página (textos, imágenes, videos y datos) es proporcionado por <strong>Chamarras , cintos de piel Queretaro</strong> bajo su exclusiva responsabilidad. Los productos y servicios aquí ofrecidos son lícitos y están permitidos por la legislación aplicable. Esta página no promueve ni permite la venta de productos o servicios ilegales, prohibidos o que requieran autorización que no se tenga.</p><p>Precios, disponibilidad, promociones y características pueden cambiar sin previo aviso. Las marcas e imágenes mencionadas pertenecen a sus respectivos dueños. Si detectas contenido inapropiado o que infrinja derechos, escríbenos a <a href="mailto:prototipowebapp@gmail.com?subject=Reporte%20de%20contenido">prototipowebapp@gmail.com</a>.</p><button type="button" onclick="legalCerrar()">Entendido</button></div></div>
+<div id="qrPrintOv" role="dialog" aria-label="Imprimir QR">
+  <div class="qp-card">
+    <h2 class="qp-nombre">Chamarras , cintos de piel Queretaro</h2>
+    <p class="qp-sub">Escanea el QR y haz tu pedido</p>
+    <img id="qpImg" class="qp-qr" alt="QR Chamarras , cintos de piel Queretaro">
+    <p class="qp-url">https://proyectosolaronline.github.io/Chamarras-cintos-de-piel-Queretaro/</p>
+    <div class="qp-btns">
+      <button type="button" class="qp-imp" onclick="imprimirQR()">🖨️ Imprimir</button>
+      <button type="button" class="qp-cerrar" onclick="cerrarQRImprimir()">Cerrar</button>
+    </div>
+  </div>
+</div>
 <script>
 (function(){
   var splash = document.getElementById('splash');
@@ -186,15 +221,130 @@ if(cvS && splash){
       cont.style.display = lFotos.length ? '' : 'none';
     }catch(e){}
   };
-window.lOpenLightbox = function(i){ var f = lFotos[i]; if(!f) return; document.getElementById('lLightboxImg').src = f.url; var s = lCorte(i); var cap = document.getElementById('lLightboxCap'); cap.textContent = (s.prev || '📸') + ' '; if(s.hayMas){ var m = document.createElement('button'); m.className = 'vermas-btn'; m.textContent = 'Ver más'; m.onclick = function(e){ e.stopPropagation(); lVerMas(i); }; cap.appendChild(m); } document.getElementById('lLightbox').classList.add('active'); };
-  window.lCloseLightbox = function(){ document.getElementById('lLightbox').classList.remove('active'); };
-  window.lToggleDescFoto = function(i){ var r = document.getElementById('lDescResto' + i); if(r) r.style.display = r.style.display === 'none' ? 'inline' : 'none'; };
-        function lCorte(i){ var t = ((lFotos[i] || {}).descripcion || '').trim(); var CR = String.fromCharCode(13), LF = String.fromCharCode(10); var h = t.indexOf('#'); if(h > 0){ var p = t.substring(0, h).split(CR).join('').split(LF).join(' ').trim(); var r = t.substring(h + 1).trim(); return { full: r ? p + LF + LF + r : p, hayMas: r !== '', prev: p, nombre: p }; } var n = Math.ceil(t.length * 0.20); var flat = t.split(CR).join('').split(LF).join(' '); var hayMas = n < t.length; return { full: t, hayMas: hayMas, prev: hayMas ? flat.substring(0, n).trim() + '…' : flat, nombre: flat.substring(0, 60).trim() }; }
-      window.lVerMas = function(i){ var o = document.createElement('div'); o.style.cssText = 'position:fixed;inset:0;z-index:6000;background:rgba(0,0,0,.8);display:flex;align-items:center;justify-content:center;padding:16px'; var b = document.createElement('div'); b.style.cssText = 'max-width:480px;width:100%;max-height:80vh;overflow:auto;background:#1a1a1a;color:#ddd;border-radius:16px;padding:20px;font-size:14px;line-height:1.6;white-space:pre-line'; b.textContent = lCorte(i).full; var c = document.createElement('button'); c.textContent = 'Cerrar'; c.style.cssText = 'display:block;width:100%;margin-top:16px;padding:12px;border:0;border-radius:10px;background:#5BB8D4;color:#111;font-weight:700;font-size:15px;cursor:pointer'; c.onclick = function(){ o.remove(); }; o.onclick = function(e){ if(e.target === o) o.remove(); }; b.appendChild(c); o.appendChild(b); document.body.appendChild(o); };
-  document.getElementById('lLightbox').addEventListener('click', function(e){ if(e.target === this) lCloseLightbox(); });
-  var u = window.location.href; var q = document.getElementById('lQrImg');
-  if(q) q.src = 'https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=' + encodeURIComponent(u);
-  window.compartirQR = function(){ window.open('https://wa.me/?text=' + encodeURIComponent('Chamarras , cintos de piel Queretaro: ' + u), '_blank'); };
+window.lOpenLightbox = function(i){
+  var f = lFotos[i];
+  if(!f || !f.url) return;
+  var im = document.getElementById('lLightboxImg');
+  var cont = document.getElementById('lLightbox');
+  lRot = 0;
+  lAjustar();
+  im.onerror = function(){
+    alert('No se pudo cargar la imagen. Intenta con otra foto.');
+    cont.classList.remove('active');
+  };
+  im.onload = function(){
+    cont.classList.add('active');
+  };
+  im.src = f.url;
+  var s = lCorte(i);
+  var cap = document.getElementById('lLightboxCap');
+  cap.textContent = (s.prev || '📸') + ' ';
+  if(s.hayMas){
+    var m = document.createElement('button');
+    m.className = 'vermas-btn';
+    m.textContent = 'Ver más';
+    m.onclick = function(e){ e.stopPropagation(); lVerMas(i); };
+    cap.appendChild(m);
+  }
+};  var lRot = 0;
+function lAjustar(){
+  var im = document.getElementById('lLightboxImg');
+  if(!im) return;
+  var lado = (lRot % 180 !== 0);
+  if(lado){
+    im.style.maxWidth = '70vh';
+    im.style.maxHeight = '85vw';
+  } else {
+    im.style.maxWidth = '100%';
+    im.style.maxHeight = '75vh';
+  }
+  im.style.transform = 'rotate(' + lRot + 'deg)';
+  im.style.transformOrigin = 'center center';
+}
+  window.lGirar = function(){ lRot = (lRot + 90) % 360; lAjustar(); };
+  window.lCloseLightbox = function(){ document.getElementById('lLightbox').classList.remove('active'); lRot = 0; lAjustar(); };
+  window.lToggleDescFoto = function(i){ var r = document.getElementById('lDescResto' + i); if(r) r.style.display = r.style.display === 'none' ? 'inline' : 'none'; }; 
+  // ===== QR DINÁMICO: visible + compartir + imprimir =====
+  // URL real de la página (siempre correcta, sin hardcodear)
+  var URL_ACTUAL = window.location.href;
+
+  // 1) QR visible en la sección "Escanea para compartir"
+  (function generarQrVisible(){
+    var img = document.getElementById('lQrImg');
+    if(!img) return;
+    img.src = 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&margin=10&data=' + encodeURIComponent(URL_ACTUAL);
+    img.dataset.url = URL_ACTUAL;
+  })();
+
+  // 2) Compartir el link (móvil: share nativo / PC: copia al portapapeles)
+  window.compartirQR = function(){
+    if(navigator.share){
+      navigator.share({
+        title: 'Chamarras , cintos de piel Queretaro',
+        text: 'Mira la página de Chamarras , cintos de piel Queretaro',
+        url: URL_ACTUAL
+      }).catch(function(){});
+    } else if(navigator.clipboard){
+      navigator.clipboard.writeText(URL_ACTUAL).then(function(){
+        alert('📋 Link copiado: ' + URL_ACTUAL);
+      }).catch(function(){
+        prompt('Copia este link:', URL_ACTUAL);
+      });
+    } else {
+      prompt('Copia este link:', URL_ACTUAL);
+    }
+  };
+
+  // 3) QR grande del overlay (doble-tap en el banner superior)
+  window.abrirQRImprimir = function(){
+    var ov = document.getElementById('qrPrintOv');
+    var im = document.getElementById('qpImg');
+    if(im){
+      im.src = 'https://api.qrserver.com/v1/create-qr-code/?size=600x600&margin=10&data=' + encodeURIComponent(URL_ACTUAL);
+    }
+    if(ov) ov.classList.add('activo');
+  };
+
+  // 4) Cerrar el overlay del QR grande
+  window.cerrarQRImprimir = function(){
+    var ov = document.getElementById('qrPrintOv');
+    if(ov) ov.classList.remove('activo');
+  };
+
+  // 5) Imprimir el QR grande
+  window.imprimirQR = function(){
+    var im = document.getElementById('qpImg');
+    function lanzar(){
+      document.body.classList.add('qr-imprimiendo');
+      setTimeout(function(){ window.print(); }, 150);
+    }
+    if(im && im.complete && im.naturalWidth) lanzar();
+    else if(im) im.onload = lanzar;
+    else lanzar();
+  };
+
+  // 6) Reset al cerrar diálogo de impresión
+  window.addEventListener('afterprint', function(){
+    document.body.classList.remove('qr-imprimiendo');
+  });
+
+  // 7) ESC cierra el overlay del QR grande
+  document.addEventListener('keydown', function(e){
+    if(e.key === 'Escape') window.cerrarQRImprimir();
+  });
+
+  // 8) Doble-tap en el banner abre el QR grande
+  var qrTaps = [];
+  var bannerQR = document.querySelector('.banner');
+  if(bannerQR){
+    bannerQR.addEventListener('click', function(e){
+      if(e.target.closest && e.target.closest('.legal-ico')) return;
+      var t = Date.now();
+      qrTaps = qrTaps.filter(function(x){ return t - x < 600; });
+      qrTaps.push(t);
+      if(qrTaps.length >= 2){ qrTaps = []; window.abrirQRImprimir(); }
+    });
+  }
     // ===== CORREO (opción alternativa): producto o motivo + teléfono antes de abrir el correo =====
   var CORREO_CONTACTO = "";
   window.correoContacto = function(){
