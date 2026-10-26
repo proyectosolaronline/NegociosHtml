@@ -608,35 +608,28 @@ function asegurarCorreoDueno(n){
   return false;
 }
 
-async function validarClaveCatalogo(clave) {
-  try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 segundos máximo
+  function validarClaveCatalogo(clave) {
+  return new Promise((resolve) => {
+    const cb = '__val_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
+    const sc = document.createElement('script');
+    let terminado = false;
 
-    const r = await fetch(CATALOGO_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // evita preflight CORS
-      body: JSON.stringify({ accion: 'verificarNegocio', clave: clave, negocio_id: '__ping__' }),
-      signal: controller.signal
-    });
-
-    clearTimeout(timeoutId);
-
-    if (!r.ok) {
-      mostrarToast('⚠️ Servidor del catálogo respondió con error HTTP ' + r.status);
-      return false;
+    function limpiar(ok) {
+      if (terminado) return;
+      terminado = true;
+      try { delete window[cb]; } catch (e) { window[cb] = undefined; }
+      if (sc.parentNode) sc.parentNode.removeChild(sc);
+      if (!ok) mostrarToast('⚠️ El catálogo no confirmó la clave (incorrecta o sin respuesta)');
+      resolve(!!ok);
     }
 
-    const j = await r.json();
-    return !!(j && j.success === true);
-  } catch (e) {
-    if (e && e.name === 'AbortError') {
-      mostrarToast('⏱️ El servidor del catálogo no respondió en 8 segundos');
-    } else {
-      mostrarToast('⚠️ Error de red: ' + (e.message || 'desconocido'));
-    }
-    return false;
-  }
+    window[cb] = (r) => limpiar(r && r.success === true);
+    sc.onerror = () => limpiar(false);
+    sc.src = CATALOGO_URL + '?accion=verificarNegocioPing&clave=' + encodeURIComponent(clave) + '&callback=' + cb + '&_=' + Date.now();
+    document.head.appendChild(sc);
+
+    setTimeout(() => limpiar(false), 8000);
+  });
 }
   /* ============================================================
    SEO: SITEMAP + ROBOTS
