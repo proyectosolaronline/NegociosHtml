@@ -518,14 +518,28 @@ function asegurarCorreoDueno(n){
   }
 
   // 2) SIEMPRE validar la clave (venga del prompt o de localStorage)
+  // 2) SIEMPRE validar la clave (venga del prompt o de localStorage)
   mostrarToast('🔐 Validando clave del catálogo...');
   const valida = await validarClaveCatalogo(clave);
   if (!valida) {
     try { localStorage.removeItem('catalogoClave'); } catch (e) {}
-    mostrarToast('❌ Clave del catálogo incorrecta (se borró del navegador)');
+
+    // 🔒 POPUP: clave no válida
+    const reintentar = confirm(
+      '🔒 CLAVE NO VÁLIDA\n\n' +
+      'La clave del catálogo no coincide con la del servidor.\n' +
+      'Puede ser incorrecta o el servidor no respondió.\n\n' +
+      '¿Quieres ingresar otra clave?\n\n' +
+      '→ Aceptar = Ingresar otra clave\n' +
+      '→ Cancelar = Cerrar y volver'
+    );
+
+    if (reintentar) {
+      // Vuelve a pedir la clave y reintenta
+      return await importarAlCatalogo(n);
+    }
     return false;
   }
-
   // 3) Solo guardar si es válida
   try { localStorage.setItem('catalogoClave', clave); } catch (e) {}
     const carpeta = nombreCarpeta(n.nombre);
@@ -1651,7 +1665,7 @@ var CONSTRUCCION = {
 
 console.log('✅ Generador de landing activo');
 (function () {
-  const VERSION_GENERADOR = 'v4 ok - publica en repo nuevo (V2)';
+  const VERSION_GENERADOR = 'v5 ok 5 - publica en repo nuevo (V2)';
   const SEGUNDOS = 5;
   function mostrarVersion() {
     const d = document.createElement('div');
