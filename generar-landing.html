@@ -505,15 +505,25 @@ function asegurarCorreoDueno(n){
   return true;
 }
   async function importarAlCatalogo(n) {
-  if (!CATALOGO_URL || !n) return;
-    if (!asegurarCorreoDueno(n)) { mostrarToast('Catálogo: no se enviaron los datos (falta el correo del dueño)'); return false; }
+  if (!CATALOGO_URL || !n) return false;
+  if (!asegurarCorreoDueno(n)) { mostrarToast('Catálogo: no se enviaron los datos (falta el correo del dueño)'); return false; }
+
   let clave = '';
   try { clave = localStorage.getItem('catalogoClave') || ''; } catch (e) {}
+
+  // Si no hay clave guardada, pedirla y VALIDARLA antes de seguir
   if (!clave) {
     clave = (prompt('Clave de importación del catálogo (se guarda en este navegador):') || '').trim();
-    if (!clave) { mostrarToast('Catálogo: no se enviaron los datos (falta la clave)'); return; }
+    if (!clave) { mostrarToast('Catálogo: no se enviaron los datos (falta la clave)'); return false; }
+
+    const valida = await validarClaveCatalogo(clave);
+    if (!valida) {
+      mostrarToast('❌ Clave del catálogo incorrecta');
+      return false;
+    }
     try { localStorage.setItem('catalogoClave', clave); } catch (e) {}
   }
+
   const carpeta = nombreCarpeta(n.nombre);
   const datos = {
     negocio_id: String(n.id || n.negocio_id || carpeta).toLowerCase().replace(/[^\w-]/g, '-'),
@@ -525,19 +535,30 @@ function asegurarCorreoDueno(n){
     correo: n.correoDueno,
     activo: true
   };
-    function info(m) {
+
+  function info(m) {
     window.estadoCatalogo = m;
     mostrarToast(m);
     try { const s = document.getElementById('linkModalSub'); if (s) s.textContent = String(s.textContent).split(' · ')[0] + ' · ' + m; } catch (e) {}
   }
   window.estadoCatalogo = '⏳ Enviando datos al catálogo...';
+
   let r;
   try {
     r = await fetch(CATALOGO_URL, { method: 'POST', body: JSON.stringify({ accion: 'importarNegocio', clave: clave, datos: datos }) });
-  } catch (e) { info('❌ Catálogo: no se pudo conectar con Apps Script'); return; }
+  } catch (e) { info('❌ Catálogo: no se pudo conectar con Apps Script'); return false; }
+
   let j;
   try { j = await r.json(); }
-  catch (e) { info('❌ Catálogo: Apps Script no respondió. Publica una nueva versión de la implementación con el Code.gs nuevo'); return; }
+  catch (e) { info('❌ Catálogo: Apps Script no respondió. Publica una nueva versión de la implementación con el Code.gs nuevo'); return false; }
+
+  // Si el servidor rechaza por clave → borrar y no continuar
+  if (j && j.success === false && /clave/i.test(j.error || '')) {
+    try { localStorage.removeItem('catalogoClave'); } catch (e) {}
+    info('❌ Clave del catálogo incorrecta');
+    return false;
+  }
+
   if (j && j.success) {
     let v = null;
     try {
@@ -548,16 +569,27 @@ function asegurarCorreoDueno(n){
       info('✅ Catálogo verificado: ' + (j.nuevo ? 'negocio nuevo' : 'actualizado') + ' · ' + v.productos + ' producto(s) · ' + v.duenos + ' dueño(s)');
       return true;
     }
-    info('⚠️ Catálogo: no se pudo confirmar → ' + JSON.stringify(v || 'sin respuesta').slice(0, 150));    return false;
-  }  info('❌ Catálogo: ' + ((j && j.error) || 'error desconocido'));
-  if (/clave/i.test((j && j.error) || '')) { try { localStorage.removeItem('catalogoClave'); } catch (e) {} }}
-  function mostrarToast(m) {
-  document.querySelectorAll('.toast').forEach(x => x.remove());
-  const e = document.createElement('div');
-  e.className = 'toast'; e.textContent = m; document.body.appendChild(e);
-  setTimeout(() => { e.style.opacity = '0'; setTimeout(() => e.remove(), 300); }, 3200);
+    info('⚠️ Catálogo: no se pudo confirmar → ' + JSON.stringify(v || 'sin respuesta').slice(0, 150));
+    return false;
+  }
+
+  info('❌ Catálogo: ' + ((j && j.error) || 'error desconocido'));
+  if (/clave/i.test((j && j.error) || '')) { try { localStorage.removeItem('catalogoClave'); } catch (e) {} }
+  return false;
 }
 
+async function validarClaveCatalogo(clave) {
+  try {
+    const r = await fetch(CATALOGO_URL, {
+      method: 'POST',
+      body: JSON.stringify({ accion: 'verificarNegocio', clave: clave, negocio_id: '__ping__' })
+    });
+    const j = await r.json();
+    return !!(j && j.success === true);
+  } catch (e) {
+    return false;
+  }
+}
 /* ============================================================
    SEO: SITEMAP + ROBOTS
    ============================================================ */
@@ -811,10 +843,17 @@ document.getElementById('btnProbarCatalogo').onclick = async () => {
   currentPreviewSlug = carp;
   currentPreviewNombre = carp + '.html';
   currentPreviewHTML = construirLandingHTML(negocioActual, plantillaActual);
+bt.textContent = '> Validando catálogo...';
+const catalogoOK = await importarAlCatalogo(negocioActual);
+if (!catalogoOK) {
+  bt.disabled = false;
+  bt.textContent = '🚀 Publicar';
+  try { localStorage.removeItem('catalogoClave'); } catch (e) {}
+  return;
+}
+bt.textContent = '> Publicando...';
 
-  bt.textContent = '> Publicando...';
-  importarAlCatalogo(negocioActual);
-  const dt = {
+      const dt = {
     token: token,
     nombreArchivo: currentPreviewNombre,
     repo: carp,
