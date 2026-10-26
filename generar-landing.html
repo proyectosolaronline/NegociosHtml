@@ -511,20 +511,24 @@ function asegurarCorreoDueno(n){
   let clave = '';
   try { clave = localStorage.getItem('catalogoClave') || ''; } catch (e) {}
 
-  // Si no hay clave guardada, pedirla y VALIDARLA antes de seguir
+  // 1) Si no hay clave → pedirla
   if (!clave) {
     clave = (prompt('Clave de importación del catálogo (se guarda en este navegador):') || '').trim();
     if (!clave) { mostrarToast('Catálogo: no se enviaron los datos (falta la clave)'); return false; }
-
-    const valida = await validarClaveCatalogo(clave);
-    if (!valida) {
-      mostrarToast('❌ Clave del catálogo incorrecta');
-      return false;
-    }
-    try { localStorage.setItem('catalogoClave', clave); } catch (e) {}
   }
 
-  const carpeta = nombreCarpeta(n.nombre);
+  // 2) SIEMPRE validar la clave (venga del prompt o de localStorage)
+  mostrarToast('🔐 Validando clave del catálogo...');
+  const valida = await validarClaveCatalogo(clave);
+  if (!valida) {
+    try { localStorage.removeItem('catalogoClave'); } catch (e) {}
+    mostrarToast('❌ Clave del catálogo incorrecta (se borró del navegador)');
+    return false;
+  }
+
+  // 3) Solo guardar si es válida
+  try { localStorage.setItem('catalogoClave', clave); } catch (e) {}
+    const carpeta = nombreCarpeta(n.nombre);
   const datos = {
     negocio_id: String(n.id || n.negocio_id || carpeta).toLowerCase().replace(/[^\w-]/g, '-'),
     nombre: nombreVisible(n.nombre), slogan: n.slogan || '', descripcion: n.descripcion || '',
