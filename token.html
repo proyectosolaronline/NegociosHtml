@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Tokens del catálogo</title>
+<style>
+  :root {
+    --fondo: #eef1f4;
+    --panel: #ffffff;
+    --texto: #1c2430;
+    --suave: #5d6b7c;
+    --linea: #d5dbe3;
+    --acento: #0b6e6e;
+    --acento-fondo: #e3f2f1;
+    --error: #b3261e;
+    --error-fondo: #fbe9e7;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --fondo: #12171d;
+      --panel: #1b222b;
+      --texto: #e6ebf1;
+      --suave: #93a1b2;
+      --linea: #2c3744;
+      --acento: #4fc3bd;
+      --acento-fondo: #17302f;
+      --error: #ff8a80;
+      --error-fondo: #3a1f1c;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--fondo);
+    color: var(--texto);
+    font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    padding: 24px 16px 48px;
+  }
+  main { max-width: 680px; margin: 0 auto; }
+  h1 { font-size: 1.5rem; margin: 0 0 4px; }
+  .sub { color: var(--suave); margin: 0 0 20px; }
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--linea);
+    border-radius: 10px;
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+  label { display: block; font-weight: 600; margin-bottom: 6px; }
+  .fila { display: flex; gap: 8px; }
+  input[type="password"], input[type="text"] {
+    flex: 1;
+    min-width: 0;
+    padding: 10px 12px;
+    font: inherit;
+    color: var(--texto);
+    background: var(--fondo);
+    border: 1px solid var(--linea);
+    border-radius: 8px;
+  }
+  input:focus-visible, button:focus-visible { outline: 3px solid var(--acento); outline-offset: 2px; }
+  button {
+    padding: 10px 16px;
+    font: inherit;
+    font-weight: 600;
+    color: #fff;
+    background: var(--acento);
+    border: 0;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+  @media (prefers-color-scheme: dark) { button { color: #0c1a1a; } }
+  button:disabled { opacity: .55; cursor: wait; }
+  .estado { margin: 0; padding: 10px 12px; border-radius: 8px; font-size: .95rem; }
+  .estado.ok { background: var(--acento-fondo); color: var(--acento); }
+  .estado.error { background: var(--error-fondo); color: var(--error); }
+  .estado.espera { background: var(--fondo); color: var(--suave); }
+  .tabla { width: 100%; border-collapse: collapse; }
+  .tabla th, .tabla td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--linea); vertical-align: top; }
+  .tabla th { font-size: .85rem; color: var(--suave); font-weight: 600; }
+  .tabla tr:last-child td { border-bottom: 0; }
+  .valor { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .92rem; word-break: break-all; }
+  .nota { color: var(--suave); font-size: .88rem; margin: 12px 0 0; }
+  [hidden] { display: none !important; }
+  @media (max-width: 520px) {
+    .fila { flex-direction: column; }
+    .tabla th:nth-child(3), .tabla td:nth-child(3) { display: none; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <h1>Tokens del catálogo</h1>
+  <p class="sub">Lee las propiedades guardadas en el Code.gs y las muestra con el valor parcialmente oculto.</p>
+
+  <section class="panel">
+    <label for="clave">Clave de importación</label>
+    <div class="fila">
+      <input type="password" id="clave" autocomplete="off" placeholder="La misma que usa el generador">
+      <button id="btnLeer" type="button">Leer tokens</button>
+    </div>
+    <p class="nota">La clave no se guarda en este navegador ni en el archivo.</p>
+  </section>
+
+  <p id="estado" class="estado espera" hidden></p>
+
+  <section id="resultado" class="panel" hidden>
+    <table class="tabla">
+      <thead>
+        <tr><th>Nombre</th><th>Valor</th><th>Longitud</th></tr>
+      </thead>
+      <tbody id="filas"></tbody>
+    </table>
+    <p class="nota" id="resumen"></p>
+  </section>
+</main>
+
+<script>
+  // URL de la implementación del Code.gs del catálogo
+  const CATALOGO_URL = 'https://script.google.com/macros/s/AKfycbzrFBrPRMg_aAMe-VijThR09R3kOiyh_Mt6o1oovscXz64fQebKbGfn0X9_NyPOm7_vJA/exec';
+
+  const $ = (id) => document.getElementById(id);
+
+  function mostrarEstado(texto, tipo) {
+    const el = $('estado');
+    el.textContent = texto;
+    el.className = 'estado ' + tipo;
+    el.hidden = false;
+  }
+
+  // JSONP: carga un <script> en vez de fetch, así no hay bloqueo por CORS
+  function pedirTokens(clave) {
+    return new Promise((resolve, reject) => {
+      const cb = '__tok_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
+      const sc = document.createElement('script');
+      let terminado = false;
+
+      function fin(fn, valor) {
+        if (terminado) return;
+        terminado = true;
+        try { delete window[cb]; } catch (e) { window[cb] = undefined; }
+        if (sc.parentNode) sc.parentNode.removeChild(sc);
+        fn(valor);
+      }
+
+      window[cb] = (r) => fin(resolve, r);
+      sc.onerror = () => fin(reject, new Error('No se pudo cargar la respuesta del servidor.'));
+      sc.src = CATALOGO_URL + '?accion=verTokens&clave=' + encodeURIComponent(clave) +
+               '&callback=' + cb + '&_=' + Date.now();
+      document.head.appendChild(sc);
+
+      setTimeout(() => fin(reject, new Error('timeout')), 10000);
+    });
+  }
+
+  function pintar(tokens) {
+    const tbody = $('filas');
+    tbody.textContent = '';
+    tokens.forEach((t) => {
+      const tr = document.createElement('tr');
+      [t.nombre, t.parcial, String(t.longitud)].forEach((texto, i) => {
+        const td = document.createElement('td');
+        td.textContent = texto;            // textContent: nunca interpreta HTML
+        if (i === 1) td.className = 'valor';
+        tr.appendChild(td);
+      });
+      tbody.appendChild(tr);
+    });
+    $('resumen').textContent = tokens.length + (tokens.length === 1 ? ' propiedad encontrada.' : ' propiedades encontradas.');
+    $('resultado').hidden = false;
+  }
+
+  async function leer() {
+    const clave = $('clave').value.trim();
+    $('resultado').hidden = true;
+    if (!clave) { mostrarEstado('Escribe la clave de importación.', 'error'); return; }
+
+    const btn = $('btnLeer');
+    btn.disabled = true;
+    mostrarEstado('Consultando el servidor…', 'espera');
+
+    try {
+      const r = await pedirTokens(clave);
+      if (!r || r.success !== true) {
+        mostrarEstado('Clave incorrecta. No se muestra ningún token.', 'error');
+      } else {
+        mostrarEstado('Clave correcta.', 'ok');
+        pintar(r.tokens || []);
+      }
+    } catch (e) {
+      mostrarEstado(
+        e.message === 'timeout'
+          ? 'El servidor no respondió en 10 segundos. Revisa que la implementación sea para "Cualquier persona" y que publicaste la nueva versión con el endpoint verTokens.'
+          : e.message,
+        'error'
+      );
+    } finally {
+      btn.disabled = false;
+      $('clave').value = '';               // no deja la clave a la vista
+    }
+  }
+
+  $('btnLeer').addEventListener('click', leer);
+  $('clave').addEventListener('keydown', (e) => { if (e.key === 'Enter') leer(); });
+</script>
+</body>
+</html>
