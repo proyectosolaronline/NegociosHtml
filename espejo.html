@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Catálogo</title>
+<style>
+  * { box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
+  body { font-family:'Segoe UI',system-ui,sans-serif; background:#0A0E17; color:#E0E0E0; padding-bottom:40px; }
+  button, input, select, textarea { font-family:inherit; }
+  .cab { min-height:150px; padding:16px 14px; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; text-align:center;
+         background:linear-gradient(rgba(10,14,23,.3),rgba(10,14,23,.85)), linear-gradient(135deg,#7B2FF7,#FF00E5,#00D4FF); background-size:cover; background-position:center; }
+  .cab img { width:72px; height:72px; border-radius:50%; object-fit:cover; border:3px solid #00D4FF; background:#0D1117; margin-bottom:8px; }
+  .cab h1 { font-size:20px; color:#fff; text-shadow:0 2px 10px rgba(0,0,0,.8); }
+  .cab p { font-size:13px; color:#cfe9ff; margin-top:2px; }
+  .info { max-width:1000px; margin:12px auto 0; padding:0 14px; font-size:13px; color:#AAA; display:flex; flex-wrap:wrap; gap:6px 16px; }
+  
+  .datosNeg { max-width:1000px; margin:10px auto 0; padding:0 14px; }
+  .datosNeg .card { background:#1A1A2E; border:1px solid #2A2A4A; border-radius:14px; padding:12px 14px; display:flex; flex-direction:column; gap:6px; }
+  .datosNeg .card h2 { font-size:15px; color:#fff; }
+  .datosNeg .card .desc { font-size:13px; color:#AAA; line-height:1.45; }
+  .datosNeg .card .fila { display:flex; flex-wrap:wrap; gap:6px 16px; font-size:13px; color:#AAA; }
+  .datosNeg .card .fila span { display:inline-flex; gap:6px; align-items:center; }
+  .datosNeg .card .id { font-size:11px; color:#7B8CFF; letter-spacing:.5px; }
+  .datosNeg .card .wa { display:inline-flex; align-items:center; gap:8px; margin-top:4px; padding:8px 12px; border-radius:10px; background:#25D366; color:#0A0E17; font-weight:800; font-size:13px; text-decoration:none; width:max-content; }
+
+  .barra { max-width:1000px; margin:12px auto; padding:0 14px; display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+  .barra span { flex:1 1 100%; font-size:13px; color:#AAA; }
+  .btn { min-height:42px; padding:8px 16px; border:none; border-radius:10px; font-size:14px; font-weight:700; cursor:pointer; }
+  .btn-p { background:#00D4FF; color:#0A0E17; }
+  .btn-s { background:#7B2FF7; color:#fff; }
+  .btn-g { background:#2A2A4A; color:#fff; }
+  .btn-r { background:#E53935; color:#fff; }
+  .btn[hidden] { display:none; }
+  .barra .btn { flex:1 1 0; min-width:0; padding:6px 8px; font-size:13px; line-height:1.15; white-space:normal; }
+  @media (max-width:380px){ .barra .btn { font-size:12px; padding:6px 4px; } }
+
+  main { max-width:1000px; margin:0 auto; padding:0 14px; }
+  #buscador { width:100%; min-height:44px; padding:8px 16px; border-radius:30px; border:none; font-size:16px; outline:none; margin-bottom:10px; }
+  .chips { display:flex; gap:6px; overflow-x:auto; padding-bottom:8px; margin-bottom:6px; }
+  .chip { flex:0 0 auto; padding:6px 14px; border-radius:20px; border:1px solid #2A2A4A; background:#1A1A2E; color:#CCC; font-size:13px; cursor:pointer; }
+  .chip.on { border-color:#00D4FF; color:#00D4FF; }
+  .grid { display:grid; grid-template-columns:repeat(2,1fr); gap:12px; }
+  @media (min-width:700px){ .grid { grid-template-columns:repeat(3,1fr); gap:16px; } }
+  @media (min-width:980px){ .grid { grid-template-columns:repeat(4,1fr); } }
+  .prod { background:#1A1A2E; border:1px solid #2A2A4A; border-radius:14px; overflow:hidden; display:flex; flex-direction:column; }
+  .prod .foto { width:100%; aspect-ratio:1/1; object-fit:cover; background:#0D1117; display:flex; align-items:center; justify-content:center; font-size:34px; }
+  .prod .cuerpo { padding:10px; display:flex; flex-direction:column; gap:4px; flex:1; }
+  .prod h3 { font-size:14px; line-height:1.3; }
+  .prod .desc { font-size:12px; color:#AAA; line-height:1.4; }
+  .prod .cat { font-size:11px; color:#7B8CFF; }
+  .precio { margin-top:auto; font-size:16px; font-weight:800; color:#25D366; }
+  .precio.bloq { font-size:12px; font-weight:600; color:#FFB74D; }
+  .vacio { grid-column:1/-1; text-align:center; padding:50px 10px; color:#888; }
+  #msg { text-align:center; color:#FFB74D; padding:20px; }
+
+  .ov { display:none; position:fixed; inset:0; background:rgba(0,0,0,.8); z-index:2000; align-items:center; justify-content:center; padding:14px; overflow-y:auto; }
+  .ov.on { display:flex; }
+  .caja { background:#1A1A2E; border:1px solid #7B2FF7; border-radius:16px; width:100%; max-width:420px; padding:20px 18px; position:relative; }
+  .caja h3 { margin-bottom:8px; }
+  .caja p { font-size:13.5px; color:#BBB; line-height:1.5; margin-bottom:12px; }
+  .caja input, .caja select, .caja textarea { width:100%; min-height:44px; padding:8px 12px; border-radius:10px; border:1px solid #2A2A4A; background:#0D1117; color:#fff; font-size:16px; margin-bottom:10px; outline:none; }
+  .caja .btn { width:100%; margin-top:2px; }
+  .x { position:absolute; top:8px; right:10px; background:none; border:none; color:#CCC; font-size:28px; width:40px; height:40px; cursor:pointer; }
+  .nota { font-size:12.5px; color:#FFB74D; min-height:18px; margin-top:8px; }
+  #toast { position:fixed; left:50%; bottom:24px; transform:translateX(-50%); background:#222; color:#fff; padding:10px 18px; border-radius:20px; font-size:13px; z-index:3000; display:none; max-width:90%; text-align:center; }
+
+  .fabQR{position:fixed;right:14px;bottom:calc(24px + env(safe-area-inset-bottom,0px));z-index:41;display:flex;align-items:center;gap:8px;height:48px;min-width:48px;padding:0 14px 0 13px;border-radius:24px;border:1px solid rgba(0,212,255,.55);background:rgba(26,26,46,.92);color:#fff;font:700 13px/1 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;box-shadow:0 4px 16px rgba(0,0,0,.45);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);opacity:.9;transition:opacity .2s,transform .2s,box-shadow .2s;-webkit-tap-highlight-color:transparent;cursor:pointer;border-width:1px}
+  .fabQR:hover,.fabQR:focus-visible{opacity:1;transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,212,255,.45);outline:none}
+  .fabQR:active{transform:scale(.96)}
+  .fabQR .ico{width:22px;height:22px;flex:0 0 22px;color:#00D4FF}
+  .fabQR .txt{white-space:nowrap}
+  @media (max-width:520px){.fabQR{width:48px;padding:0;justify-content:center}.fabQR .txt{display:none}}
+  #ovQR .caja{max-width:420px}
+  #ovQR .qrWrap{display:flex;justify-content:center;padding:6px 0 10px}
+  #ovQR .qrBox{background:#fff;padding:10px;border-radius:12px;display:inline-block}
+  #ovQR .qrBox img{display:block;width:220px;height:220px}
+  #ovQR .urlBox{font-size:12px;color:#cfe9ff;background:#0D1117;border:1px dashed #2A2A4A;border-radius:10px;padding:8px 10px;word-break:break-all;margin-bottom:10px}
+  #ovQR .acciones{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  #ovQR .acciones .btn{width:100%}
+  #ovQR .acciones .btnWA{background:#25D366;color:#0A0E17;grid-column:1/-1}
+  @media (max-width:380px){#ovQR .acciones{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<div class="cab" id="cab">
+  <img id="cabLogo" alt="" style="display:none">
+  <h1 id="cabNombre">Catálogo</h1>
+  <p id="cabSlogan"></p>
+</div>
+<div class="info" id="info"></div>
+
+<div class="datosNeg" id="datosNeg" hidden>
+  <div class="card">
+    <h2 id="dnNombre"></h2>
+    <div class="desc" id="dnDesc"></div>
+    <div class="fila">
+      <span id="dnDir"></span>
+      <span id="dnHor"></span>
+      <span id="dnTel"></span>
+    </div>
+    <div class="id" id="dnId"></div>
+    <a class="wa" id="dnWa" href="#" target="_blank" rel="noopener" hidden>💬 Escribir por WhatsApp</a>
+  </div>
+</div>
+
+<div class="barra">
+  <span id="estadoUsr"></span>
+  <button class="btn btn-p" id="btnAcceso" onclick="clickAcceso()">🔓 Ver precios</button>
+  <button class="btn btn-s" id="btnRegistro" onclick="abrirNuevoRegistro()">📝 Registrarme</button>
+</div>
+<main>
+  <div id="msg"></div>
+  <input type="text" id="buscador" placeholder="Busca un producto..." autocomplete="off" oninput="pintarGrid()">
+  <div class="chips" id="chips"></div>
+  <div class="grid" id="grid"></div>
+</main>
+
+<div id="toast"></div>
+
+<div class="ov" id="ovNuevoReg" onclick="if(event.target===this)cerrarNuevoRegistro()">
+  <div class="caja">
+    <button class="x" onclick="cerrarNuevoRegistro()">×</button>
+    <h3>📝 Registro de cliente</h3>
+    <p>Llena tus datos. El dueño revisará tu solicitud y te dará acceso a los precios.</p>
+    <input id="nrNombre" type="text" placeholder="Nombre completo *">
+    <input id="nrEmpresa" type="text" placeholder="Negocio o empresa">
+    <input id="nrTel" type="tel" placeholder="Teléfono *">
+    <input id="nrCorreo" type="email" placeholder="Correo *">
+    <input id="nrCiudad" type="text" placeholder="Ciudad o dirección">
+    <select id="nrTipo"><option value="menudeo">Menudeo</option><option value="mayoreo">Mayoreo</option></select>
+    <textarea id="nrNotas" rows="2" placeholder="Comentarios (opcional)"></textarea>
+    <button class="btn btn-p" id="nrEnviar" onclick="enviarNuevoRegistro()">Enviar solicitud</button>
+    <div class="nota" id="nrNota"></div>
+  </div>
+</div>
+
+<button type="button" class="fabQR" id="fabQR" title="Ver QR del catálogo">
+  <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"></rect><rect x="14" y="3" width="7" height="7" rx="1"></rect><rect x="3" y="14" width="7" height="7" rx="1"></rect><path d="M14 14h3v3h-3z"></path><path d="M20 14v.01M20 20v.01M14 20v.01M17 20h.01M20 17h.01"></path></svg>
+  <span class="txt">QR</span>
+</button>
+
+<div class="ov" id="ovQR" onclick="if(event.target===this)cerrarQR()">
+  <div class="caja">
+    <button class="x" onclick="cerrarQR()">×</button>
+    <h3>🔗 Compartir catálogo</h3>
+    <p>Escanea o comparte el enlace de <b id="qrNombre">este negocio</b>.</p>
+    <div class="urlBox" id="qrUrl">—</div>
+    <div class="qrWrap"><div class="qrBox"><img id="qrImg" alt="QR del catálogo" width="220" height="220" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"></div></div>
+    <div class="acciones">
+      <button class="btn btn-g" onclick="copiarQRUrl()">📋 Copiar link</button>
+      <button class="btn btn-g" onclick="descargarQR()">⬇️ Descargar QR</button>
+      <button class="btn btnWA" onclick="compartirWhatsApp()">💬 WhatsApp</button>
+    </div>
+    <div class="nota" id="qrNota"></div>
+  </div>
+</div>
+
+<script>
+/* =====================================================================
+   CONFIGURACIÓN GITHUB PAGES
+   Cambia esta URL por la de tu implementación de Apps Script (la que termina en /exec)
+   ===================================================================== */
+const API_URL = 'https://script.google.com/macros/s/TU_ID_DE_IMPLEMENTACION_AQUI/exec';
+const NEGOCIO_ID = new URLSearchParams(window.location.search).get('negocio') || '';
+
+const $ = id => document.getElementById(id);
+const esc = t => String(t==null?'':t).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const money = n => n==null ? '' : Number(n).toLocaleString('es-MX',{style:'currency',currency:'MXN'});
+const sinAcentos = s => String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
+
+const S = { correo:'', productos:[], verPrecios:false, acceso:'anonimo', nombre:'', cat:'' };
+const NEG = { id:'', nombre:'', slogan:'', descripcion:'', direccion:'', horario:'', telefono:'', whatsapp:'', logo:'', banner:'' };
+
+function guardarLocal(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
+function leerLocal(k){ try{ return localStorage.getItem(k)||''; }catch(e){ return ''; } }
+function quitarLocal(k){ try{ localStorage.removeItem(k); }catch(e){} }
+
+function toast(t){
+  const el=$('toast'); el.textContent=t; el.style.display='block';
+  clearTimeout(toast._t); toast._t=setTimeout(()=>el.style.display='none',3500);
+}
+
+// Función para hacer POST a Apps Script (evita problemas de CORS con Content-Type: text/plain)
+async function apiPost(accion, datos) {
+  const payload = Object.assign({ accion: accion }, datos);
+  const res = await fetch(API_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify(payload)
+  });
+  return await res.json();
+}
+
+// Función para hacer GET (obtener datos)
+async function apiGet(accion, params) {
+  const url = new URL(API_URL);
+  url.searchParams.set('accion', accion);
+  for (const key in params) {
+    url.searchParams.set(key, params[key]);
+  }
+  const res = await fetch(url.toString());
+  return await res.json();
+}
+
+function pintarCabecera(n){
+  NEG.id = n.id || NEGOCIO_ID;
+  NEG.nombre = n.nombre || '';
+  NEG.slogan = n.slogan || '';
+  NEG.descripcion = n.descripcion || '';
+  NEG.direccion = n.direccion || '';
+  NEG.horario = n.horario || '';
+  NEG.telefono = n.telefono || '';
+  NEG.whatsapp = n.whatsapp || '';
+  NEG.logo = n.logo || '';
+  NEG.banner = n.banner || '';
+
+  document.title = NEG.nombre || 'Catálogo';
+  $('cabNombre').textContent = NEG.nombre || 'Catálogo';
+  $('cabSlogan').textContent = NEG.slogan || '';
+  if (NEG.banner) $('cab').style.backgroundImage = "linear-gradient(rgba(10,14,23,.3),rgba(10,14,23,.85)), url('" + NEG.banner + "')";
+  if (NEG.logo) { const l=$('cabLogo'); l.src=NEG.logo; l.style.display='block'; }
+  
+  $('info').innerHTML = [
+    NEG.direccion ? '📍 '+esc(NEG.direccion) : '',
+    NEG.horario ? '🕐 '+esc(NEG.horario) : ''
+  ].filter(Boolean).map(x=>'<span>'+x+'</span>').join('');
+
+  pintarDatosNegocio();
+}
+
+function pintarDatosNegocio(){
+  const box = $('datosNeg');
+  if (!NEG.nombre) { box.hidden = true; return; }
+  box.hidden = false;
+  $('dnNombre').textContent = NEG.nombre;
+  $('dnDesc').textContent = NEG.descripcion || '';
+  $('dnDir').innerHTML = NEG.direccion ? '📍 ' + esc(NEG.direccion) : '';
+  $('dnHor').innerHTML = NEG.horario ? '🕐 ' + esc(NEG.horario) : '';
+  $('dnTel').innerHTML = NEG.telefono ? '📞 ' + esc(NEG.telefono) : '';
+  $('dnId').textContent = NEG.id ? 'ID: ' + NEG.id : '';
+  const waNum = String(NEG.whatsapp || NEG.telefono || '').replace(/\D/g,'');
+  const wa = $('dnWa');
+  if (waNum) {
+    wa.hidden = false;
+    wa.href = 'https://wa.me/' + waNum + '?text=' + encodeURIComponent('Hola, vi tu catálogo: ' + (NEG.nombre || ''));
+  } else { wa.hidden = true; }
+}
+
+function pintarBarra(){
+  const bAcceso = $('btnAcceso');
+  const bReg = $('btnRegistro');
+  bAcceso.hidden = false; bReg.hidden = false;
+
+  if (S.verPrecios) {
+    $('estadoUsr').textContent = '👤 ' + (S.nombre || S.correo) + ' · precios visibles';
+    bAcceso.hidden = true;
+    bReg.hidden = true;
+  } else if (S.acceso === 'pendiente') {
+    $('estadoUsr').textContent = '⏳ Tu registro está pendiente de aprobación';
+    bAcceso.textContent = '⏳ Pendiente';
+    bReg.textContent = '📝 Cambiar correo';
+  } else if (S.acceso === 'inactivo' || S.acceso === 'rechazado') {
+    $('estadoUsr').textContent = '⛔ Acceso no autorizado';
+    bAcceso.textContent = '🔓 Ver precios';
+    bReg.textContent = '📝 Solicitar de nuevo';
+  } else {
+    $('estadoUsr').textContent = 'Regístrate para ver precios';
+    bAcceso.textContent = '🔓 Ver precios';
+    bReg.textContent = '📝 Registrarme';
+  }
+}
+
+let CATS = [];
+function elegirCat(i){ S.cat = i < 0 ? '' : (CATS[i] || ''); pintarGrid(); }
+
+function pintarGrid(){
+  const term = sinAcentos($('buscador').value.trim());
+  CATS = [...new Set(S.productos.map(p=>p.categoria).filter(Boolean))];
+  if (S.cat && CATS.indexOf(S.cat) < 0) S.cat = '';
+  $('chips').innerHTML = CATS.length > 1
+    ? '<button class="chip'+(!S.cat?' on':'')+'" onclick="elegirCat(-1)">Todos</button>' +
+      CATS.map((c,i) => '<button class="chip'+(c===S.cat?' on':'')+'" onclick="elegirCat('+i+')">'+esc(c)+'</button>').join('')
+    : '';
+  const lista = S.productos.filter(p =>
+    (!S.cat || p.categoria === S.cat) &&
+    (!term || sinAcentos(p.nombre+' '+p.descripcion+' '+p.categoria).includes(term)));
+  
+  $('grid').innerHTML = lista.length ? lista.map(p => `
+    <div class="prod">
+      ${p.foto ? `<img class="foto" src="${esc(p.foto)}" alt="" loading="lazy" onerror="this.outerHTML='<div class=&quot;foto&quot;>🛍️</div>'">` : '<div class="foto">🛍️</div>'}
+      <div class="cuerpo">
+        <h3>${esc(p.nombre)}</h3>
+        ${p.categoria ? '<div class="cat">'+esc(p.categoria)+'</div>' : ''}
+        ${p.descripcion ? '<div class="desc">'+esc(p.descripcion)+'</div>' : ''}
+        ${S.verPrecios && p.precio!=null
+          ? '<div class="precio">'+money(p.precio)+'</div>'
+          : '<div class="precio bloq">🔒 Regístrate para ver el precio</div>'}
+      </div>
+    </div>`).join('') : '<div class="vacio">😕 No hay productos para mostrar</div>';
+}
+
+async function iniciar(){
+  if (!NEGOCIO_ID) { $('msg').textContent = 'Falta el negocio en el enlace (?negocio=ID).'; return; }
+
+  // Recuperar correo guardado
+  S.correo = leerLocal('cat_correo_' + NEGOCIO_ID);
+
+  // Cargar datos del negocio
+  try {
+    const url = new URL(API_URL);
+    url.searchParams.set('negocio', NEGOCIO_ID);
+    // Usamos fetch GET tradicional porque obtenerDatosNegocio en Apps Script espera parámetros por URL
+    const res = await fetch(url.toString());
+    const r = await res.json();
+    if (r.success) pintarCabecera(r.negocio);
+    else $('msg').textContent = r.error || 'No se pudo cargar el negocio';
+  } catch(e) { $('msg').textContent = 'Error de conexión: ' + e.message; }
+
+  // Cargar catálogo (POST para enviar correo y evitar CORS)
+  try {
+    const r = await apiPost('obtenerCatalogo', { negocioId: NEGOCIO_ID, correo: S.correo, token: '' });
+    if (!r.success) { $('msg').textContent = r.error || 'No se pudo cargar el catálogo'; return; }
+    $('msg').textContent = '';
+    S.productos = r.productos;
+    S.verPrecios = !!r.verPrecios && r.acceso === 'cliente';
+    S.acceso = r.acceso;
+    S.nombre = r.nombre || '';
+    pintarGrid();
+    pintarBarra();
+  } catch(e) {
+    $('msg').textContent = 'Error de conexión: ' + e.message;
+  }
+}
+
+function clickAcceso(){
+  if (S.verPrecios) return;
+  if (S.acceso === 'pendiente') { toast('⏳ Tu solicitud está pendiente de aprobación'); return; }
+  abrirNuevoRegistro();
+}
+
+function abrirNuevoRegistro(){
+  $('nrNota').textContent = '';
+  $('nrEnviar').disabled = false;
+  if (S.correo && !$('nrCorreo').value) $('nrCorreo').value = S.correo;
+  $('ovNuevoReg').classList.add('on');
+}
+function cerrarNuevoRegistro(){ $('ovNuevoReg').classList.remove('on'); }
+
+async function enviarNuevoRegistro(){
+  const d = {
+    nombre: $('nrNombre').value.trim(), empresa: $('nrEmpresa').value.trim(),
+    telefono: $('nrTel').value.trim(), correo: $('nrCorreo').value.trim().toLowerCase(),
+    ciudad: $('nrCiudad').value.trim(), tipo: $('nrTipo').value, notas: $('nrNotas').value.trim()
+  };
+  const nota = $('nrNota'), b = $('nrEnviar');
+  if (!d.nombre || !d.telefono || !d.correo) { nota.textContent = 'Nombre, teléfono y correo son obligatorios.'; return; }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(d.correo)) { nota.textContent = 'Escribe un correo válido.'; return; }
+  b.disabled = true; nota.textContent = 'Enviando...';
+  
+  try {
+    const r = await apiPost('registrarClientePendiente', { negocioId: NEGOCIO_ID, datos: d });
+    if (!r.success) { nota.textContent = r.error || 'No se pudo enviar.'; return; }
+    S.correo = d.correo; S.acceso = 'pendiente'; guardarLocal('cat_correo_' + NEGOCIO_ID, d.correo);
+    pintarBarra(); cerrarNuevoRegistro();
+    toast('✅ Solicitud enviada. El dueño la revisará pronto.');
+  } catch(e) { nota.textContent = 'Error de conexión: ' + e.message; }
+  finally { b.disabled = false; }
+}
+
+// Lógica del QR para GitHub Pages
+function abrirQR(){
+  $('qrNombre').textContent = NEG.nombre || 'este negocio';
+  const urlGithub = window.location.origin + window.location.pathname + '?negocio=' + encodeURIComponent(NEGOCIO_ID);
+  $('qrUrl').textContent = urlGithub;
+  $('qrNota').textContent = '';
+  $('ovQR').classList.add('on');
+  $('qrImg').src = 'https://api.qrserver.com/v1/create-qr-code/?size=220x220&margin=8&data=' + encodeURIComponent(urlGithub);
+}
+function cerrarQR(){ $('ovQR').classList.remove('on'); }
+function copiarQRUrl(){ navigator.clipboard.writeText($('qrUrl').textContent); toast('✅ Link copiado'); }
+function descargarQR(){
+  const a = document.createElement('a');
+  a.href = $('qrImg').src; a.target = '_blank'; a.download = 'qr.png';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+}
+function compartirWhatsApp(){
+  const num = String(NEG.whatsapp || NEG.telefono || '').replace(/\D/g,'');
+  const texto = 'Mira el catálogo de ' + (NEG.nombre || 'este negocio') + ': ' + $('qrUrl').textContent;
+  const url = num ? 'https://wa.me/' + num + '?text=' + encodeURIComponent(texto) : 'https://wa.me/?text=' + encodeURIComponent(texto);
+  window.open(url, '_blank');
+}
+
+window.onload = iniciar;
+</script>
+</body>
+</html>
