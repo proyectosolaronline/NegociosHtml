@@ -1444,7 +1444,16 @@ function lAjustar(){
   // ===== QR DINÁMICO: visible + compartir + imprimir =====
   // URL real de la página (siempre correcta, sin hardcodear)
   var URL_ACTUAL = window.location.href;
-
+  // Botón "Ver catálogo": le agrega esta landing como origen (el catálogo regresa aquí tras 30 min sin actividad)
+  (function(){
+    var a = document.querySelector('a.btn-catalogo');
+    if(!a) return;
+    try{
+      var u = new URL(a.getAttribute('href'));
+      u.searchParams.set('origen_url', URL_ACTUAL.split('#')[0]);
+      a.href = u.toString();
+    }catch(e){}
+  })();
   // 1) QR visible en la sección "Escanea para compartir"
   (function generarQrVisible(){
     var img = document.getElementById('lQrImg');
