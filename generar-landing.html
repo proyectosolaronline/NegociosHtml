@@ -504,15 +504,47 @@ function asegurarCorreoDueno(n){
   return true;
 }
   async function importarAlCatalogo(n) {
-  if (!CATALOGO_URL || !n) return;
-    if (!asegurarCorreoDueno(n)) { mostrarToast('Catálogo: no se enviaron los datos (falta el correo del dueño)'); return false; }
+  if (!CATALOGO_URL || !n) return false;
+  if (!asegurarCorreoDueno(n)) { mostrarToast('Catálogo: no se enviaron los datos (falta el correo del dueño)'); return false; }
+
   let clave = '';
   try { clave = localStorage.getItem('catalogoClave') || ''; } catch (e) {}
   if (!clave) {
     clave = (prompt('Clave de importación del catálogo (se guarda en este navegador):') || '').trim();
-    if (!clave) { mostrarToast('Catálogo: no se enviaron los datos (falta la clave)'); return; }
-    try { localStorage.setItem('catalogoClave', clave); } catch (e) {}
+    if (!clave) { mostrarToast('Catálogo: no se enviaron los datos (falta la clave)'); return false; }
   }
+
+  // 1) Validar la clave por JSONP (sin CORS) antes de hacer el POST
+  mostrarToast('🔐 Validando clave de importación...');
+  const estadoClave = await new Promise((resolve) => {
+    const cb = '__val_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
+    const sc = document.createElement('script');
+    let terminado = false;
+    function limpiar(r) {
+      if (terminado) return;
+      terminado = true;
+      try { delete window[cb]; } catch (e) { window[cb] = undefined; }
+      if (sc.parentNode) sc.parentNode.removeChild(sc);
+      resolve(r);
+    }
+    window[cb] = (r) => limpiar(r && r.success === true ? 'ok' : 'mala');
+    sc.onerror = () => limpiar('red');
+    sc.src = CATALOGO_URL + '?accion=verificarNegocioPing&clave=' + encodeURIComponent(clave) + '&callback=' + cb + '&_=' + Date.now();
+    document.head.appendChild(sc);
+    setTimeout(() => limpiar('red'), 8000);
+  });
+
+  if (estadoClave === 'mala') {
+    try { localStorage.removeItem('catalogoClave'); } catch (e) {}
+    mostrarToast('❌ Clave del catálogo incorrecta');
+    return false;
+  }
+  if (estadoClave === 'red') {
+    mostrarToast('⚠️ El servidor del catálogo no respondió. Intenta de nuevo.');
+    return false;
+  }
+  try { localStorage.setItem('catalogoClave', clave); } catch (e) {}
+
   const carpeta = nombreCarpeta(n.nombre);
   const datos = {
     negocio_id: String(n.id || n.negocio_id || carpeta).toLowerCase().replace(/[^\w-]/g, '-'),
@@ -524,19 +556,43 @@ function asegurarCorreoDueno(n){
     correo: n.correoDueno,
     activo: true
   };
-    function info(m) {
+
+  function info(m) {
     window.estadoCatalogo = m;
     mostrarToast(m);
     try { const s = document.getElementById('linkModalSub'); if (s) s.textContent = String(s.textContent).split(' · ')[0] + ' · ' + m; } catch (e) {}
   }
   window.estadoCatalogo = '⏳ Enviando datos al catálogo...';
+
+  // 2) Enviar los datos al catálogo (fetch POST con timeout)
   let r;
   try {
-    r = await fetch(CATALOGO_URL, { method: 'POST', body: JSON.stringify({ accion: 'importarNegocio', clave: clave, datos: datos }) });
-  } catch (e) { info('❌ Catálogo: no se pudo conectar con Apps Script'); return; }
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 12000);
+    r = await fetch(CATALOGO_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ accion: 'importarNegocio', clave: clave, datos: datos }),
+      signal: controller.signal
+    });
+    clearTimeout(timeoutId);
+    if (!r.ok) { info('❌ Catálogo: HTTP ' + r.status); return false; }
+  } catch (e) {
+    if (e && e.name === 'AbortError') info('⏱️ Catálogo: el servidor no respondió en 12s');
+    else info('❌ Catálogo: no se pudo conectar (' + (e.message || 'red') + ')');
+    return false;
+  }
+
   let j;
   try { j = await r.json(); }
-  catch (e) { info('❌ Catálogo: Apps Script no respondió. Publica una nueva versión de la implementación con el Code.gs nuevo'); return; }
+  catch (e) { info('❌ Catálogo: Apps Script no respondió. Publica una nueva versión con el Code.gs nuevo'); return false; }
+
+  if (j && j.success === false && /clave/i.test(j.error || '')) {
+    try { localStorage.removeItem('catalogoClave'); } catch (e) {}
+    info('❌ Clave del catálogo incorrecta');
+    return false;
+  }
+
   if (j && j.success) {
     let v = null;
     try {
@@ -547,9 +603,14 @@ function asegurarCorreoDueno(n){
       info('✅ Catálogo verificado: ' + (j.nuevo ? 'negocio nuevo' : 'actualizado') + ' · ' + v.productos + ' producto(s) · ' + v.duenos + ' dueño(s)');
       return true;
     }
-    info('⚠️ Catálogo: no se pudo confirmar → ' + JSON.stringify(v || 'sin respuesta').slice(0, 150));    return false;
-  }  info('❌ Catálogo: ' + ((j && j.error) || 'error desconocido'));
-  if (/clave/i.test((j && j.error) || '')) { try { localStorage.removeItem('catalogoClave'); } catch (e) {} }}
+    info('⚠️ Catálogo: no se pudo confirmar → ' + JSON.stringify(v || 'sin respuesta').slice(0, 150));
+    return false;
+  }
+
+  info('❌ Catálogo: ' + ((j && j.error) || 'error desconocido'));
+  if (/clave/i.test((j && j.error) || '')) { try { localStorage.removeItem('catalogoClave'); } catch (e) {} }
+  return false;
+}
   function mostrarToast(m) {
   document.querySelectorAll('.toast').forEach(x => x.remove());
   const e = document.createElement('div');
