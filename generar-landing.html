@@ -1800,7 +1800,7 @@ var CONSTRUCCION = {
 (function(){
   var TIEMPO = '1h';   // 6s = segundos, 6m = minutos, 6h = horas, 6d = días
   function aMs(t){
-    var m = /^\s*(\d+(?:\.\d+)?)\s*([smhd])\s*$/i.exec(String(t));
+    var m = /^\\s*(\\d+(?:\\.\\d+)?)\\s*([smhd])\\s*$/i.exec(String(t));
     if(!m) return 3600000;
     return parseFloat(m[1]) * {s:1000, m:60000, h:3600000, d:86400000}[m[2].toLowerCase()];
   }
