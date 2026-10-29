@@ -1816,7 +1816,8 @@ var CONSTRUCCION = {
     var url = a.href;
     try{
       var u = new URL(a.href);
-      u.searchParams.set('v', Date.now() + aMs(TIEMPO));
+      u.searchParams.set('exp', Date.now() + aMs(TIEMPO));
+      u.searchParams.set('vista', 'compartir');
       url = u.toString();
     }catch(e){}
     var im = document.getElementById('qpImg');
