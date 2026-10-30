@@ -1302,8 +1302,9 @@ ${ov}
   <div class="splash-loader"></div>
 </div>
 <div class="banner" id="lBanner"><button type="button" class="legal-ico" id="legalIco" onclick="legalAbrir()" aria-label="Aviso legal">⚖️</button></div>
-${'<p class="desc" id="lDesc"' + (dl ? '' : ' style="display:none"') + '>' + escHTML(dl || '') + '</p>'}${galeriaHTML}
-${videoHTML}
+${'<p class="desc" id="lDesc"' + (dl ? '' : ' style="display:none"') + '>' + escHTML(dl || '') + '</p>'}
+${'<section class="section" id="lMision"' + (n.mision ? '' : ' style="display:none"') + '><h2>🎯 Nuestra Misión</h2><p id="lMisionTxt" style="color:#AAA">' + escHTML(n.mision || '') + '</p></section>'}
+${galeriaHTML}${videoHTML}
 ${urlExternaHTML}
 <div class="contact-grid" id="lContactos">${ci.map(x => '<div class="contact-item"><div class="cl">' + x[0] + ' ' + x[1] + '</div><div class="cv">' + escHTML(x[2]) + '</div></div>').join('')}</div>
 ${mapaHTML}
