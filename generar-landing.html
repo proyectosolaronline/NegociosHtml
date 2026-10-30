@@ -192,7 +192,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;color:#00FF41;f
 
 <div class="builder" id="builder">
   <div class="builder-header">
-    <div class="builder-title">🤖 estoy construyendo_landing.exe</div>
+    <div class="builder-title">🤖 estoy construyendo_landing  para google sheet</div>
     <div class="builder-subtitle" id="builderSubtitle">> Inicializando sistema...</div>
   </div>
 
@@ -1382,6 +1382,24 @@ if(cvS && splash){
   var lFotos = ${JSON.stringify(ft)};
   function lEsc(x){ return String(x == null ? '' : x).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
   function lFirma(a){ return JSON.stringify((a || []).map(function(f){ return [f.url, (f.descripcion || '').trim()]; })); }
+   function lNorm(t){ return String(t || '').split(String.fromCharCode(10)).join(' ').split(String.fromCharCode(9)).join(' ').split(' ').filter(function(x){ return x; }).join(' '); }
+  function lCorte(i){
+    var f = lFotos[i] || {};
+    var dT = String(f.descripcion || '').trim();
+    var iH = dT.indexOf('#');
+    var nC = Math.ceil(dT.length * 0.20);
+    var hayMas = iH > 0 ? dT.substring(iH + 1).trim() !== '' : nC < dT.length;
+    var prev = iH > 0 ? lNorm(dT.substring(0, iH)) : (hayMas ? lNorm(dT.substring(0, nC)) + '…' : lNorm(dT));
+    var nombre = iH > 0 ? lNorm(dT.substring(0, iH)) : lNorm(dT).substring(0, 60);
+    return { full: dT, prev: prev, hayMas: hayMas, nombre: nombre };
+  }
+  window.lVerMas = function(i){
+    var s = lCorte(i);
+    var cap = document.getElementById('lLightboxCap'), cont = document.getElementById('lLightbox');
+    if(!cap || !cont) return;
+    if(!cont.classList.contains('active')) window.lOpenLightbox(i);
+    cap.textContent = s.full.split('#').join(' ').trim();
+  };
   window.lActualizarFotos = function(arr){
     try{
       var nuevas = (arr || []).filter(function(f){ return f && f.url; });
