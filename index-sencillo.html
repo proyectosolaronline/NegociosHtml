@@ -1799,6 +1799,9 @@ async function guardarNegocio(event) {
     fuenteLanding: (prevNeg.fuenteLanding || "'Segoe UI',system-ui,sans-serif"),
     plantillaLanding: (prevNeg.plantillaLanding || 'futurista')
   };
+    if (editId && prevNeg.fotos && prevNeg.fotos.length > 0 && datos.fotos.length === 0) {
+    datos.borrarFotos = true;
+  }
   if (!datos.nombre) {
     showToast('❌ El nombre es obligatorio', 'error');
     btnGuardar.disabled = false;
