@@ -1177,6 +1177,14 @@ body{font-family:${fn};color:#E0E0E0;background:#0A0E17;line-height:1.6;padding:
 .section{padding:24px 16px 0}
 .section h2{font-size:18px;margin-bottom:14px;color:#E0E0E0;font-weight:700}
 .gallery{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;padding:20px 8px 0}
+.carrusel{grid-column:1/-1;position:relative;height:180px;border-radius:12px;overflow:hidden;background:#0D1117;border:1px solid ${cp}}
+.carr-slide{position:absolute;top:0;left:0;width:100%;height:100%;opacity:0}
+.carr-logo{object-fit:contain;padding:16px;box-sizing:border-box}
+.carr-banner{object-fit:cover}
+.carrusel.n1 .carr-slide{opacity:1}
+.carrusel.n2 .carr-slide{animation:lCarr 6s infinite}
+.carrusel.n2 .carr-slide:nth-child(2){animation-delay:3s}
+@keyframes lCarr{0%{opacity:0}8%{opacity:1}50%{opacity:1}58%{opacity:0}100%{opacity:0}}
 .gallery-item{border-radius:12px;overflow:hidden;background:#0D1117;border:1px solid ${cp}}
 .gallery-item img{width:100%;height:160px;object-fit:cover;cursor:pointer;display:block}
 .gallery-info{padding:10px 12px 12px}
@@ -1379,7 +1387,7 @@ if(cvS && splash){
     legalModal.addEventListener('click', function(e){ if(e.target === legalModal) window.legalCerrar(); });
     setTimeout(function(){ legalMostrar(); setInterval(legalMostrar, 10000); }, 4500);
   }
-  var lFotos = ${JSON.stringify(ft)};
+  var lFotos = [], lListo = false;
   function lEsc(x){ return String(x == null ? '' : x).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
   function lFirma(a){ return JSON.stringify((a || []).map(function(f){ return [f.url, (f.descripcion || '').trim()]; })); }
    function lNorm(t){ return String(t || '').split(String.fromCharCode(10)).join(' ').split(String.fromCharCode(9)).join(' ').split(' ').filter(function(x){ return x; }).join(' '); }
@@ -1403,7 +1411,8 @@ if(cvS && splash){
   window.lActualizarFotos = function(arr){
     try{
       var nuevas = (arr || []).filter(function(f){ return f && f.url; });
-      if(lFirma(nuevas) === lFirma(lFotos)) return;
+      if(lListo && lFirma(nuevas) === lFirma(lFotos)) return;
+      lListo = true;
       var cont = document.getElementById('lGaleria');
       if(!cont) return;
       lFotos = nuevas;
@@ -1750,8 +1759,14 @@ var CONSTRUCCION = {
 })();
 // ===== SINCRONIZAR CATÁLOGO (FOTOS Y DESCRIPCIONES) DESDE EL SHEET =====
 (function sincronizarSheet(){
-  if(!ID_NEGOCIO || !API_CANDADO) return;
-    ${parsearUrlExterna.toString()}
+  var NOMBRE_POP = '${escJS(nombreLimpio)}'.split('&').join('y').split('<').join('').split('>').join('');
+  var MSG_VACIO = 'Espacio reservado para ofertas y promociones de ' + NOMBRE_POP;
+  if(!ID_NEGOCIO || !API_CANDADO){
+    if(window.lActualizarFotos) window.lActualizarFotos([]);
+    if(window.lActualizarPopup) window.lActualizarPopup(MSG_VACIO);
+    return;
+  }
+  ${parsearUrlExterna.toString()}
   function actualizarExterno(raw){
     var sec = document.getElementById('lExterno'), btn = document.getElementById('lExternoBtn');
     if(!sec || !btn) return;
@@ -1797,8 +1812,8 @@ var CONSTRUCCION = {
     var aw = document.querySelector('a.btn-whatsapp'); if(aw && wd) aw.setAttribute('href', 'https://wa.me/' + wd);
     var ac = document.querySelector('a.btn-call'); if(ac && td) ac.setAttribute('href', 'tel:' + td);
   }
-  function pedir(){
-    if(document.hidden) return;
+   function pedir(primera){
+    if(document.hidden && !primera) return;
     var cb = '__neg_' + Date.now();
     var sc = document.createElement('script');
     function limpiar(){
@@ -1811,8 +1826,11 @@ var CONSTRUCCION = {
         for(var i = 0; i < lista.length; i++){
                       if(String(lista[i].id).trim().toUpperCase() === String(ID_NEGOCIO).trim().toUpperCase()){
             if(window.lActualizarFotos) window.lActualizarFotos(lista[i].fotos || []);
-                        if(window.lActualizarPopup) window.lActualizarPopup(String(lista[i].mensajeEmergente || '').replace(/[\\n\\r]/g, ' ').trim());
-            actualizarExterno(lista[i].Urlexterna || lista[i].urlexterna || lista[i].UrlExterna || lista[i].urlExterna);            actualizarTextos(lista[i]); break;
+                        var msgP = String(lista[i].mensajeEmergente || '').replace(/[\\n\\r]/g, ' ').trim();
+                        var sinFotos = !(lista[i].fotos || []).some(function(f){ return f && f.url; });
+                        if(!msgP && sinFotos) msgP = MSG_VACIO;
+                        if(window.lActualizarPopup) window.lActualizarPopup(msgP);
+                        actualizarExterno(lista[i].Urlexterna || lista[i].urlexterna || lista[i].UrlExterna || lista[i].urlExterna);            actualizarTextos(lista[i]); break;
           }
         }
       }catch(e){}
@@ -1822,7 +1840,7 @@ var CONSTRUCCION = {
     sc.src = API_CANDADO + '?action=obtenerNegocios&callback=' + cb + '&_=' + Date.now();
     document.head.appendChild(sc);
   }
-  setTimeout(pedir, 2500);
+  pedir(true);
   setInterval(pedir, 20000);
 })();
 /* ===== Mostrar el botón directorio 3 s y ocultarlo, cada 10 s ===== */
@@ -1885,7 +1903,7 @@ var CONSTRUCCION = {
 
 console.log('✅ Generador de landing activo');
 (function () {
-  const VERSION_GENERADOR = 'v5 ok test - publica en repo nuevo (test url imagen)';
+  const VERSION_GENERADOR = 'v5 ok test - publica en repo nuevo (carrusel logo y banner)';
   const SEGUNDOS = 5;
   function mostrarVersion() {
     const d = document.createElement('div');
