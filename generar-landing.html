@@ -1301,8 +1301,10 @@ ${ov}
   .fab-directorio.destello{animation:none}
 }
 @media(max-width:380px){.fab-directorio{padding:10px 14px;font-size:12px;bottom:calc(14px + env(safe-area-inset-bottom));right:12px}}
-</style></head><body>
-<div id="splash"${pl === 'futurista' ? ' class="espacial"' : ''}>
+html.vb #splash,html.vb body>*:not(#lBanner){display:none!important}
+html.vb body{margin:0;background:transparent;overflow:hidden}
+html.vb #lBanner{display:block!important;height:100vh;min-height:0}
+</style><script>if(/[?&]vista=banner/.test(location.search)){document.documentElement.className='vb';window.setInterval=function(){return 0};window.setTimeout=function(){return 0}}</script></head><body><div id="splash"${pl === 'futurista' ? ' class="espacial"' : ''}>
   ${pl === 'futurista' ? '<canvas id="splashStars"></canvas>' : ''}
   ${n.logo ? '<img class="splash-logo" src="' + escHTML(n.logo) + '" alt="Logo ' + escHTML(nombreLimpio) + '">' : ''}
   <h1 class="splash-nombre">${escHTML(nombreLimpio)}</h1>
