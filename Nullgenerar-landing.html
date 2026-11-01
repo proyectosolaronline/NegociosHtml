@@ -1006,7 +1006,8 @@ document.getElementById('btnProbarCatalogo').onclick = async () => {
   bt.disabled = true; bt.textContent = '> Buscando repo...';
 
   const { nombre: carp, existe } = await resolverRepo(negocioActual);
-  if (existe && !confirm('Ya existe el repositorio "' + carp + '".\n¿Actualizarlo con esta landing?')) {
+    try { localStorage.removeItem('repos_cache'); } catch (e) {}
+      if (existe && !confirm('Ya existe el repositorio "' + carp + '".\n¿Actualizarlo con esta landing?')) {
     bt.disabled = false; bt.textContent = '🚀 Publicar'; return;
   }
   slugRepo = carp;
@@ -1015,12 +1016,12 @@ document.getElementById('btnProbarCatalogo').onclick = async () => {
   currentPreviewHTML = construirLandingHTML(negocioActual, plantillaActual);
 bt.textContent = '> Validando catálogo...';
 const catalogoOK = await importarAlCatalogo(negocioActual, claveImportar);
-if (!catalogoOK) {
+if (!catalogoOK && !confirm('El catálogo no se confirmó:\n' + (window.estadoCatalogo || 'sin detalle') + '\n\n¿Publicar la landing en GitHub de todos modos?')) {
   bt.disabled = false;
   bt.textContent = '🚀 Publicar';
   return;
 }
-bt.textContent = '> Publicando...';
+      bt.textContent = '> Publicando...';
 
       const dt = {
     token: token,
@@ -1046,6 +1047,7 @@ bt.textContent = '> Publicando...';
         const noAut = /autorizado/i.test(e.data.error || '');
         if (noAut) olvidarTokenAdmin();
         mostrarToast('❌ Error: ' + (e.data.error || 'desconocido'));
+           alert('❌ GitHub no publicó:\n' + (e.data.error || 'desconocido'));
         if (noAut && confirm('La clave de administrador no fue aceptada.\n¿Quieres revisar los tokens guardados en el servidor?')) abrirTokens();
       }
     }
@@ -1057,8 +1059,8 @@ bt.textContent = '> Publicando...';
   const fm = document.getElementById('hiddenSaveForm');
   fm.action = GITHUB_PUBLISH_URL;
   fm.submit();
-  setTimeout(() => { window.removeEventListener('message', om); bt.disabled = false; bt.textContent = '🚀 Publicar'; }, 30000);
-};
+    setTimeout(() => { if (bt.textContent === '> Publicando...') alert('⏱️ Apps Script no respondió en 30 s. Revisa que el Code.gs esté publicado con "Nueva versión" y vuelve a intentar.'); window.removeEventListener('message', om); bt.disabled = false; bt.textContent = '🚀 Publicar'; }, 30000);
+   
 function mostrarModalLink(u, n) {
   document.getElementById('linkBox').textContent = u;
   document.getElementById('linkModalSub').textContent = n ? 'Landing de "' + n + '"' : 'Tu landing está en línea';
@@ -1340,6 +1342,7 @@ ${ov}
 }
 @media(max-width:380px){.fab-directorio{padding:10px 14px;font-size:12px;bottom:calc(14px + env(safe-area-inset-bottom));right:12px}}
 </style></head><body>
+<div id="splash"${pl === 'futurista' ? ' class="espacial"' : ''}>
   ${pl === 'futurista' ? '<canvas id="splashStars"></canvas>' : ''}
   ${n.logo ? '<img class="splash-logo" src="' + escHTML(n.logo) + '" alt="Logo ' + escHTML(nombreLimpio) + '">' : ''}
   <h1 class="splash-nombre">${escHTML(nombreLimpio)}</h1>
@@ -1659,14 +1662,14 @@ function lAjustar(){
     var pop = document.createElement('div');
     pop.className = 'popup-msg';
     var htmlPop = '';
-    if(textoPop) htmlPop += '<span class="popup-txt">✨ ' + textoPop + '</span>';
+    if(textoPop) htmlPop += '<span class="popup-txt">✨ ' + lEsc(textoPop) + '</span>';
     htmlPop += '<button class="popup-cerrar">×</button>';
     pop.innerHTML = htmlPop;
     var st = { el: pop, cerrado: false, anim: null, timer: null };
     popActual = st;
     document.body.appendChild(pop);
     var txtPop = pop.querySelector('.popup-txt');
-    if(linkPop){ pop.style.cursor = 'pointer'; pop.addEventListener('click', function(e){ if(e.target.closest('.popup-cerrar')) return; window.location.href = linkPop; }); }
+    if(linkPop){ pop.style.cursor = 'pointer'; pop.addEventListener('click', function(e){ if(e.target.closest('.popup-cerrar')) return; var lk = linkPop.toLowerCase(); if(lk.indexOf('http://') === 0 || lk.indexOf('https://') === 0) window.location.href = linkPop; }); }
     pop.querySelector('.popup-cerrar').onclick = function(){ st.cerrado = true; if(st.anim) st.anim.cancel(); pop.classList.remove('mostrar'); };
     function ocultarPop(){ pop.classList.remove('mostrar'); if(!st.cerrado) st.timer = setTimeout(correrPop, 10000); }
     function correrPop(){
