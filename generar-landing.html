@@ -995,7 +995,10 @@ document.getElementById('btnProbarCatalogo').onclick = async () => {
   const claveImportar = await exigirClaveImportar(true);   // si es incorrecta: detiene todo y regresa atrás
   btClave.disabled = false; btClave.textContent = '🚀 Publicar';
   if (!claveImportar) return;
-  if (!asegurarCorreoDueno(negocioActual)) { mostrarToast('Falta el correo del dueño: no se publicó'); return; }
+   const verifGoogle = pedirVerificadorGoogle();   // se pide ANTES de publicar; cancelar detiene todo
+  if (verifGoogle === null) return;
+  googleVerifActual = verifGoogle;
+      if (!asegurarCorreoDueno(negocioActual)) { mostrarToast('Falta el correo del dueño: no se publicó'); return; }
   const token = obtenerTokenAdmin();
   if (!token) { mostrarToast('Falta la clave de administrador: no se publicó'); return; }
 
@@ -1071,7 +1074,42 @@ document.getElementById('linkModal').addEventListener('click', e => { if (e.targ
 /* ============================================================
    CONSTRUCTOR PRINCIPAL
    ============================================================ */
-function construirLandingHTML(n, plantillaOverride) {
+/* ============================================================
+   VERIFICADOR DE GOOGLE (Search Console): se pide antes de publicar y se agrega al HTML generado
+   ============================================================ */
+function verifGoogleValido(v) {
+  v = String(v || '').trim();
+  return (/^[A-Za-z0-9_-]{20,100}$/.test(v) && !/^AQUI_/i.test(v)) ? v : '';   // descarta el marcador viejo
+}
+// Acepta el valor solo, o la etiqueta <meta name="google-site-verification" content="..."> completa
+function extraerVerifGoogle(texto) {
+  const t = String(texto || '').trim();
+  const m = t.match(/content\s*=\s*["']([^"']+)["']/i);
+  return verifGoogleValido(m ? m[1] : t);
+}
+var googleVerifActual = (function () {      // último usado: la vista previa y la descarga también lo incluyen
+  try { return verifGoogleValido(localStorage.getItem('googleVerif')); } catch (e) { return ''; }
+})();
+// Devuelve el código (string), '' para publicar sin él, o null si se cancela (no se publica)
+function pedirVerificadorGoogle() {
+  let previo = '';
+  try { previo = verifGoogleValido(localStorage.getItem('googleVerif')); } catch (e) {}
+  for (;;) {
+    const t = prompt(
+      'Código verificador de Google (Search Console)\n\n' +
+      'Pega solo el valor de content="..." de la etiqueta google-site-verification.\n' +
+      'Déjalo vacío para publicar sin él. Cancelar = no publicar.', previo);
+    if (t === null) { mostrarToast('Publicación cancelada: falta el código verificador de Google'); return null; }
+    if (!t.trim()) {
+      if (confirm('¿Publicar SIN código verificador de Google?')) { return ''; }
+      continue;
+    }
+    const v = extraerVerifGoogle(t);
+    if (v) { try { localStorage.setItem('googleVerif', v); } catch (e) {} return v; }
+    alert('El código no es válido.\nPega solo el valor (letras, números, - y _; entre 20 y 100 caracteres) o la etiqueta completa.');
+  }
+}
+  function construirLandingHTML(n, plantillaOverride) {
   return construirLandingNORMAL(n, plantillaOverride);
 }
 
@@ -1138,7 +1176,7 @@ const ca = n.colorAcento || (pl === 'futurista' ? '#5BB8D4' : '#00D4FF');
 <meta name="description" content="${escHTML(sd)}">
 <meta name="robots" content="index, follow, max-image-preview:large">
 <meta name="negocio-id" content="${escHTML(idCatalogo)}">
-<meta name="google-site-verification" content="AQUI_AGREGA_EL_VERIFICADOR_GOOGLE">
+${googleVerifActual ? '<meta name="google-site-verification" content="' + escHTML(googleVerifActual) + '">' : ''}
 <meta name="theme-color" content="${escHTML(cp)}">
 <meta name="author" content="${escHTML(nombreLimpio)}">
 <link rel="canonical" href="${escHTML(cu)}">
