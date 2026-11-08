@@ -1,0 +1,505 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Ficha de tienda</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700&family=DM+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: una columna estrecha. Arriba el nombre del negocio (solo el dueño lo edita). Abajo la ficha del cliente: el dueño marca qué campos se piden, el cliente solo ve y llena los marcados. */
+:root {
+  --bg: #f2f5f5;
+  --surface: #ffffff;
+  --fg: #14201f;
+  --muted: #5a6b69;
+  --line: #d6dfde;
+  --accent: #0b7a6f;
+  --accent-fg: #ffffff;
+  --ok: #1c7a3d;
+  --warn: #a8540c;
+  --font-display: "Bricolage Grotesque", "Trebuchet MS", system-ui, sans-serif;
+  --font-body: "DM Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e1514; --surface: #162120; --fg: #e8f0ee; --muted: #93a6a3; --line: #283836;
+    --accent: #3fc4b3; --accent-fg: #04201c; --ok: #5fd28a; --warn: #f0a766;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e1514; --surface: #162120; --fg: #e8f0ee; --muted: #93a6a3; --line: #283836;
+  --accent: #3fc4b3; --accent-fg: #04201c; --ok: #5fd28a; --warn: #f0a766;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.5;
+  padding-block: 28px 48px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+main { max-width: 680px; margin: 0 auto; display: grid; gap: 20px; }
+
+header { display: grid; gap: 6px; }
+.eyebrow { font-size: 12px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+h1 {
+  font-family: var(--font-display); font-size: clamp(28px, 7vw, 40px); line-height: 1.1;
+  margin: 0; text-wrap: balance; overflow-wrap: anywhere;
+}
+h1.pending { color: var(--muted); }
+
+section { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 20px; display: grid; gap: 18px; min-width: 0; }
+h2 { font-family: var(--font-display); font-size: 18px; margin: 0; }
+.lead { margin: 4px 0 0; color: var(--muted); font-size: 14px; }
+
+.field { display: grid; gap: 8px; min-width: 0; }
+.fhead { display: flex; justify-content: space-between; align-items: baseline; gap: 6px 14px; flex-wrap: wrap; }
+label { font-size: 14px; font-weight: 600; }
+.hint { font-size: 13px; color: var(--muted); font-weight: 400; }
+.pedir { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 500; color: var(--accent); cursor: pointer; }
+.pedir input { width: 16px; height: 16px; padding: 0; accent-color: var(--accent); }
+
+input[type="text"], textarea {
+  width: 100%; font: inherit; color: var(--fg); background: var(--bg);
+  border: 1px solid var(--line); border-radius: 6px; padding: 10px 12px; min-width: 0;
+}
+textarea { min-height: 88px; resize: vertical; }
+input:focus-visible, textarea:focus-visible, button:focus-visible, .pedir input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+input:disabled, textarea:disabled { opacity: .65; cursor: not-allowed; }
+input[readonly] { opacity: .85; }
+
+.row { display: flex; gap: 10px; align-items: stretch; flex-wrap: wrap; }
+.row input { flex: 1 1 220px; }
+button {
+  font: inherit; font-weight: 600; cursor: pointer; border: 0; border-radius: 6px;
+  background: var(--accent); color: var(--accent-fg); padding: 10px 18px;
+}
+button.sec { background: transparent; color: var(--accent); border: 1px solid var(--accent); padding: 8px 14px; font-size: 14px; }
+button:disabled { opacity: .5; cursor: not-allowed; }
+
+.slug { font-size: 13px; color: var(--muted); }
+.slug code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--fg); background: var(--bg); padding: 2px 6px; border-radius: 4px; overflow-wrap: anywhere; }
+
+.barra { display: flex; flex-wrap: wrap; gap: 8px 10px; align-items: center; padding: 12px; background: var(--bg); border: 1px dashed var(--line); border-radius: 8px; }
+.barra .cuenta { font-size: 13px; color: var(--muted); margin-right: auto; }
+
+.field.off input[type="text"], .field.off textarea, .field.off .imgs { opacity: .55; }
+.field.off .pedir { color: var(--muted); }
+
+.imgs { display: flex; flex-wrap: wrap; gap: 10px; }
+.imgs figure { margin: 0; position: relative; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--bg); max-width: 100%; }
+.imgs.logo img { width: 120px; height: 120px; object-fit: contain; display: block; max-width: 100%; }
+.imgs.fotos img { width: 110px; height: 110px; object-fit: cover; display: block; }
+.imgs.banner figure { width: 100%; }
+.imgs.banner img { width: 100%; aspect-ratio: 8 / 3; object-fit: cover; display: block; max-width: 100%; }
+.imgs .x { position: absolute; top: 6px; right: 6px; padding: 3px 8px; font-size: 12px; background: var(--surface); color: var(--fg); border: 1px solid var(--line); }
+.vacio { margin: 0; font-size: 13px; color: var(--muted); }
+.up { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.enlace { font-size: 13px; }
+.enlace a { color: var(--accent); }
+
+.aviso { margin: 0; padding: 14px; border-radius: 8px; background: var(--bg); color: var(--muted); font-size: 14px; }
+
+.status { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); }
+.status i { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); display: inline-block; flex: none; }
+.status[data-k="ok"] i { background: var(--ok); }
+.status[data-k="ok"] { color: var(--ok); }
+.status[data-k="warn"] i { background: var(--warn); }
+.status[data-k="warn"] { color: var(--warn); }
+.status[data-k="busy"] i { background: var(--accent); }
+
+@media (prefers-reduced-motion: no-preference) { button { transition: opacity .15s; } }
+</style>
+
+<main>
+  <header>
+    <span class="eyebrow">Ficha de tienda online</span>
+    <h1 id="titulo" class="pending">Nombre del negocio pendiente</h1>
+  </header>
+
+  <section aria-labelledby="h-negocio">
+    <h2 id="h-negocio">Negocio</h2>
+    <div class="field">
+      <label for="nombre">Nombre del negocio</label>
+      <div class="row">
+        <input id="nombre" type="text" autocomplete="off" placeholder="Ej. Panadería La Espiga" maxlength="80" disabled>
+        <button id="guardar-nombre" type="button" hidden>Guardar nombre</button>
+      </div>
+      <div class="slug">Slug de la tienda: <code id="slug">nombre-del-negocio</code></div>
+      <span class="hint" id="nota-nombre">Este dato lo define quien armó la tienda.</span>
+    </div>
+  </section>
+
+  <section aria-labelledby="h-cliente">
+    <div>
+      <h2 id="h-cliente">Ficha del cliente</h2>
+      <p class="lead" id="lead">Llena lo que sepas. Todo se guarda solo mientras escribes.</p>
+    </div>
+
+    <div class="barra" id="barra" hidden>
+      <span class="cuenta" id="cuenta"></span>
+      <button type="button" class="sec" id="todo">Marcar todo</button>
+      <button type="button" class="sec" id="nada">Quitar todo</button>
+      <button type="button" class="sec" id="ver">Ver como cliente</button>
+    </div>
+
+    <p class="aviso" id="vacio" hidden>Todavía no hay campos para llenar. Quien armó tu tienda los activará pronto; vuelve a abrir este enlace más tarde.</p>
+
+    <div id="lista" style="display:grid;gap:22px"></div>
+
+    <span class="status" id="estado" data-k="busy" role="status" aria-live="polite"><i></i><span id="estado-txt">Conectando…</span></span>
+  </section>
+</main>
+
+<script>
+(function () {
+  var DEFS = [
+    { k: "logo", t: "img", max: 1, label: "Logo", hint: "PNG con fondo transparente si lo tienes" },
+    { k: "banner", t: "img", max: 1, label: "Banner", hint: "Imagen horizontal, ideal de 1600 × 600 px" },
+    { k: "fotos", t: "img", max: 8, label: "Fotos del negocio y productos", hint: "Hasta 8 fotos" },
+    { k: "descripcion", t: "area", label: "Descripción corta", hint: "¿Qué vendes y qué te distingue?", ph: "Ej. Pan artesanal y pasteles por encargo, horneado cada mañana." },
+    { k: "whatsapp", t: "text", mode: "tel", label: "WhatsApp de pedidos", hint: "", ph: "+52 442 000 0000" },
+    { k: "correo", t: "text", mode: "email", label: "Correo de contacto", hint: "", ph: "contacto@minegocio.mx" },
+    { k: "direccion", t: "text", label: "Dirección o zona de entrega", hint: "", ph: "Calle, colonia, ciudad" },
+    { k: "ubicacion", t: "text", mode: "url", link: true, label: "Ubicación en el mapa", hint: "Pega el enlace de Google Maps", ph: "https://maps.app.goo.gl/..." },
+    { k: "horario", t: "text", label: "Horario de atención", hint: "", ph: "Lun a Sáb, 9:00 a 18:00" },
+    { k: "redes", t: "text", label: "Redes sociales", hint: "Instagram, Facebook, TikTok", ph: "@minegocio" },
+    { k: "productos", t: "area", label: "Productos principales", hint: "Uno por línea, con precio si ya lo tienes", ph: "Concha — $18&#10;Pastel tres leches — $350" }
+  ];
+  var $ = function (id) { return document.getElementById(id); };
+  var nombreEl = $("nombre"), guardarBtn = $("guardar-nombre"), tituloEl = $("titulo"), slugEl = $("slug");
+  var estadoEl = $("estado"), estadoTxt = $("estado-txt"), listaEl = $("lista");
+
+  function setEstado(txt, k) { estadoEl.setAttribute("data-k", k || ""); estadoTxt.textContent = txt; }
+  function slugify(s) {
+    return String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 60);
+  }
+  function pintarNombre(n) {
+    var limpio = (n || "").trim();
+    tituloEl.textContent = limpio || "Nombre del negocio pendiente";
+    tituloEl.className = limpio ? "" : "pending";
+    slugEl.textContent = slugify(limpio) || "nombre-del-negocio";
+  }
+  function def(k) { for (var i = 0; i < DEFS.length; i++) if (DEFS[i].k === k) return DEFS[i]; return null; }
+
+  /* Construye una sola vez todos los bloques; después solo se muestran u ocultan. */
+  DEFS.forEach(function (d) {
+    var b = document.createElement("div");
+    b.className = "field"; b.id = "b-" + d.k; b.hidden = true;
+    var ctl, forId;
+    if (d.t === "img") {
+      forId = "u-" + d.k;
+      ctl = '<div class="imgs ' + d.k + '" id="i-' + d.k + '"></div>' +
+        '<div class="up"><button type="button" class="sec" id="u-' + d.k + '" disabled>' + (d.max > 1 ? "Subir fotos" : "Subir imagen") + '</button>' +
+        '<span class="hint" id="m-' + d.k + '"></span></div>' +
+        '<input type="file" id="x-' + d.k + '" accept="image/*"' + (d.max > 1 ? " multiple" : "") + ' hidden>';
+    } else if (d.t === "area") {
+      forId = "f-" + d.k;
+      ctl = '<textarea id="f-' + d.k + '" disabled placeholder="' + d.ph + '"></textarea>';
+    } else {
+      forId = "f-" + d.k;
+      ctl = '<input id="f-' + d.k + '" type="text"' + (d.mode ? ' inputmode="' + d.mode + '"' : "") + ' autocomplete="off" disabled placeholder="' + d.ph + '">' +
+        (d.link ? '<div class="enlace" id="e-' + d.k + '" hidden><a id="a-' + d.k + '" target="_blank" rel="noopener noreferrer">Abrir en el mapa</a></div>' : "");
+    }
+    b.innerHTML = '<div class="fhead"><label for="' + forId + '">' + d.label + (d.hint ? ' <span class="hint">' + d.hint + "</span>" : "") + "</label>" +
+      '<label class="pedir" hidden><input type="checkbox" id="c-' + d.k + '"> Pedir al cliente</label></div>' + ctl;
+    listaEl.appendChild(b);
+  });
+
+  var db = null, user = null, assets = null;
+  var esDueno = false, vistaCliente = false, modoDueno = false, puedeEscribir = true, cargado = false;
+  var refNombre = null, refCliente = null;
+  var cfg = { nombre: "", campos: {} };
+  var datos = {}, firmaPrev = {};
+  var guardando = false, pendiente = false, timer = null, cargaTimer = null;
+  var cfgGuardando = false, cfgPend = false, cfgTimer = null;
+
+  function ids(k) { var v = datos[k]; if (!v) return []; return Array.isArray(v) ? v.slice() : [v]; }
+  function valores() {
+    var o = {};
+    DEFS.forEach(function (d) {
+      if (d.t === "img") { if (datos[d.k]) o[d.k] = datos[d.k]; }
+      else o[d.k] = $("f-" + d.k).value;
+    });
+    return o;
+  }
+
+  function aplicarVisibilidad() {
+    var activos = 0;
+    DEFS.forEach(function (d) {
+      var on = cfg.campos[d.k] === true;
+      if (on) activos++;
+      var c = $("c-" + d.k);
+      c.checked = on;
+      c.parentNode.hidden = !modoDueno;
+      var b = $("b-" + d.k);
+      b.hidden = !(modoDueno || on);
+      b.classList.toggle("off", modoDueno && !on);
+    });
+    $("barra").hidden = !esDueno;
+    $("cuenta").textContent = activos + " de " + DEFS.length + " campos activos para el cliente";
+    $("ver").textContent = vistaCliente ? "Volver a editar" : "Ver como cliente";
+    $("vacio").hidden = !(!modoDueno && activos === 0 && cargado);
+    $("lead").textContent = modoDueno
+      ? "Marca los campos que tu cliente debe llenar. Lo que no marques, no lo verá."
+      : "Llena lo que sepas. Todo se guarda solo mientras escribes.";
+    guardarBtn.hidden = !modoDueno;
+  }
+
+  function actualizarEnlace() {
+    var v = $("f-ubicacion").value.trim();
+    var ok = /^https?:\/\/\S+$/i.test(v);
+    $("e-ubicacion").hidden = !ok;
+    if (ok) $("a-ubicacion").href = v;
+  }
+
+  function pintarImgs(k) {
+    var c = $("i-" + k), lista = ids(k);
+    c.innerHTML = "";
+    if (!lista.length) {
+      var p = document.createElement("p"); p.className = "vacio"; p.textContent = "Sin imagen todavía";
+      c.appendChild(p);
+    }
+    lista.forEach(function (id) {
+      var f = document.createElement("figure");
+      var im = document.createElement("img");
+      im.src = "/_blob/" + id; im.alt = def(k).label; im.loading = "lazy";
+      f.appendChild(im);
+      if (puedeEscribir) {
+        var x = document.createElement("button");
+        x.type = "button"; x.className = "x"; x.textContent = "Quitar";
+        x.setAttribute("aria-label", "Quitar imagen de " + def(k).label);
+        x.addEventListener("click", function () { quitar(k, id); });
+        f.appendChild(x);
+      }
+      c.appendChild(f);
+    });
+    var d = def(k), ub = $("u-" + k);
+    ub.disabled = !(assets && puedeEscribir && cargado) || (d.max > 1 && lista.length >= d.max);
+  }
+
+  function habilitar() {
+    DEFS.forEach(function (d) {
+      if (d.t === "img") {
+        var ub = $("u-" + d.k);
+        ub.hidden = !assets || !puedeEscribir;
+        $("m-" + d.k).textContent = !assets ? "Para subir imágenes necesitas acceso de Editor." : "";
+        pintarImgs(d.k);
+      } else {
+        $("f-" + d.k).disabled = !puedeEscribir;
+      }
+    });
+    nombreEl.disabled = false;
+    nombreEl.readOnly = !esDueno;
+    $("nota-nombre").textContent = esDueno
+      ? "Solo tú puedes cambiarlo. Tu cliente lo ve pero no lo edita."
+      : "Este dato lo define quien armó la tienda.";
+    aplicarVisibilidad();
+  }
+
+  async function guardarDatos() {
+    if (!refCliente || !cargado || !puedeEscribir) return false;
+    if (guardando) { pendiente = true; return true; }
+    guardando = true;
+    setEstado("Guardando…", "busy");
+    var ok = true;
+    try { await refCliente.set(valores()); setEstado("Guardado", "ok"); }
+    catch (e) { ok = false; setEstado("No se pudo guardar. Revisa tu conexión y vuelve a intentar.", "warn"); }
+    guardando = false;
+    if (pendiente) { pendiente = false; guardarDatos(); }
+    return ok;
+  }
+
+  async function escribirNegocio(msg) {
+    if (!refNombre || !esDueno) return;
+    if (cfgGuardando) { cfgPend = true; return; }
+    cfgGuardando = true;
+    setEstado("Guardando…", "busy");
+    try {
+      await refNombre.set({ nombre: cfg.nombre, slug: slugify(cfg.nombre), campos: cfg.campos });
+      setEstado(msg || "Guardado", "ok");
+    } catch (e) { setEstado("No se pudo guardar. Intenta de nuevo.", "warn"); }
+    cfgGuardando = false;
+    if (cfgPend) { cfgPend = false; escribirNegocio(); }
+  }
+  function programarConfig() {
+    clearTimeout(cfgTimer);
+    cfgTimer = setTimeout(function () { cfgTimer = null; escribirNegocio(); }, 500);
+  }
+
+  async function quitar(k, id) {
+    var d = def(k);
+    if (d.max === 1) delete datos[k];
+    else datos[k] = ids(k).filter(function (x) { return x !== id; });
+    firmaPrev[k] = JSON.stringify(datos[k] || null);
+    pintarImgs(k);
+    var ok = await guardarDatos();
+    if (ok && assets) assets.delete(id).catch(function () {});
+  }
+
+  async function reducir(file, k) {
+    var t = file.type;
+    if (t === "image/svg+xml" || t === "image/gif") return file;
+    var bmp = await createImageBitmap(file);
+    var max = k === "banner" ? 2000 : 1600;
+    var s = Math.min(1, max / Math.max(bmp.width, bmp.height));
+    var w = Math.max(1, Math.round(bmp.width * s)), h = Math.max(1, Math.round(bmp.height * s));
+    var c = document.createElement("canvas"); c.width = w; c.height = h;
+    var ctx = c.getContext("2d");
+    var out = (t === "image/png" || t === "image/webp") ? "image/png" : "image/jpeg";
+    if (out === "image/jpeg") { ctx.fillStyle = "#ffffff"; ctx.fillRect(0, 0, w, h); }
+    ctx.drawImage(bmp, 0, 0, w, h);
+    var blob = await new Promise(function (r) { c.toBlob(r, out, 0.86); });
+    if (!blob) throw new Error("sin imagen");
+    return blob;
+  }
+
+  async function subir(k, files) {
+    if (!assets || !cargado) return;
+    var d = def(k), actual = ids(k);
+    var cupo = d.max > 1 ? d.max - actual.length : 1;
+    var lista = Array.prototype.slice.call(files).slice(0, Math.max(0, cupo));
+    if (!lista.length) { setEstado("Ya llegaste al máximo de fotos.", "warn"); return; }
+    setEstado("Subiendo imagen…", "busy");
+    var nuevos = [], errores = 0;
+    for (var i = 0; i < lista.length; i++) {
+      try { var blob = await reducir(lista[i], k); var r = await assets.upload(blob); nuevos.push(r.id); }
+      catch (e) { errores++; }
+    }
+    if (!nuevos.length) { setEstado("No se pudo subir la imagen. Usa un JPG o PNG.", "warn"); return; }
+    var viejos = [];
+    if (d.max === 1) { viejos = actual; datos[k] = nuevos[0]; }
+    else datos[k] = actual.concat(nuevos);
+    firmaPrev[k] = JSON.stringify(datos[k] || null);
+    pintarImgs(k);
+    var ok = await guardarDatos();
+    if (ok && viejos.length) viejos.forEach(function (id) { assets.delete(id).catch(function () {}); });
+    if (ok && errores) setEstado("Algunas imágenes no se pudieron subir. Usa JPG o PNG.", "warn");
+  }
+
+  /* Eventos */
+  DEFS.forEach(function (d) {
+    $("c-" + d.k).addEventListener("change", function () {
+      if (!esDueno) return;
+      cfg.campos[d.k] = $("c-" + d.k).checked;
+      aplicarVisibilidad();
+      programarConfig();
+    });
+    if (d.t === "img") {
+      $("u-" + d.k).addEventListener("click", function () { $("x-" + d.k).click(); });
+      $("x-" + d.k).addEventListener("change", function (ev) {
+        var f = ev.target.files;
+        if (f && f.length) subir(d.k, f);
+        ev.target.value = "";
+      });
+    } else {
+      $("f-" + d.k).addEventListener("input", function () {
+        if (d.link) actualizarEnlace();
+        setEstado("Escribiendo…", "busy");
+        clearTimeout(timer);
+        timer = setTimeout(guardarDatos, 700);
+      });
+    }
+  });
+
+  function marcar(valor) {
+    if (!esDueno) return;
+    DEFS.forEach(function (d) { cfg.campos[d.k] = valor; });
+    aplicarVisibilidad();
+    programarConfig();
+  }
+  $("todo").addEventListener("click", function () { marcar(true); });
+  $("nada").addEventListener("click", function () { marcar(false); });
+  $("ver").addEventListener("click", function () {
+    vistaCliente = !vistaCliente;
+    modoDueno = esDueno && !vistaCliente;
+    aplicarVisibilidad();
+  });
+
+  nombreEl.addEventListener("input", function () { if (esDueno) pintarNombre(nombreEl.value); });
+  guardarBtn.addEventListener("click", async function () {
+    if (!refNombre || !esDueno) return;
+    var n = nombreEl.value.trim();
+    if (!n) { setEstado("Escribe el nombre del negocio antes de guardar.", "warn"); nombreEl.focus(); return; }
+    guardarBtn.disabled = true;
+    cfg.nombre = n;
+    clearTimeout(cfgTimer); cfgTimer = null;
+    await escribirNegocio("Nombre guardado");
+    pintarNombre(n);
+    guardarBtn.disabled = false;
+  });
+
+  async function iniciar() {
+    if (!window.claude || !window.claude.use) {
+      setEstado("Abre esta página desde tu enlace de Claude para poder guardar.", "warn");
+      return;
+    }
+    try {
+      db = await window.claude.use("db");
+      user = await window.claude.use("user");
+      assets = await window.claude.use("assets");
+    } catch (e) { /* se evalúa abajo */ }
+    if (!db) { setEstado("Inicia sesión para ver y guardar los datos.", "warn"); return; }
+
+    esDueno = user ? user.isOwner() : false;
+    modoDueno = esDueno;
+    var cw = user ? user.can("data.write") : null;
+    puedeEscribir = cw !== false;
+    aplicarVisibilidad();
+
+    refNombre = db.doc("negocio/principal");
+    refCliente = db.doc("cliente/principal");
+
+    cargaTimer = setTimeout(function () {
+      setEstado("Todavía no se puede conectar. Los datos pueden no estar al día.", "warn");
+    }, 10000);
+
+    refNombre.onSnapshot(function (snap) {
+      if (!snap.metadata.fromCache) clearTimeout(cargaTimer);
+      var d = snap.exists ? snap.data() : null;
+      var escribiendo = esDueno && (cfgGuardando || cfgTimer);
+      if (!escribiendo) {
+        cfg.nombre = d && typeof d.nombre === "string" ? d.nombre : "";
+        cfg.campos = d && d.campos && typeof d.campos === "object" ? d.campos : {};
+      }
+      if (document.activeElement !== nombreEl) nombreEl.value = cfg.nombre;
+      pintarNombre(esDueno && document.activeElement === nombreEl ? nombreEl.value : cfg.nombre);
+      aplicarVisibilidad();
+    }, function () { setEstado("No se pudo leer la selección de campos.", "warn"); });
+
+    refCliente.onSnapshot(function (snap) {
+      if (!snap.metadata.fromCache) {
+        clearTimeout(cargaTimer);
+        if (estadoEl.getAttribute("data-k") !== "warn" || estadoTxt.textContent.indexOf("Todavía") === 0) {
+          setEstado(puedeEscribir ? "Listo. Todo se guarda solo." : "Solo lectura: tu acceso no permite editar.", puedeEscribir ? "ok" : "warn");
+        }
+      }
+      var d = snap.exists ? snap.data() : {};
+      DEFS.forEach(function (def) {
+        if (def.t === "img") {
+          if (guardando || pendiente) return;
+          var v = d[def.k];
+          var firma = JSON.stringify(v || null);
+          if (firma !== firmaPrev[def.k] || !cargado) {
+            firmaPrev[def.k] = firma;
+            if (v) datos[def.k] = v; else delete datos[def.k];
+            pintarImgs(def.k);
+          }
+        } else {
+          var e = $("f-" + def.k);
+          if (document.activeElement !== e && typeof d[def.k] === "string") e.value = d[def.k];
+        }
+      });
+      actualizarEnlace();
+      if (!cargado) { cargado = true; habilitar(); }
+    }, function () { setEstado("No se pudieron leer los datos del cliente.", "warn"); });
+  }
+  iniciar();
+})();
+</script>
+
+</body></html>
