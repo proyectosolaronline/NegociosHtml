@@ -126,81 +126,195 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 @media (prefers-reduced-motion: no-preference) { button { transition: opacity .15s; } }
 </style>
 
+<style>
+#sel-negocio { font: inherit; color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 10px 12px; width: 100%; min-width: 0; }
+</style>
 <main>
   <header>
     <span class="eyebrow">Ficha de tienda online</span>
-    <h1 id="titulo" class="pending">Nombre del negocio pendiente</h1>
+    <h1 id="titulo" class="pending">Ficha de tienda</h1>
   </header>
 
-  <section aria-labelledby="h-negocio">
+  <section aria-labelledby="h-negocio" id="sec-negocio" hidden>
     <h2 id="h-negocio">Negocio</h2>
     <div class="field">
-      <label for="nombre">Nombre del negocio</label>
-      <div class="row">
-        <input id="nombre" type="text" autocomplete="off" placeholder="Ej. Panadería La Espiga" maxlength="80" disabled>
-        <button id="guardar-nombre" type="button" hidden>Guardar nombre</button>
-      </div>
-      <div class="slug">Slug de la tienda: <code id="slug">nombre-del-negocio</code></div>
-      <span class="hint" id="nota-nombre">Este dato lo define quien armó la tienda.</span>
+      <label for="sel-negocio">Elige el negocio</label>
+      <select id="sel-negocio"><option value="">Cargando negocios…</option></select>
     </div>
   </section>
 
   <section aria-labelledby="h-cliente">
     <div>
       <h2 id="h-cliente">Ficha del cliente</h2>
-      <p class="lead" id="lead">Llena lo que sepas. Todo se guarda solo mientras escribes.</p>
+      <p class="lead" id="lead"></p>
     </div>
+
     <div class="banner-t" id="banner-t" hidden></div>
 
     <div class="barra" id="barra" hidden>
-      <span class="cuenta" id="cuenta"></span>
-      <button type="button" class="sec" id="todo">Marcar todo</button>
-      <button type="button" class="sec" id="nada">Quitar todo</button>
-      <button type="button" class="sec" id="ver">Ver como cliente</button>
+      <span class="cuenta" id="cuenta">Acceso temporal para tu cliente</span>
       <button type="button" id="compartir">🔗 Compartir edición</button>
     </div>
 
-    <p class="aviso" id="vacio" hidden>Todavía no hay campos para llenar. Quien armó tu tienda los activará pronto; vuelve a abrir este enlace más tarde.</p>
+    <p class="aviso" id="vacio" hidden>Este enlace no tiene campos para editar.</p>
 
     <div id="lista" style="display:grid;gap:22px"></div>
+
+    <button type="button" id="guardar" hidden>💾 Guardar cambios</button>
 
     <span class="status" id="estado" data-k="busy" role="status" aria-live="polite"><i></i><span id="estado-txt">Conectando…</span></span>
   </section>
 </main>
 
+<iframe name="hiddenSaveFrame" style="display:none;"></iframe>
+<form id="hiddenSaveForm" method="POST" target="hiddenSaveFrame" style="display:none;">
+  <input type="hidden" name="action" id="hf_action">
+  <input type="hidden" name="id" id="hf_id">
+  <input type="hidden" name="datos" id="hf_datos">
+</form>
+
 <script>
 (function () {
+  var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzC0XThmPutT8VjPMyYiRrvVIREMr3LfHeRIYsFFJ8wT_H-3vmKcaAuqbz337BahBmPeg/exec';
+  var LIMITE_IMG_CHARS = 45000;
+  var FILTRO_IMG = { tipos: ['image/jpeg', 'image/png', 'image/webp'], maxOriginalKB: 15360, minLado: { foto: 200, logo: 80, banner: 300 } };
+
+  /* g = grupo de permiso (los mismos que usa Compartir edición en index-sencillo) */
   var DEFS = [
-    { k: "logo", t: "img", max: 1, label: "Logo", hint: "PNG con fondo transparente si lo tienes" },
-    { k: "banner", t: "img", max: 1, label: "Banner", hint: "Imagen horizontal, ideal de 1600 × 600 px" },
-    { k: "fotos", t: "img", max: 8, label: "Fotos del negocio y productos", hint: "Hasta 8 fotos" },
-    { k: "descripcion", t: "area", label: "Descripción corta", hint: "¿Qué vendes y qué te distingue?", ph: "Ej. Pan artesanal y pasteles por encargo, horneado cada mañana." },
-    { k: "whatsapp", t: "text", mode: "tel", label: "WhatsApp de pedidos", hint: "", ph: "+52 442 000 0000" },
-    { k: "correo", t: "text", mode: "email", label: "Correo de contacto", hint: "", ph: "contacto@minegocio.mx" },
-    { k: "direccion", t: "text", label: "Dirección o zona de entrega", hint: "", ph: "Calle, colonia, ciudad" },
-    { k: "ubicacion", t: "text", mode: "url", link: true, label: "Ubicación en el mapa", hint: "Pega el enlace de Google Maps", ph: "https://maps.app.goo.gl/..." },
-    { k: "horario", t: "text", label: "Horario de atención", hint: "", ph: "Lun a Sáb, 9:00 a 18:00" },
-    { k: "redes", t: "text", label: "Redes sociales", hint: "Instagram, Facebook, TikTok", ph: "@minegocio" },
-    { k: "productos", t: "area", label: "Productos principales", hint: "Uno por línea, con precio si ya lo tienes", ph: "Concha — $18&#10;Pastel tres leches — $350" }
+    { k: "logo", g: "logo", t: "img", max: 1, tipo: "logo", dim: 500, cal: 0.6, label: "Logo", hint: "PNG o JPG" },
+    { k: "banner", g: "logo", t: "img", max: 1, tipo: "banner", dim: 500, cal: 0.6, label: "Banner", hint: "Imagen horizontal" },
+    { k: "fotos", g: "fotos", t: "img", max: 4, tipo: "foto", dim: 900, cal: 0.7, label: "Fotos del negocio", hint: "Hasta 4 fotos" },
+    { k: "descripcion", g: "descripcion", t: "area", label: "Descripción", hint: "¿Qué vendes y qué te distingue?", ph: "Ej. Pan artesanal y pasteles por encargo." },
+    { k: "slogan", g: "slogan", t: "text", label: "Slogan", hint: "", ph: "Frase corta del negocio" },
+    { k: "mision", g: "mision", t: "area", label: "Misión", hint: "", ph: "" },
+    { k: "mensajeEmergente", g: "mensaje", t: "area", label: "Mensaje emergente", hint: "", ph: "" },
+    { k: "horario", g: "horario", t: "text", label: "Horario de atención", hint: "", ph: "Lun a Sáb, 9:00 a 18:00" },
+    { k: "telefono", g: "contacto", t: "text", mode: "tel", label: "Teléfono", hint: "", ph: "442 000 0000" },
+    { k: "whatsapp", g: "contacto", t: "text", mode: "tel", label: "WhatsApp de pedidos", hint: "", ph: "+52 442 000 0000" },
+    { k: "correo", g: "contacto", t: "text", mode: "email", label: "Correo de contacto", hint: "", ph: "contacto@minegocio.mx" },
+    { k: "urlFacebook", g: "contacto", t: "text", mode: "url", label: "Facebook", hint: "", ph: "https://facebook.com/minegocio" },
+    { k: "ubicacion", g: "ubicacion", t: "text", mode: "url", link: true, label: "Ubicación en el mapa", hint: "Enlace de Google Maps", ph: "https://maps.app.goo.gl/..." },
+    { k: "direccion", g: "ubicacion", t: "text", label: "Dirección o zona de entrega", hint: "", ph: "Calle, colonia, ciudad" },
+    { k: "video", g: "video", t: "text", mode: "url", label: "Video (enlace)", hint: "", ph: "https://..." }
   ];
+  /* Mismas opciones y valores que el diálogo Compartir de index-sencillo */
+  var GRUPOS = [
+    ["descripcion", "Descripción", true], ["fotos", "Fotos", true], ["slogan", "Slogan"], ["mision", "Misión"],
+    ["mensaje", "Mensaje emergente"], ["horario", "Horario"], ["contacto", "Contacto"], ["ubicacion", "Ubicación"],
+    ["logo", "Logo y banner"], ["video", "Video"]
+  ];
+
   var $ = function (id) { return document.getElementById(id); };
-  var nombreEl = $("nombre"), guardarBtn = $("guardar-nombre"), tituloEl = $("titulo"), slugEl = $("slug");
-  var estadoEl = $("estado"), estadoTxt = $("estado-txt"), listaEl = $("lista");
+  var listaEl = $("lista"), estadoEl = $("estado"), estadoTxt = $("estado-txt");
+  var esCliente = false, tokenCliente = "", expCliente = 0, camposCliente = [], expirado = false, timerBanner = null;
+  var negocio = null, datos = { fotos: [] }, negocios = [];
 
   function setEstado(txt, k) { estadoEl.setAttribute("data-k", k || ""); estadoTxt.textContent = txt; }
-  function slugify(s) {
-    return String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 60);
-  }
-  function pintarNombre(n) {
-    var limpio = (n || "").trim();
-    tituloEl.textContent = limpio || "Nombre del negocio pendiente";
-    tituloEl.className = limpio ? "" : "pending";
-    slugEl.textContent = slugify(limpio) || "nombre-del-negocio";
-  }
   function def(k) { for (var i = 0; i < DEFS.length; i++) if (DEFS[i].k === k) return DEFS[i]; return null; }
 
-  /* Construye una sola vez todos los bloques; después solo se muestran u ocultan. */
+  /* ===== Utilidades iguales a index-sencillo ===== */
+  function getAdminToken() {
+    try { sessionStorage.removeItem('adm_tk'); localStorage.removeItem('adm_tk'); } catch (e) {}
+    var t = prompt('Clave de administrador:');
+    if (t === null) return null;
+    var limpio = t.trim();
+    return limpio ? limpio : null;
+  }
+  function msgErrorEnvio(e) { return (e && e.message === 'CANCELADO') ? '🔒 Cancelado: no se envió nada' : '❌ Error de conexión'; }
+  function esDataUrl(u) { return typeof u === 'string' && u.indexOf('data:') === 0; }
+  function kbImagen(u) { if (!esDataUrl(u)) return 0; var i = u.indexOf(','); return Math.round(((u.length - i - 1) * 0.75 / 1024) * 10) / 10; }
+  function limiteKB() { return Math.round((LIMITE_IMG_CHARS * 0.75 / 1024) * 10) / 10; }
+  function imagenExcede(u) { return esDataUrl(u) && u.length > LIMITE_IMG_CHARS; }
+  function comprimirImagen(img, maxDim, calidadIni) {
+    var dim = maxDim;
+    while (dim >= 120) {
+      var w = img.width, h = img.height;
+      if (w > h && w > dim) { h = Math.round(h * dim / w); w = dim; }
+      else if (h >= w && h > dim) { w = Math.round(w * dim / h); h = dim; }
+      var canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      for (var q = calidadIni; q >= 0.2; q -= 0.1) {
+        var d = canvas.toDataURL('image/jpeg', q);
+        if (d.length <= LIMITE_IMG_CHARS) return d;
+      }
+      dim = Math.round(dim * 0.8);
+    }
+    return null;
+  }
+  function validarArchivoImagen(file) {
+    if (!file) return 'No se eligió ningún archivo';
+    var t = (file.type || '').toLowerCase();
+    if (FILTRO_IMG.tipos.indexOf(t) === -1) {
+      var nom = t ? t.split('/').pop().toUpperCase() : 'desconocido';
+      return 'Formato no permitido (' + nom + '). Usa JPG, PNG o WEBP.';
+    }
+    var kb = Math.round(file.size / 1024);
+    if (kb < 1) return 'El archivo está vacío o dañado';
+    if (kb > FILTRO_IMG.maxOriginalKB) return 'Archivo muy pesado (' + kb + ' KB). Máximo ' + FILTRO_IMG.maxOriginalKB + ' KB.';
+    return '';
+  }
+  function validarMedidasImagen(img, tipo) {
+    var min = FILTRO_IMG.minLado[tipo] || 100;
+    var lado = tipo === 'banner' ? Math.max(img.width, img.height) : Math.min(img.width, img.height);
+    if (lado < min) return 'Imagen muy pequeña (' + img.width + '×' + img.height + ' px). Mínimo ' + min + ' px.';
+    return '';
+  }
+
+  /* ===== Llamadas al Apps Script (idénticas a index-sencillo) ===== */
+  function callAPI(action, params) {
+    params = params || {};
+    return new Promise(function (resolve, reject) {
+      var callbackName = 'cb_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+      var script = document.createElement('script');
+      window[callbackName] = function (result) {
+        delete window[callbackName];
+        if (script.parentNode) script.parentNode.removeChild(script);
+        resolve(result);
+      };
+      var url = APPS_SCRIPT_URL + '?action=' + action + '&callback=' + callbackName;
+      for (var key in params) {
+        url += '&' + key + '=' + encodeURIComponent(typeof params[key] === 'object' ? JSON.stringify(params[key]) : params[key]);
+      }
+      script.src = url;
+      script.onerror = function () {
+        delete window[callbackName];
+        if (script.parentNode) script.parentNode.removeChild(script);
+        reject(new Error('Error de conexión'));
+      };
+      document.body.appendChild(script);
+    });
+  }
+  function postViaIframe(action, id, payload) {
+    var tokenAdmin = null;
+    if (!esCliente) {
+      tokenAdmin = getAdminToken();
+      if (tokenAdmin === null) return Promise.reject(new Error('CANCELADO'));
+    }
+    return new Promise(function (resolve, reject) {
+      var resuelto = false;
+      function onMessage(e) {
+        if (resuelto) return;
+        if (e.data && typeof e.data === 'object' && 'success' in e.data) {
+          resuelto = true;
+          window.removeEventListener('message', onMessage);
+          resolve(e.data);
+        }
+      }
+      window.addEventListener('message', onMessage);
+      $('hf_action').value = action;
+      $('hf_id').value = id || '';
+      $('hf_datos').value = JSON.stringify(Object.assign({}, payload, esCliente ? { tokenCliente: tokenCliente } : { token: tokenAdmin }));
+      var form = $('hiddenSaveForm');
+      form.action = APPS_SCRIPT_URL;
+      form.submit();
+      setTimeout(function () {
+        if (!resuelto) { resuelto = true; window.removeEventListener('message', onMessage); reject(new Error('Timeout')); }
+      }, 30000);
+    });
+  }
+
+  /* ===== Construcción de los campos (una sola vez) ===== */
   DEFS.forEach(function (d) {
     var b = document.createElement("div");
     b.className = "field"; b.id = "b-" + d.k; b.hidden = true;
@@ -208,65 +322,38 @@ button:disabled { opacity: .5; cursor: not-allowed; }
     if (d.t === "img") {
       forId = "u-" + d.k;
       ctl = '<div class="imgs ' + d.k + '" id="i-' + d.k + '"></div>' +
-        '<div class="up"><button type="button" class="sec" id="u-' + d.k + '" disabled>' + (d.max > 1 ? "Subir fotos" : "Subir imagen") + '</button>' +
+        '<div class="up"><button type="button" class="sec" id="u-' + d.k + '">' + (d.max > 1 ? "Subir fotos" : "Subir imagen") + '</button>' +
         '<span class="hint" id="m-' + d.k + '"></span></div>' +
-        '<input type="file" id="x-' + d.k + '" accept="image/*"' + (d.max > 1 ? " multiple" : "") + ' hidden>';
+        '<input type="file" id="x-' + d.k + '" accept="image/jpeg,image/png,image/webp"' + (d.max > 1 ? " multiple" : "") + ' hidden>';
     } else if (d.t === "area") {
       forId = "f-" + d.k;
-      ctl = '<textarea id="f-' + d.k + '" disabled placeholder="' + d.ph + '"></textarea>';
+      ctl = '<textarea id="f-' + d.k + '" placeholder="' + (d.ph || "") + '"></textarea>';
     } else {
       forId = "f-" + d.k;
-      ctl = '<input id="f-' + d.k + '" type="text"' + (d.mode ? ' inputmode="' + d.mode + '"' : "") + ' autocomplete="off" disabled placeholder="' + d.ph + '">' +
+      ctl = '<input id="f-' + d.k + '" type="text"' + (d.mode ? ' inputmode="' + d.mode + '"' : "") + ' autocomplete="off" placeholder="' + (d.ph || "") + '">' +
         (d.link ? '<div class="enlace" id="e-' + d.k + '" hidden><a id="a-' + d.k + '" target="_blank" rel="noopener noreferrer">Abrir en el mapa</a></div>' : "");
     }
-    b.innerHTML = '<div class="fhead"><label for="' + forId + '">' + d.label + (d.hint ? ' <span class="hint">' + d.hint + "</span>" : "") + "</label>" +
-      '<label class="pedir" hidden><input type="checkbox" id="c-' + d.k + '"> Pedir al cliente</label></div>' + ctl;
+    b.innerHTML = '<div class="fhead"><label for="' + forId + '">' + d.label + (d.hint ? ' <span class="hint">' + d.hint + "</span>" : "") + "</label></div>" + ctl;
     listaEl.appendChild(b);
   });
 
-  var db = null, user = null, assets = null;
-  var esDueno = false, vistaCliente = false, modoDueno = false, puedeEscribir = true, cargado = false;
-  var refNombre = null, refCliente = null;
-  var cfg = { nombre: "", campos: {} };
-  var datos = {}, firmaPrev = {};
-  var LINK_BASE = ""; // pega aquí el enlace de tu artifact (sin #); si lo dejas vacío usa la URL actual
-  var tokenId = "", tokenModo = false, tokenExp = 0, tokenCampos = [], tokenTimer = null;
-  var mh = /^#e-([a-z0-9]+)$/i.exec(location.hash || "");
-  if (mh) { tokenId = mh[1]; tokenModo = true; }
-  var guardando = false, pendiente = false, timer = null, cargaTimer = null;
-  var cfgGuardando = false, cfgPend = false, cfgTimer = null;
-
-  function ids(k) { var v = datos[k]; if (!v) return []; return Array.isArray(v) ? v.slice() : [v]; }
-  function valores() {
-    var o = {};
-    DEFS.forEach(function (d) {
-      if (d.t === "img") { if (datos[d.k]) o[d.k] = datos[d.k]; }
-      else o[d.k] = $("f-" + d.k).value;
-    });
-    return o;
-  }
+  /* ===== Pintar / cargar ===== */
+  function visible(d) { return !esCliente || camposCliente.indexOf(d.g) >= 0; }
 
   function aplicarVisibilidad() {
-    var activos = 0;
+    var hay = false;
     DEFS.forEach(function (d) {
-      var on = tokenModo ? tokenCampos.indexOf(d.k) >= 0 : cfg.campos[d.k] === true;
-      if (on) activos++;
-      var c = $("c-" + d.k);
-      c.checked = on;
-      c.parentNode.hidden = !modoDueno;
-      var b = $("b-" + d.k);
-      b.hidden = !(modoDueno || on);
-      b.classList.toggle("off", modoDueno && !on);
+      var on = !!negocio && visible(d);
+      if (on) hay = true;
+      $("b-" + d.k).hidden = !on;
     });
-    $("barra").hidden = !esDueno;
-    $("cuenta").textContent = activos + " de " + DEFS.length + " campos activos para el cliente";
-    $("ver").textContent = vistaCliente ? "Volver a editar" : "Ver como cliente";
-    $("vacio").hidden = !(!modoDueno && activos === 0 && cargado);
-    $("lead").textContent = modoDueno
-      ? "Marca los campos que tu cliente debe llenar. Lo que no marques, no lo verá."
-      : "Llena lo que sepas. Todo se guarda solo mientras escribes.";
-    guardarBtn.hidden = !modoDueno;
-    $("h-negocio").parentNode.hidden = tokenModo;
+    $("vacio").hidden = !(esCliente && negocio && !hay);
+    $("guardar").hidden = !(negocio && hay);
+    $("sec-negocio").hidden = esCliente;
+    $("barra").hidden = esCliente || !negocio;
+    $("lead").textContent = esCliente
+      ? "Llena lo que sepas y presiona Guardar cambios."
+      : "Elige un negocio, edita sus datos y guarda. Con Compartir edición le das a tu cliente un acceso temporal.";
   }
 
   function actualizarEnlace() {
@@ -276,136 +363,143 @@ button:disabled { opacity: .5; cursor: not-allowed; }
     if (ok) $("a-ubicacion").href = v;
   }
 
+  function listaImgs(k) {
+    if (k === "fotos") return (datos.fotos || []).map(function (f) { return f.url; });
+    return datos[k] ? [datos[k]] : [];
+  }
   function pintarImgs(k) {
-    var c = $("i-" + k), lista = ids(k);
+    var c = $("i-" + k), lista = listaImgs(k), d = def(k);
     c.innerHTML = "";
     if (!lista.length) {
       var p = document.createElement("p"); p.className = "vacio"; p.textContent = "Sin imagen todavía";
       c.appendChild(p);
     }
-    lista.forEach(function (id) {
+    lista.forEach(function (url, i) {
       var f = document.createElement("figure");
       var im = document.createElement("img");
-      im.src = "/_blob/" + id; im.alt = def(k).label; im.loading = "lazy";
+      im.src = url; im.alt = d.label; im.loading = "lazy";
       f.appendChild(im);
-      if (puedeEscribir) {
+      if (!expirado) {
         var x = document.createElement("button");
         x.type = "button"; x.className = "x"; x.textContent = "Quitar";
-        x.setAttribute("aria-label", "Quitar imagen de " + def(k).label);
-        x.addEventListener("click", function () { quitar(k, id); });
+        x.setAttribute("aria-label", "Quitar imagen de " + d.label);
+        x.addEventListener("click", function () { quitar(k, i); });
         f.appendChild(x);
       }
       c.appendChild(f);
     });
-    var d = def(k), ub = $("u-" + k);
-    ub.disabled = !(assets && puedeEscribir && cargado) || (d.max > 1 && lista.length >= d.max);
+    $("u-" + k).disabled = expirado || (d.max > 1 && lista.length >= d.max);
+    var u = k === "fotos" ? "" : datos[k];
+    $("m-" + k).textContent = esDataUrl(u) ? (imagenExcede(u) ? "❌ " : "✅ ") + kbImagen(u) + " KB / máx " + limiteKB() + " KB" : "";
   }
 
-  function habilitar() {
+  function normFotos(v) {
+    if (typeof v === "string" && v) { try { v = JSON.parse(v); } catch (e) { v = []; } }
+    if (!Array.isArray(v)) return [];
+    return v.filter(function (f) { return f && f.url; }).map(function (f) { return { url: f.url, descripcion: f.descripcion || "" }; });
+  }
+
+  function cargarEnForm(n) {
+    negocio = n;
+    n.fotos = normFotos(n.fotos);
+    datos = { fotos: n.fotos.map(function (f) { return { url: f.url, descripcion: f.descripcion }; }) };
     DEFS.forEach(function (d) {
-      if (d.t === "img") {
-        var ub = $("u-" + d.k);
-        ub.hidden = !assets || !puedeEscribir;
-        $("m-" + d.k).textContent = !assets ? "Para subir imágenes necesitas acceso de Editor." : "";
-        pintarImgs(d.k);
-      } else {
-        $("f-" + d.k).disabled = !puedeEscribir;
-      }
+      if (d.t === "img") { if (d.k !== "fotos") datos[d.k] = n[d.k] || ""; pintarImgs(d.k); }
+      else $("f-" + d.k).value = n[d.k] == null ? "" : String(n[d.k]);
     });
-    nombreEl.disabled = false;
-    nombreEl.readOnly = !esDueno;
-    $("nota-nombre").textContent = esDueno
-      ? "Solo tú puedes cambiarlo. Tu cliente lo ve pero no lo edita."
-      : "Este dato lo define quien armó la tienda.";
+    $("titulo").textContent = n.nombre || "Negocio sin nombre";
+    $("titulo").className = "";
+    actualizarEnlace();
     aplicarVisibilidad();
   }
 
-  async function guardarDatos() {
-    if (!refCliente || !cargado || !puedeEscribir) return false;
-    if (tokenModo && Date.now() > tokenExp) { actualizarBannerTiempo(); return false; }
-    if (guardando) { pendiente = true; return true; }
-    guardando = true;
-    setEstado("Guardando…", "busy");
-    var ok = true;
-    try { await refCliente.set(valores()); setEstado("Guardado", "ok"); }
-    catch (e) { ok = false; setEstado("No se pudo guardar. Revisa tu conexión y vuelve a intentar.", "warn"); }
-    guardando = false;
-    if (pendiente) { pendiente = false; guardarDatos(); }
-    return ok;
-  }
-
-  async function escribirNegocio(msg) {
-    if (!refNombre || !esDueno) return;
-    if (cfgGuardando) { cfgPend = true; return; }
-    cfgGuardando = true;
-    setEstado("Guardando…", "busy");
-    try {
-      await refNombre.set({ nombre: cfg.nombre, slug: slugify(cfg.nombre), campos: cfg.campos });
-      setEstado(msg || "Guardado", "ok");
-    } catch (e) { setEstado("No se pudo guardar. Intenta de nuevo.", "warn"); }
-    cfgGuardando = false;
-    if (cfgPend) { cfgPend = false; escribirNegocio(); }
-  }
-  function programarConfig() {
-    clearTimeout(cfgTimer);
-    cfgTimer = setTimeout(function () { cfgTimer = null; escribirNegocio(); }, 500);
-  }
-
-  async function quitar(k, id) {
-    var d = def(k);
-    if (d.max === 1) delete datos[k];
-    else datos[k] = ids(k).filter(function (x) { return x !== id; });
-    firmaPrev[k] = JSON.stringify(datos[k] || null);
+  /* ===== Imágenes ===== */
+  function quitar(k, i) {
+    if (expirado) return;
+    if (k === "fotos") datos.fotos.splice(i, 1); else datos[k] = "";
     pintarImgs(k);
-    var ok = await guardarDatos();
-    if (ok && assets) assets.delete(id).catch(function () {});
   }
-
-  async function reducir(file, k) {
-    var t = file.type;
-    if (t === "image/svg+xml" || t === "image/gif") return file;
-    var bmp = await createImageBitmap(file);
-    var max = k === "banner" ? 2000 : 1600;
-    var s = Math.min(1, max / Math.max(bmp.width, bmp.height));
-    var w = Math.max(1, Math.round(bmp.width * s)), h = Math.max(1, Math.round(bmp.height * s));
-    var c = document.createElement("canvas"); c.width = w; c.height = h;
-    var ctx = c.getContext("2d");
-    var out = (t === "image/png" || t === "image/webp") ? "image/png" : "image/jpeg";
-    if (out === "image/jpeg") { ctx.fillStyle = "#ffffff"; ctx.fillRect(0, 0, w, h); }
-    ctx.drawImage(bmp, 0, 0, w, h);
-    var blob = await new Promise(function (r) { c.toBlob(r, out, 0.86); });
-    if (!blob) throw new Error("sin imagen");
-    return blob;
+  function leerImagen(file) {
+    return new Promise(function (ok, no) {
+      var r = new FileReader();
+      r.onerror = function () { no(new Error("No se pudo leer la imagen, elige otra")); };
+      r.onload = function (e) {
+        var im = new Image();
+        im.onerror = function () { no(new Error("No se pudo leer la imagen, elige otra")); };
+        im.onload = function () { ok(im); };
+        im.src = e.target.result;
+      };
+      r.readAsDataURL(file);
+    });
   }
-
   async function subir(k, files) {
-    if (!assets || !cargado) return;
-    var d = def(k), actual = ids(k);
-    var cupo = d.max > 1 ? d.max - actual.length : 1;
+    if (expirado || !negocio) return;
+    var d = def(k), actual = listaImgs(k).length;
+    var cupo = d.max > 1 ? d.max - actual : 1;
     var lista = Array.prototype.slice.call(files).slice(0, Math.max(0, cupo));
     if (!lista.length) { setEstado("Ya llegaste al máximo de fotos.", "warn"); return; }
-    setEstado("Subiendo imagen…", "busy");
-    var nuevos = [], errores = 0;
+    setEstado("Procesando imagen…", "busy");
+    var nuevas = [], err = "";
     for (var i = 0; i < lista.length; i++) {
-      try { var blob = await reducir(lista[i], k); var r = await assets.upload(blob); nuevos.push(r.id); }
-      catch (e) { errores++; }
+      try {
+        var e1 = validarArchivoImagen(lista[i]); if (e1) throw new Error(e1);
+        var im = await leerImagen(lista[i]);
+        var e2 = validarMedidasImagen(im, d.tipo); if (e2) throw new Error(e2);
+        var url = comprimirImagen(im, d.dim, d.cal);
+        if (!url) throw new Error("Imagen muy grande, elige otra");
+        nuevas.push(url);
+      } catch (ex) { err = ex.message; }
     }
-    if (!nuevos.length) { setEstado("No se pudo subir la imagen. Usa un JPG o PNG.", "warn"); return; }
-    var viejos = [];
-    if (d.max === 1) { viejos = actual; datos[k] = nuevos[0]; }
-    else datos[k] = actual.concat(nuevos);
-    firmaPrev[k] = JSON.stringify(datos[k] || null);
-    pintarImgs(k);
-    var ok = await guardarDatos();
-    if (ok && viejos.length) viejos.forEach(function (id) { assets.delete(id).catch(function () {}); });
-    if (ok && errores) setEstado("Algunas imágenes no se pudieron subir. Usa JPG o PNG.", "warn");
+    if (nuevas.length) {
+      if (k === "fotos") nuevas.forEach(function (u) { datos.fotos.push({ url: u, descripcion: "" }); });
+      else datos[k] = nuevas[0];
+      pintarImgs(k);
+    }
+    if (err) setEstado("❌ " + err, "warn");
+    else setEstado("Imagen lista. Recuerda presionar Guardar cambios.", "ok");
+  }
+
+  /* ===== Guardar (misma carga que guardarNegocio de index-sencillo) ===== */
+  function recolectar() {
+    var o = {};
+    DEFS.forEach(function (d) {
+      if (!visible(d)) return;
+      if (d.t === "img") {
+        if (d.k === "fotos") o.fotos = datos.fotos.filter(function (f) { return f && f.url; });
+        else o[d.k] = datos[d.k] || "";
+      } else o[d.k] = $("f-" + d.k).value.trim();
+    });
+    return o;
+  }
+  async function guardar() {
+    if (!negocio) return;
+    if (esCliente && Date.now() > expCliente) { actualizarBannerTiempo(); return; }
+    var ed = recolectar();
+    var excedidas = [];
+    function rev(n, u) { if (imagenExcede(u)) excedidas.push(n + " (" + kbImagen(u) + " KB)"); }
+    rev("Logo", ed.logo); rev("Banner", ed.banner);
+    (ed.fotos || []).forEach(function (f, i) { rev("Foto " + (i + 1), f.url); });
+    if (excedidas.length) { setEstado("❌ Muy pesadas (máx " + limiteKB() + " KB): " + excedidas.join(", ") + ". Vuelve a elegirlas.", "warn"); return; }
+    var base = Object.assign({}, negocio); delete base.id;
+    var payload = Object.assign(base, {
+      usuario: String(negocio.nombre || "").trim().toLowerCase().replace(/\s+/g, "_"),
+      password: Math.random().toString(36).substring(2, 10)
+    }, ed);
+    if (ed.fotos && negocio.fotos && negocio.fotos.length > 0 && ed.fotos.length === 0) payload.borrarFotos = true;
+    var btn = $("guardar");
+    btn.disabled = true;
+    setEstado("Guardando…", "busy");
+    try {
+      var r = await postViaIframe(esCliente ? "editarNegocioCliente" : "editarNegocio", negocio.id, payload);
+      btn.disabled = expirado;
+      if (r.success) {
+        Object.keys(ed).forEach(function (k) { negocio[k] = ed[k]; });
+        setEstado(esCliente ? "✅ Cambios guardados" : "✅ Negocio actualizado", "ok");
+      } else setEstado("❌ Error: " + r.error, "warn");
+    } catch (e) { btn.disabled = expirado; setEstado(msgErrorEnvio(e), "warn"); }
   }
 
   /* ===== Compartir edición (misma lógica que index-sencillo) ===== */
-  function nuevoToken() {
-    var a = new Uint8Array(12); crypto.getRandomValues(a);
-    return Array.prototype.map.call(a, function (x) { return ("0" + x.toString(16)).slice(-2); }).join("");
-  }
   function cerrarModal(m) { if (m && m.parentNode) m.parentNode.removeChild(m); }
   function modal(html) {
     var m = document.createElement("div");
@@ -415,11 +509,10 @@ button:disabled { opacity: .5; cursor: not-allowed; }
     m.addEventListener("click", function (e) { if (e.target === m) cerrarModal(m); });
     return m;
   }
-
   function compartirEdicion() {
-    if (!esDueno || !db) return;
-    var checks = DEFS.map(function (d) {
-      return '<label><input type="checkbox" value="' + d.k + '"' + (d.k === "descripcion" || d.k === "fotos" ? " checked" : "") + "> " + d.label + "</label>";
+    if (esCliente || !negocio) return;
+    var checks = GRUPOS.map(function (g) {
+      return '<label><input type="checkbox" value="' + g[0] + '"' + (g[2] ? " checked" : "") + "> " + g[1] + "</label>";
     }).join("");
     var m = modal(
       "<h3>🔗 Compartir edición</h3>" +
@@ -441,15 +534,16 @@ button:disabled { opacity: .5; cursor: not-allowed; }
       var campos = Array.prototype.map.call(m.querySelectorAll("#camposCliente input:checked"), function (c) { return c.value; });
       if (!campos.length) { aviso.textContent = "⚠️ Elige al menos un campo"; return; }
       btn.disabled = true;
-      var token = nuevoToken();
+      aviso.textContent = "";
       try {
-        await db.doc("enlaces/" + token).set({ exp: Date.now() + minutos * 60000, campos: campos, creado: Date.now() });
+        var r = await postViaIframe("crearTokenCliente", negocio.id, { minutos: minutos, campos: campos });
+        if (!r.success) { btn.disabled = false; aviso.textContent = "❌ " + r.error; return; }
+        var link = location.origin + location.pathname + "?editarCliente=" + encodeURIComponent(negocio.id) + "&t=" + r.token;
         cerrarModal(m);
-        mostrarLink((LINK_BASE || location.href.split("#")[0]) + "#e-" + token, cfg.nombre, cantidad, unidad);
-      } catch (e) { btn.disabled = false; aviso.textContent = "❌ No se pudo generar el enlace. Intenta de nuevo."; }
+        mostrarLink(link, negocio.nombre, cantidad, unidad);
+      } catch (e) { btn.disabled = false; aviso.textContent = msgErrorEnvio(e); }
     };
   }
-
   function mostrarLink(link, nombre, cantidad, unidad) {
     var m = modal(
       "<h3>✅ Enlace generado</h3>" +
@@ -471,42 +565,28 @@ button:disabled { opacity: .5; cursor: not-allowed; }
     };
   }
 
-  /* ===== Modo cliente por enlace ===== */
-  async function validarToken() {
-    try {
-      var s = await db.doc("enlaces/" + tokenId).get();
-      var t = s.exists ? s.data() : null;
-      if (!t || !(t.exp > Date.now())) return false;
-      tokenExp = t.exp;
-      tokenCampos = Array.isArray(t.campos) ? t.campos : [];
-      return true;
-    } catch (e) { return false; }
-  }
+  /* ===== Modo cliente: contador y pantalla expirada ===== */
   function pantallaExpirada() {
     document.body.innerHTML = '<main style="min-height:100vh;align-content:center;text-align:center"><div style="font-size:50px">⏰</div><h2>Enlace no disponible</h2><p class="lead">Este enlace ha expirado.</p></main>';
   }
   function actualizarBannerTiempo() {
     var b = $("banner-t"); if (!b) return;
-    var restante = tokenExp - Date.now();
+    var restante = expCliente - Date.now();
     if (restante <= 0) {
+      expirado = true;
       b.className = "banner-t exp";
       b.textContent = "⏰ El tiempo expiró";
-      clearInterval(tokenTimer);
-      puedeEscribir = false;
-      habilitar();
+      document.querySelectorAll("#lista input, #lista textarea, #lista button, #guardar").forEach(function (el) { el.disabled = true; });
+      clearInterval(timerBanner);
+      DEFS.forEach(function (d) { if (d.t === "img") pintarImgs(d.k); });
       return;
     }
-    b.textContent = "⏳ Tiempo restante: " + Math.floor(restante / 60000) + "min " + Math.floor((restante % 60000) / 1000) + "seg";
+    var minutos = Math.floor(restante / 60000), segundos = Math.floor((restante % 60000) / 1000);
+    b.textContent = "⏳ Tiempo restante: " + minutos + "min " + segundos + "seg";
   }
 
-  /* Eventos */
+  /* ===== Eventos ===== */
   DEFS.forEach(function (d) {
-    $("c-" + d.k).addEventListener("change", function () {
-      if (!esDueno) return;
-      cfg.campos[d.k] = $("c-" + d.k).checked;
-      aplicarVisibilidad();
-      programarConfig();
-    });
     if (d.t === "img") {
       $("u-" + d.k).addEventListener("click", function () { $("x-" + d.k).click(); });
       $("x-" + d.k).addEventListener("change", function (ev) {
@@ -514,114 +594,58 @@ button:disabled { opacity: .5; cursor: not-allowed; }
         if (f && f.length) subir(d.k, f);
         ev.target.value = "";
       });
-    } else {
-      $("f-" + d.k).addEventListener("input", function () {
-        if (d.link) actualizarEnlace();
-        setEstado("Escribiendo…", "busy");
-        clearTimeout(timer);
-        timer = setTimeout(guardarDatos, 700);
-      });
+    } else if (d.link) {
+      $("f-" + d.k).addEventListener("input", actualizarEnlace);
     }
   });
-
-  function marcar(valor) {
-    if (!esDueno) return;
-    DEFS.forEach(function (d) { cfg.campos[d.k] = valor; });
-    aplicarVisibilidad();
-    programarConfig();
-  }
-  $("todo").addEventListener("click", function () { marcar(true); });
-  $("nada").addEventListener("click", function () { marcar(false); });
+  $("guardar").addEventListener("click", guardar);
   $("compartir").addEventListener("click", compartirEdicion);
-  $("ver").addEventListener("click", function () {
-    vistaCliente = !vistaCliente;
-    modoDueno = esDueno && !vistaCliente;
-    aplicarVisibilidad();
+  $("sel-negocio").addEventListener("change", function () {
+    var id = this.value;
+    var n = null;
+    for (var i = 0; i < negocios.length; i++) if (String(negocios[i].id) === id) n = negocios[i];
+    if (n) { cargarEnForm(n); setEstado("Listo.", "ok"); }
+    else { negocio = null; $("titulo").textContent = "Ficha de tienda"; $("titulo").className = "pending"; aplicarVisibilidad(); }
   });
 
-  nombreEl.addEventListener("input", function () { if (esDueno) pintarNombre(nombreEl.value); });
-  guardarBtn.addEventListener("click", async function () {
-    if (!refNombre || !esDueno) return;
-    var n = nombreEl.value.trim();
-    if (!n) { setEstado("Escribe el nombre del negocio antes de guardar.", "warn"); nombreEl.focus(); return; }
-    guardarBtn.disabled = true;
-    cfg.nombre = n;
-    clearTimeout(cfgTimer); cfgTimer = null;
-    await escribirNegocio("Nombre guardado");
-    pintarNombre(n);
-    guardarBtn.disabled = false;
-  });
-
-  async function iniciar() {
-    if (!window.claude || !window.claude.use) {
-      setEstado("Abre esta página desde tu enlace de Claude para poder guardar.", "warn");
+  /* ===== Inicio ===== */
+  function iniciar() {
+    var p = new URLSearchParams(location.search);
+    var idCli = p.get("editarCliente");
+    if (idCli) {
+      esCliente = true;
+      tokenCliente = p.get("t") || "";
+      if (!tokenCliente) { pantallaExpirada(); return; }
+      setEstado("Conectando…", "busy");
+      callAPI("clienteGet", { t: tokenCliente }).then(function (r) {
+        if (!r.success || !r.negocio || r.negocio.id !== idCli) { pantallaExpirada(); return; }
+        expCliente = Number(r.exp);
+        camposCliente = Array.isArray(r.campos) ? r.campos : String(r.campos || "").split(",");
+        cargarEnForm(r.negocio);
+        $("banner-t").hidden = false;
+        actualizarBannerTiempo();
+        timerBanner = setInterval(actualizarBannerTiempo, 30000);
+        if (!expirado) setEstado("Listo. Presiona Guardar cambios al terminar.", "ok");
+      }).catch(function () { pantallaExpirada(); });
       return;
     }
-    try {
-      db = await window.claude.use("db");
-      user = await window.claude.use("user");
-      assets = await window.claude.use("assets");
-    } catch (e) { /* se evalúa abajo */ }
-    if (!db) { setEstado("Inicia sesión para ver y guardar los datos.", "warn"); return; }
-    if (tokenModo && !(await validarToken())) { pantallaExpirada(); return; }
-
-    esDueno = tokenModo ? false : (user ? user.isOwner() : false);
-    modoDueno = esDueno;
-    var cw = user ? user.can("data.write") : null;
-    puedeEscribir = cw !== false;
     aplicarVisibilidad();
-    if (tokenModo) {
-      $("banner-t").hidden = false;
-      actualizarBannerTiempo();
-      tokenTimer = setInterval(actualizarBannerTiempo, 30000);
-    }
-
-    refNombre = db.doc("negocio/principal");
-    refCliente = db.doc("cliente/principal");
-
-    cargaTimer = setTimeout(function () {
-      setEstado("Todavía no se puede conectar. Los datos pueden no estar al día.", "warn");
-    }, 10000);
-
-    refNombre.onSnapshot(function (snap) {
-      if (!snap.metadata.fromCache) clearTimeout(cargaTimer);
-      var d = snap.exists ? snap.data() : null;
-      var escribiendo = esDueno && (cfgGuardando || cfgTimer);
-      if (!escribiendo) {
-        cfg.nombre = d && typeof d.nombre === "string" ? d.nombre : "";
-        cfg.campos = d && d.campos && typeof d.campos === "object" ? d.campos : {};
-      }
-      if (document.activeElement !== nombreEl) nombreEl.value = cfg.nombre;
-      pintarNombre(esDueno && document.activeElement === nombreEl ? nombreEl.value : cfg.nombre);
-      aplicarVisibilidad();
-    }, function () { setEstado("No se pudo leer la selección de campos.", "warn"); });
-
-    refCliente.onSnapshot(function (snap) {
-      if (!snap.metadata.fromCache) {
-        clearTimeout(cargaTimer);
-        if (estadoEl.getAttribute("data-k") !== "warn" || estadoTxt.textContent.indexOf("Todavía") === 0) {
-          setEstado(puedeEscribir ? "Listo. Todo se guarda solo." : "Solo lectura: tu acceso no permite editar.", puedeEscribir ? "ok" : "warn");
-        }
-      }
-      var d = snap.exists ? snap.data() : {};
-      DEFS.forEach(function (def) {
-        if (def.t === "img") {
-          if (guardando || pendiente) return;
-          var v = d[def.k];
-          var firma = JSON.stringify(v || null);
-          if (firma !== firmaPrev[def.k] || !cargado) {
-            firmaPrev[def.k] = firma;
-            if (v) datos[def.k] = v; else delete datos[def.k];
-            pintarImgs(def.k);
-          }
-        } else {
-          var e = $("f-" + def.k);
-          if (document.activeElement !== e && typeof d[def.k] === "string") e.value = d[def.k];
-        }
+    var t = getAdminToken();
+    if (t === null) { setEstado("🔒 Clave cancelada: no se cargaron los negocios. Recarga la página para intentar de nuevo.", "warn"); return; }
+    setEstado("Cargando negocios…", "busy");
+    callAPI("obtenerNegocios", { token: t }).then(function (r) {
+      if (!r.success) { setEstado("Error: " + r.error, "warn"); return; }
+      negocios = r.negocios || [];
+      var sel = $("sel-negocio");
+      sel.innerHTML = "";
+      var o0 = document.createElement("option"); o0.value = ""; o0.textContent = negocios.length ? "Elige un negocio…" : "No hay negocios"; sel.appendChild(o0);
+      negocios.forEach(function (n) {
+        var o = document.createElement("option");
+        o.value = String(n.id); o.textContent = (n.id || "-") + " · " + (n.nombre || "sin nombre");
+        sel.appendChild(o);
       });
-      actualizarEnlace();
-      if (!cargado) { cargado = true; habilitar(); }
-    }, function () { setEstado("No se pudieron leer los datos del cliente.", "warn"); });
+      setEstado("Elige un negocio para editarlo.", "ok");
+    }).catch(function () { setEstado("Error de conexión", "warn"); });
   }
   iniciar();
 })();
