@@ -110,6 +110,18 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 .status[data-k="warn"] i { background: var(--warn); }
 .status[data-k="warn"] { color: var(--warn); }
 .status[data-k="busy"] i { background: var(--accent); }
+.banner-t { padding: 12px 16px; border-radius: 10px; background: var(--bg); color: var(--accent); border: 1px solid var(--line); font-size: 13px; font-weight: 600; text-align: center; }
+.banner-t.exp { background: #b3261e; color: #fff; border-color: #b3261e; }
+.modal-fondo { position: fixed; inset: 0; background: rgba(0,0,0,.65); z-index: 5000; display: flex; align-items: center; justify-content: center; padding: 20px; }
+.modal-caja { background: var(--surface); color: var(--fg); border: 1px solid var(--accent); border-radius: 16px; padding: 24px; width: 100%; max-width: 400px; max-height: 100%; overflow: auto; display: grid; gap: 12px; }
+.modal-caja h3 { margin: 0; font-family: var(--font-display); font-size: 16px; }
+.modal-caja .chk { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; font-size: 13px; }
+.modal-caja .chk label { font-weight: 400; display: flex; gap: 6px; align-items: center; }
+.modal-caja select, .modal-caja input[type="number"] { font: inherit; color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 10px; min-width: 0; }
+.modal-caja textarea { font-family: ui-monospace, monospace; font-size: 12px; min-height: 70px; }
+.modal-caja button { width: 100%; }
+.modal-caja .row input { flex: 1 1 90px; }
+.modal-caja .row button { flex: 1 1 120px; width: auto; }
 
 @media (prefers-reduced-motion: no-preference) { button { transition: opacity .15s; } }
 </style>
@@ -138,12 +150,14 @@ button:disabled { opacity: .5; cursor: not-allowed; }
       <h2 id="h-cliente">Ficha del cliente</h2>
       <p class="lead" id="lead">Llena lo que sepas. Todo se guarda solo mientras escribes.</p>
     </div>
+    <div class="banner-t" id="banner-t" hidden></div>
 
     <div class="barra" id="barra" hidden>
       <span class="cuenta" id="cuenta"></span>
       <button type="button" class="sec" id="todo">Marcar todo</button>
       <button type="button" class="sec" id="nada">Quitar todo</button>
       <button type="button" class="sec" id="ver">Ver como cliente</button>
+      <button type="button" id="compartir">🔗 Compartir edición</button>
     </div>
 
     <p class="aviso" id="vacio" hidden>Todavía no hay campos para llenar. Quien armó tu tienda los activará pronto; vuelve a abrir este enlace más tarde.</p>
@@ -215,6 +229,10 @@ button:disabled { opacity: .5; cursor: not-allowed; }
   var refNombre = null, refCliente = null;
   var cfg = { nombre: "", campos: {} };
   var datos = {}, firmaPrev = {};
+  var LINK_BASE = ""; // pega aquí el enlace de tu artifact (sin #); si lo dejas vacío usa la URL actual
+  var tokenId = "", tokenModo = false, tokenExp = 0, tokenCampos = [], tokenTimer = null;
+  var mh = /^#e-([a-z0-9]+)$/i.exec(location.hash || "");
+  if (mh) { tokenId = mh[1]; tokenModo = true; }
   var guardando = false, pendiente = false, timer = null, cargaTimer = null;
   var cfgGuardando = false, cfgPend = false, cfgTimer = null;
 
@@ -231,7 +249,7 @@ button:disabled { opacity: .5; cursor: not-allowed; }
   function aplicarVisibilidad() {
     var activos = 0;
     DEFS.forEach(function (d) {
-      var on = cfg.campos[d.k] === true;
+      var on = tokenModo ? tokenCampos.indexOf(d.k) >= 0 : cfg.campos[d.k] === true;
       if (on) activos++;
       var c = $("c-" + d.k);
       c.checked = on;
@@ -248,6 +266,7 @@ button:disabled { opacity: .5; cursor: not-allowed; }
       ? "Marca los campos que tu cliente debe llenar. Lo que no marques, no lo verá."
       : "Llena lo que sepas. Todo se guarda solo mientras escribes.";
     guardarBtn.hidden = !modoDueno;
+    $("h-negocio").parentNode.hidden = tokenModo;
   }
 
   function actualizarEnlace() {
@@ -303,6 +322,7 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 
   async function guardarDatos() {
     if (!refCliente || !cargado || !puedeEscribir) return false;
+    if (tokenModo && Date.now() > tokenExp) { actualizarBannerTiempo(); return false; }
     if (guardando) { pendiente = true; return true; }
     guardando = true;
     setEstado("Guardando…", "busy");
@@ -381,6 +401,104 @@ button:disabled { opacity: .5; cursor: not-allowed; }
     if (ok && errores) setEstado("Algunas imágenes no se pudieron subir. Usa JPG o PNG.", "warn");
   }
 
+  /* ===== Compartir edición (misma lógica que index-sencillo) ===== */
+  function nuevoToken() {
+    var a = new Uint8Array(12); crypto.getRandomValues(a);
+    return Array.prototype.map.call(a, function (x) { return ("0" + x.toString(16)).slice(-2); }).join("");
+  }
+  function cerrarModal(m) { if (m && m.parentNode) m.parentNode.removeChild(m); }
+  function modal(html) {
+    var m = document.createElement("div");
+    m.className = "modal-fondo";
+    m.innerHTML = '<div class="modal-caja">' + html + "</div>";
+    document.body.appendChild(m);
+    m.addEventListener("click", function (e) { if (e.target === m) cerrarModal(m); });
+    return m;
+  }
+
+  function compartirEdicion() {
+    if (!esDueno || !db) return;
+    var checks = DEFS.map(function (d) {
+      return '<label><input type="checkbox" value="' + d.k + '"' + (d.k === "descripcion" || d.k === "fotos" ? " checked" : "") + "> " + d.label + "</label>";
+    }).join("");
+    var m = modal(
+      "<h3>🔗 Compartir edición</h3>" +
+      "<label>Tiempo de acceso</label>" +
+      '<div class="row"><input type="number" id="cantidadTiempo" value="30" min="1">' +
+      '<select id="unidadTiempo"><option value="minutos" selected>Minutos</option><option value="horas">Horas</option><option value="dias">Días</option></select></div>' +
+      "<label>Campos que podrá editar</label>" +
+      '<div class="chk" id="camposCliente">' + checks + "</div>" +
+      '<span class="hint" id="avisoLink" role="alert"></span>' +
+      '<button type="button" id="btnGenerarLinkCliente">Generar enlace</button>' +
+      '<button type="button" class="sec" id="btnCancelarLinkCliente">Cancelar</button>');
+    var aviso = m.querySelector("#avisoLink");
+    m.querySelector("#btnCancelarLinkCliente").onclick = function () { cerrarModal(m); };
+    m.querySelector("#btnGenerarLinkCliente").onclick = async function () {
+      var btn = this;
+      var cantidad = parseFloat(m.querySelector("#cantidadTiempo").value) || 30;
+      var unidad = m.querySelector("#unidadTiempo").value;
+      var minutos = Math.round(unidad === "minutos" ? cantidad : unidad === "horas" ? cantidad * 60 : cantidad * 1440);
+      var campos = Array.prototype.map.call(m.querySelectorAll("#camposCliente input:checked"), function (c) { return c.value; });
+      if (!campos.length) { aviso.textContent = "⚠️ Elige al menos un campo"; return; }
+      btn.disabled = true;
+      var token = nuevoToken();
+      try {
+        await db.doc("enlaces/" + token).set({ exp: Date.now() + minutos * 60000, campos: campos, creado: Date.now() });
+        cerrarModal(m);
+        mostrarLink((LINK_BASE || location.href.split("#")[0]) + "#e-" + token, cfg.nombre, cantidad, unidad);
+      } catch (e) { btn.disabled = false; aviso.textContent = "❌ No se pudo generar el enlace. Intenta de nuevo."; }
+    };
+  }
+
+  function mostrarLink(link, nombre, cantidad, unidad) {
+    var m = modal(
+      "<h3>✅ Enlace generado</h3>" +
+      '<span class="hint">Válido por ' + cantidad + " " + unidad + "</span>" +
+      '<textarea readonly id="linkGen"></textarea>' +
+      '<span class="hint" id="avisoCopia" role="status"></span>' +
+      '<div class="row"><button type="button" id="btnCopiarLink">📋 Copiar</button>' +
+      '<button type="button" id="btnWhatsappLink">💬 WhatsApp</button></div>' +
+      '<button type="button" class="sec" id="btnCerrarLinkModal">Cerrar</button>');
+    m.querySelector("#linkGen").value = link;
+    m.querySelector("#btnCerrarLinkModal").onclick = function () { cerrarModal(m); };
+    m.querySelector("#btnCopiarLink").onclick = async function () {
+      try { await navigator.clipboard.writeText(link); m.querySelector("#avisoCopia").textContent = "✅ Enlace copiado"; }
+      catch (e) { m.querySelector("#avisoCopia").textContent = "⚠️ No se pudo copiar"; }
+    };
+    m.querySelector("#btnWhatsappLink").onclick = function () {
+      var texto = "Hola" + (nombre ? " " + nombre : "") + ", aquí puedes editar tu negocio: " + link;
+      window.open("https://wa.me/?text=" + encodeURIComponent(texto), "_blank");
+    };
+  }
+
+  /* ===== Modo cliente por enlace ===== */
+  async function validarToken() {
+    try {
+      var s = await db.doc("enlaces/" + tokenId).get();
+      var t = s.exists ? s.data() : null;
+      if (!t || !(t.exp > Date.now())) return false;
+      tokenExp = t.exp;
+      tokenCampos = Array.isArray(t.campos) ? t.campos : [];
+      return true;
+    } catch (e) { return false; }
+  }
+  function pantallaExpirada() {
+    document.body.innerHTML = '<main style="min-height:100vh;align-content:center;text-align:center"><div style="font-size:50px">⏰</div><h2>Enlace no disponible</h2><p class="lead">Este enlace ha expirado.</p></main>';
+  }
+  function actualizarBannerTiempo() {
+    var b = $("banner-t"); if (!b) return;
+    var restante = tokenExp - Date.now();
+    if (restante <= 0) {
+      b.className = "banner-t exp";
+      b.textContent = "⏰ El tiempo expiró";
+      clearInterval(tokenTimer);
+      puedeEscribir = false;
+      habilitar();
+      return;
+    }
+    b.textContent = "⏳ Tiempo restante: " + Math.floor(restante / 60000) + "min " + Math.floor((restante % 60000) / 1000) + "seg";
+  }
+
   /* Eventos */
   DEFS.forEach(function (d) {
     $("c-" + d.k).addEventListener("change", function () {
@@ -414,6 +532,7 @@ button:disabled { opacity: .5; cursor: not-allowed; }
   }
   $("todo").addEventListener("click", function () { marcar(true); });
   $("nada").addEventListener("click", function () { marcar(false); });
+  $("compartir").addEventListener("click", compartirEdicion);
   $("ver").addEventListener("click", function () {
     vistaCliente = !vistaCliente;
     modoDueno = esDueno && !vistaCliente;
@@ -444,12 +563,18 @@ button:disabled { opacity: .5; cursor: not-allowed; }
       assets = await window.claude.use("assets");
     } catch (e) { /* se evalúa abajo */ }
     if (!db) { setEstado("Inicia sesión para ver y guardar los datos.", "warn"); return; }
+    if (tokenModo && !(await validarToken())) { pantallaExpirada(); return; }
 
-    esDueno = user ? user.isOwner() : false;
+    esDueno = tokenModo ? false : (user ? user.isOwner() : false);
     modoDueno = esDueno;
     var cw = user ? user.can("data.write") : null;
     puedeEscribir = cw !== false;
     aplicarVisibilidad();
+    if (tokenModo) {
+      $("banner-t").hidden = false;
+      actualizarBannerTiempo();
+      tokenTimer = setInterval(actualizarBannerTiempo, 30000);
+    }
 
     refNombre = db.doc("negocio/principal");
     refCliente = db.doc("cliente/principal");
