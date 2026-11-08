@@ -136,14 +136,18 @@ button:disabled { opacity: .5; cursor: not-allowed; }
   </header>
 
   <section aria-labelledby="h-negocio" id="sec-negocio" hidden>
-    <h2 id="h-negocio">Negocio</h2>
+    <h2 id="h-negocio">Nuevo negocio</h2>
     <div class="field">
-      <label for="sel-negocio">Elige el negocio</label>
-      <select id="sel-negocio"><option value="">Cargando negocios…</option></select>
+      <label for="nombre">Nombre del negocio</label>
+      <div class="row">
+        <input id="nombre" type="text" autocomplete="off" placeholder="Ej. Panadería La Espiga" maxlength="80">
+        <button id="guardar-nombre" type="button">Guardar negocio</button>
+      </div>
+      <span class="hint">Solo el nombre. El resto de los datos los llena tu cliente con el enlace que le envíes.</span>
     </div>
   </section>
 
-  <section aria-labelledby="h-cliente">
+  <section aria-labelledby="h-cliente" id="sec-cliente">
     <div>
       <h2 id="h-cliente">Ficha del cliente</h2>
       <p class="lead" id="lead"></p>
@@ -154,6 +158,7 @@ button:disabled { opacity: .5; cursor: not-allowed; }
     <div class="barra" id="barra" hidden>
       <span class="cuenta" id="cuenta">Acceso temporal para tu cliente</span>
       <button type="button" id="compartir">🔗 Compartir edición</button>
+      <button type="button" class="sec" id="otro">➕ Otro negocio nuevo</button>
     </div>
 
     <p class="aviso" id="vacio" hidden>Este enlace no tiene campos para editar.</p>
@@ -207,7 +212,7 @@ button:disabled { opacity: .5; cursor: not-allowed; }
   var $ = function (id) { return document.getElementById(id); };
   var listaEl = $("lista"), estadoEl = $("estado"), estadoTxt = $("estado-txt");
   var esCliente = false, tokenCliente = "", expCliente = 0, camposCliente = [], expirado = false, timerBanner = null;
-  var negocio = null, datos = { fotos: [] }, negocios = [];
+  var negocio = null, datos = { fotos: [] };
 
   function setEstado(txt, k) { estadoEl.setAttribute("data-k", k || ""); estadoTxt.textContent = txt; }
   function def(k) { for (var i = 0; i < DEFS.length; i++) if (DEFS[i].k === k) return DEFS[i]; return null; }
@@ -343,17 +348,18 @@ button:disabled { opacity: .5; cursor: not-allowed; }
   function aplicarVisibilidad() {
     var hay = false;
     DEFS.forEach(function (d) {
-      var on = !!negocio && visible(d);
+      var on = esCliente && !!negocio && visible(d);
       if (on) hay = true;
       $("b-" + d.k).hidden = !on;
     });
     $("vacio").hidden = !(esCliente && negocio && !hay);
-    $("guardar").hidden = !(negocio && hay);
+    $("guardar").hidden = !(esCliente && negocio && hay);
     $("sec-negocio").hidden = esCliente;
+    $("sec-cliente").hidden = !esCliente && !negocio;
     $("barra").hidden = esCliente || !negocio;
     $("lead").textContent = esCliente
       ? "Llena lo que sepas y presiona Guardar cambios."
-      : "Elige un negocio, edita sus datos y guarda. Con Compartir edición le das a tu cliente un acceso temporal.";
+      : "Negocio creado. Elige qué campos podrá llenar tu cliente y por cuánto tiempo; luego envíale el enlace.";
   }
 
   function actualizarEnlace() {
@@ -499,6 +505,47 @@ button:disabled { opacity: .5; cursor: not-allowed; }
     } catch (e) { btn.disabled = expirado; setEstado(msgErrorEnvio(e), "warn"); }
   }
 
+  /* ===== Alta del negocio: solo el nombre (agregarNegocio de index-sencillo) ===== */
+  async function crearNegocio() {
+    if (esCliente || negocio) return;
+    var nombre = $("nombre").value.trim();
+    if (!nombre) { setEstado("❌ El nombre es obligatorio", "warn"); $("nombre").focus(); return; }
+    var btn = $("guardar-nombre");
+    btn.disabled = true;
+    var payload = {
+      usuario: nombre.toLowerCase().replace(/\s+/g, "_"),
+      password: Math.random().toString(36).substring(2, 10),
+      nombre: nombre, slogan: "", descripcion: "", mision: "", mensajeEmergente: "",
+      ubicacion: "", direccion: "", latitud: "", longitud: "",
+      telefono: "", whatsapp: "", correo: "", horario: "",
+      rol: "Admin", urlFacebook: "", Urlexterna: "", activo: true, candado: "abierto",
+      fotos: [], logo: "", banner: "", video: "",
+      duenoMensaje: "", duenoTelefono: "", duenoCorreo: "",
+      colorPrimario: "#7B2FF7", colorSecundario: "#FF00E5", colorAcento: "#00D4FF",
+      fuenteLanding: "'Segoe UI',system-ui,sans-serif", plantillaLanding: "futurista"
+    };
+    setEstado("Guardando…", "busy");
+    try {
+      var r = await postViaIframe("agregarNegocio", "", payload);
+      if (r.success && r.id) {
+        negocio = { id: r.id, nombre: nombre };
+        $("nombre").disabled = true;
+        btn.hidden = true;
+        $("titulo").textContent = nombre;
+        $("titulo").className = "";
+        setEstado("✅ Negocio creado (" + r.id + "). Ahora envía el enlace a tu cliente.", "ok");
+        aplicarVisibilidad();
+        compartirEdicion();
+      } else if (r.success) {
+        btn.disabled = false;
+        setEstado("⚠️ Se guardó, pero el servidor no devolvió el ID. Búscalo en la lista de index-sencillo y usa Compartir desde ahí.", "warn");
+      } else {
+        btn.disabled = false;
+        setEstado("❌ Error: " + r.error, "warn");
+      }
+    } catch (e) { btn.disabled = false; setEstado(msgErrorEnvio(e), "warn"); }
+  }
+
   /* ===== Compartir edición (misma lógica que index-sencillo) ===== */
   function cerrarModal(m) { if (m && m.parentNode) m.parentNode.removeChild(m); }
   function modal(html) {
@@ -600,13 +647,9 @@ button:disabled { opacity: .5; cursor: not-allowed; }
   });
   $("guardar").addEventListener("click", guardar);
   $("compartir").addEventListener("click", compartirEdicion);
-  $("sel-negocio").addEventListener("change", function () {
-    var id = this.value;
-    var n = null;
-    for (var i = 0; i < negocios.length; i++) if (String(negocios[i].id) === id) n = negocios[i];
-    if (n) { cargarEnForm(n); setEstado("Listo.", "ok"); }
-    else { negocio = null; $("titulo").textContent = "Ficha de tienda"; $("titulo").className = "pending"; aplicarVisibilidad(); }
-  });
+  $("guardar-nombre").addEventListener("click", crearNegocio);
+  $("nombre").addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); crearNegocio(); } });
+  $("otro").addEventListener("click", function () { location.reload(); });
 
   /* ===== Inicio ===== */
   function iniciar() {
@@ -630,22 +673,8 @@ button:disabled { opacity: .5; cursor: not-allowed; }
       return;
     }
     aplicarVisibilidad();
-    var t = getAdminToken();
-    if (t === null) { setEstado("🔒 Clave cancelada: no se cargaron los negocios. Recarga la página para intentar de nuevo.", "warn"); return; }
-    setEstado("Cargando negocios…", "busy");
-    callAPI("obtenerNegocios", { token: t }).then(function (r) {
-      if (!r.success) { setEstado("Error: " + r.error, "warn"); return; }
-      negocios = r.negocios || [];
-      var sel = $("sel-negocio");
-      sel.innerHTML = "";
-      var o0 = document.createElement("option"); o0.value = ""; o0.textContent = negocios.length ? "Elige un negocio…" : "No hay negocios"; sel.appendChild(o0);
-      negocios.forEach(function (n) {
-        var o = document.createElement("option");
-        o.value = String(n.id); o.textContent = (n.id || "-") + " · " + (n.nombre || "sin nombre");
-        sel.appendChild(o);
-      });
-      setEstado("Elige un negocio para editarlo.", "ok");
-    }).catch(function () { setEstado("Error de conexión", "warn"); });
+    $("titulo").textContent = "Nuevo negocio";
+    setEstado("Escribe el nombre del negocio y presiona Guardar negocio.", "ok");
   }
   iniciar();
 })();
