@@ -1,4 +1,4 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body class="tema">
 <title>Ficha de tienda</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700&family=DM+Sans:wght@400;500;600&display=swap">
@@ -127,12 +127,51 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 </style>
 
 <style>
-#sel-negocio { font: inherit; color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 10px 12px; width: 100%; min-width: 0; }
+body.tema { color-scheme: dark; --bg:#0D1117; --surface:#1A1A2E; --fg:#E0E0E0; --muted:#AAA; --line:#2A2A4A; --accent:#00D4FF; --accent-fg:#0A0E17; --ok:#00FF88; --warn:#FFB300; background:#0A0E17; color:#E0E0E0; font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif; padding:0; }
+body.tema main { max-width:800px; min-height:100vh; background:#1A1A2E; padding:18px 16px 40px; align-content:start; }
+@media (min-width:820px) { body.tema main { border-left:1px solid #7B2FF7; border-right:1px solid #7B2FF7; box-shadow:0 0 60px rgba(123,47,247,.4); } }
+body.tema .eyebrow { display:none; }
+body.tema header { padding-bottom:15px; border-bottom:2px solid #2A2A4A; }
+body.tema h1, body.tema h1.pending { font-family:inherit; font-size:22px; color:#E0E0E0; line-height:1.2; }
+body.tema .sub { margin:0; color:#AAA; font-size:14px; }
+body.tema section { background:transparent; border:0; padding:0; gap:15px; }
+body.tema #sec-negocio, body.tema .fsec { background:#0D1117; border:1px solid #2A2A4A; border-radius:12px; padding:16px; gap:15px; display:grid; }
+body.tema h2, body.tema .fsec h3 { font-family:inherit; font-size:16px; margin:0; color:#00D4FF; text-shadow:0 0 10px rgba(0,212,255,.5); }
+body.tema #h-cliente { display:none; }
+body.tema .lead { color:#AAA; margin:0; }
+body.tema label { color:#AAA; font-size:13px; font-weight:600; }
+body.tema .hint { color:#888; }
+body.tema input[type="text"], body.tema input[type="number"], body.tema textarea, body.tema select { background:#1A1A2E; color:#E0E0E0; border:2px solid #2A2A4A; border-radius:8px; font-size:16px; padding:14px; min-height:48px; }
+body.tema textarea { min-height:90px; }
+body.tema input:focus-visible, body.tema textarea:focus-visible, body.tema select:focus-visible { outline:none; border-color:#00D4FF; box-shadow:0 0 20px rgba(0,212,255,.2); }
+body.tema button { background:#7B2FF7; color:#fff; border-radius:10px; padding:10px 24px; box-shadow:0 0 15px rgba(123,47,247,.4); }
+body.tema button.sec { background:transparent; color:#00D4FF; border:2px solid #00D4FF; box-shadow:none; padding:8px 16px; }
+body.tema button:disabled { opacity:.4; }
+body.tema #guardar { width:100%; min-height:54px; font-size:17px; background:#00FF88; color:#0A0E17; box-shadow:0 0 15px rgba(0,255,136,.4); margin-top:10px; }
+body.tema #previsualizar { width:100%; min-height:54px; font-size:17px; background:#00D4FF; color:#0A0E17; border:0; box-shadow:0 0 15px rgba(0,212,255,.4); }
+body.tema .barra { background:#0D1117; border:1px dashed #2A2A4A; }
+body.tema .banner-t { background:#2A2A4A; color:#00D4FF; border:0; }
+body.tema .banner-t.exp { background:#FF0040; color:#fff; }
+body.tema .aviso { background:#0D1117; color:#AAA; }
+body.tema .imgs figure { border:2px solid #2A2A4A; border-radius:12px; background:#1A1A2E; }
+body.tema .imgs.fotos { display:grid; grid-template-columns:repeat(2,1fr); gap:10px; }
+body.tema .imgs.fotos img { width:100%; height:140px; }
+body.tema .imgs .x { background:#FF0040; color:#fff; border:0; box-shadow:none; padding:3px 8px; }
+body.tema .modal-caja { background:#1A1A2E; border:1px solid #7B2FF7; box-shadow:0 0 60px rgba(123,47,247,.4); }
+body.tema .modal-caja h3 { color:#E0E0E0; }
+.prev-fondo { position:fixed; inset:0; background:rgba(0,0,0,.8); z-index:6000; display:flex; align-items:center; justify-content:center; padding:10px; }
+.prev-caja { width:95%; max-width:1100px; height:90vh; display:flex; flex-direction:column; background:#1A1A2E; border:1px solid #7B2FF7; border-radius:20px; overflow:hidden; }
+body.tema .prev-head { background:linear-gradient(135deg,#7B2FF7 0%,#FF00E5 50%,#00D4FF 100%); color:#fff; padding:15px 20px; display:flex; justify-content:space-between; align-items:center; gap:10px; }
+body.tema .prev-head h2 { margin:0; font-size:18px; color:#fff; text-shadow:0 0 15px rgba(255,255,255,.5); }
+body.tema .prev-x { background:none; box-shadow:none; border:0; color:#fff; font-size:32px; line-height:1; padding:0 8px; width:auto; }
+.prev-caja iframe { flex:1; border:0; width:100%; background:#0A0E17; }
+@media (max-width:768px) { .prev-fondo { padding:0; } .prev-caja { width:100%; max-width:100%; height:100vh; border-radius:0; } }
 </style>
 <main>
   <header>
     <span class="eyebrow">Ficha de tienda online</span>
     <h1 id="titulo" class="pending">Ficha de tienda</h1>
+    <p class="sub" id="subtitulo" hidden></p>
   </header>
 
   <section aria-labelledby="h-negocio" id="sec-negocio" hidden>
@@ -166,10 +205,21 @@ button:disabled { opacity: .5; cursor: not-allowed; }
     <div id="lista" style="display:grid;gap:22px"></div>
 
     <button type="button" id="guardar" hidden>💾 Guardar cambios</button>
+    <button type="button" id="previsualizar" hidden>👁️ Previsualizar página</button>
 
     <span class="status" id="estado" data-k="busy" role="status" aria-live="polite"><i></i><span id="estado-txt">Conectando…</span></span>
   </section>
 </main>
+
+<div class="prev-fondo" id="prev-fondo" hidden>
+  <div class="prev-caja">
+    <div class="prev-head">
+      <h2>🌐 Vista Previa - <span id="prev-titulo"></span></h2>
+      <button type="button" class="prev-x" id="prev-cerrar" aria-label="Cerrar vista previa">&times;</button>
+    </div>
+    <iframe id="prev-frame" sandbox="allow-scripts" title="Vista previa de la página publicada"></iframe>
+  </div>
+</div>
 
 <iframe name="hiddenSaveFrame" style="display:none;"></iframe>
 <form id="hiddenSaveForm" method="POST" target="hiddenSaveFrame" style="display:none;">
@@ -186,21 +236,21 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 
   /* g = grupo de permiso (los mismos que usa Compartir edición en index-sencillo) */
   var DEFS = [
-    { k: "logo", g: "logo", t: "img", max: 1, tipo: "logo", dim: 500, cal: 0.6, label: "Logo", hint: "PNG o JPG" },
-    { k: "banner", g: "logo", t: "img", max: 1, tipo: "banner", dim: 500, cal: 0.6, label: "Banner", hint: "Imagen horizontal" },
-    { k: "fotos", g: "fotos", t: "img", max: 4, tipo: "foto", dim: 900, cal: 0.7, label: "Fotos del negocio", hint: "Hasta 4 fotos" },
-    { k: "descripcion", g: "descripcion", t: "area", label: "Descripción", hint: "¿Qué vendes y qué te distingue?", ph: "Ej. Pan artesanal y pasteles por encargo." },
-    { k: "slogan", g: "slogan", t: "text", label: "Slogan", hint: "", ph: "Frase corta del negocio" },
-    { k: "mision", g: "mision", t: "area", label: "Misión", hint: "", ph: "" },
-    { k: "mensajeEmergente", g: "mensaje", t: "area", label: "Mensaje emergente", hint: "", ph: "" },
-    { k: "horario", g: "horario", t: "text", label: "Horario de atención", hint: "", ph: "Lun a Sáb, 9:00 a 18:00" },
-    { k: "telefono", g: "contacto", t: "text", mode: "tel", label: "Teléfono", hint: "", ph: "442 000 0000" },
-    { k: "whatsapp", g: "contacto", t: "text", mode: "tel", label: "WhatsApp de pedidos", hint: "", ph: "+52 442 000 0000" },
-    { k: "correo", g: "contacto", t: "text", mode: "email", label: "Correo de contacto", hint: "", ph: "contacto@minegocio.mx" },
-    { k: "urlFacebook", g: "contacto", t: "text", mode: "url", label: "Facebook", hint: "", ph: "https://facebook.com/minegocio" },
-    { k: "ubicacion", g: "ubicacion", t: "text", mode: "url", link: true, label: "Ubicación en el mapa", hint: "Enlace de Google Maps", ph: "https://maps.app.goo.gl/..." },
-    { k: "direccion", g: "ubicacion", t: "text", label: "Dirección o zona de entrega", hint: "", ph: "Calle, colonia, ciudad" },
-    { k: "video", g: "video", t: "text", mode: "url", label: "Video (enlace)", hint: "", ph: "https://..." }
+    { k: "logo", s: "logo", g: "logo", t: "img", max: 1, tipo: "logo", dim: 500, cal: 0.6, label: "Logo", hint: "PNG o JPG" },
+    { k: "banner", s: "logo", g: "logo", t: "img", max: 1, tipo: "banner", dim: 500, cal: 0.6, label: "Banner", hint: "Imagen horizontal" },
+    { k: "fotos", s: "fotos", g: "fotos", t: "img", max: 4, tipo: "foto", dim: 900, cal: 0.7, label: "Fotos del negocio", hint: "Hasta 4 fotos" },
+    { k: "descripcion", s: "basicos", g: "descripcion", t: "area", label: "Descripción", hint: "¿Qué vendes y qué te distingue?", ph: "Ej. Pan artesanal y pasteles por encargo." },
+    { k: "slogan", s: "basicos", g: "slogan", t: "text", label: "Slogan", hint: "", ph: "Frase corta del negocio" },
+    { k: "mision", s: "basicos", g: "mision", t: "area", label: "Misión", hint: "", ph: "" },
+    { k: "mensajeEmergente", s: "basicos", g: "mensaje", t: "area", label: "Mensaje emergente", hint: "", ph: "" },
+    { k: "horario", s: "contacto", g: "horario", t: "text", label: "Horario de atención", hint: "", ph: "Lun a Sáb, 9:00 a 18:00" },
+    { k: "telefono", s: "contacto", g: "contacto", t: "text", mode: "tel", label: "Teléfono", hint: "", ph: "442 000 0000" },
+    { k: "whatsapp", s: "contacto", g: "contacto", t: "text", mode: "tel", label: "WhatsApp de pedidos", hint: "", ph: "+52 442 000 0000" },
+    { k: "correo", s: "contacto", g: "contacto", t: "text", mode: "email", label: "Correo de contacto", hint: "", ph: "contacto@minegocio.mx" },
+    { k: "urlFacebook", s: "contacto", g: "contacto", t: "text", mode: "url", label: "Facebook", hint: "", ph: "https://facebook.com/minegocio" },
+    { k: "ubicacion", s: "ubicacion", g: "ubicacion", t: "text", mode: "url", link: true, label: "Ubicación en el mapa", hint: "Enlace de Google Maps", ph: "https://maps.app.goo.gl/..." },
+    { k: "direccion", s: "ubicacion", g: "ubicacion", t: "text", label: "Dirección o zona de entrega", hint: "", ph: "Calle, colonia, ciudad" },
+    { k: "video", s: "video", g: "video", t: "text", mode: "url", label: "Video (enlace)", hint: "", ph: "https://..." }
   ];
   /* Mismas opciones y valores que el diálogo Compartir de index-sencillo */
   var GRUPOS = [
@@ -209,10 +259,13 @@ button:disabled { opacity: .5; cursor: not-allowed; }
     ["logo", "Logo y banner"], ["video", "Video"]
   ];
 
+  var SECCIONES = [["basicos", "📝 Datos Básicos"], ["ubicacion", "📍 Ubicación"], ["contacto", "📞 Contacto"],
+    ["fotos", "📸 Fotos (hasta 4)"], ["video", "🎬 Video"], ["logo", "🎨 Logo y Banner"]];
+
   var $ = function (id) { return document.getElementById(id); };
   var listaEl = $("lista"), estadoEl = $("estado"), estadoTxt = $("estado-txt");
   var esCliente = false, tokenCliente = "", expCliente = 0, camposCliente = [], expirado = false, timerBanner = null;
-  var negocio = null, datos = { fotos: [] };
+  var negocio = null, datos = { fotos: [] }, ultimoGuardado = null;
 
   function setEstado(txt, k) { estadoEl.setAttribute("data-k", k || ""); estadoTxt.textContent = txt; }
   function def(k) { for (var i = 0; i < DEFS.length; i++) if (DEFS[i].k === k) return DEFS[i]; return null; }
@@ -320,6 +373,13 @@ button:disabled { opacity: .5; cursor: not-allowed; }
   }
 
   /* ===== Construcción de los campos (una sola vez) ===== */
+  SECCIONES.forEach(function (sc) {
+    var sec = document.createElement("div");
+    sec.className = "fsec"; sec.id = "s-" + sc[0]; sec.hidden = true;
+    var h = document.createElement("h3"); h.textContent = sc[1];
+    sec.appendChild(h);
+    listaEl.appendChild(sec);
+  });
   DEFS.forEach(function (d) {
     var b = document.createElement("div");
     b.className = "field"; b.id = "b-" + d.k; b.hidden = true;
@@ -339,8 +399,294 @@ button:disabled { opacity: .5; cursor: not-allowed; }
         (d.link ? '<div class="enlace" id="e-' + d.k + '" hidden><a id="a-' + d.k + '" target="_blank" rel="noopener noreferrer">Abrir en el mapa</a></div>' : "");
     }
     b.innerHTML = '<div class="fhead"><label for="' + forId + '">' + d.label + (d.hint ? ' <span class="hint">' + d.hint + "</span>" : "") + "</label></div>" + ctl;
-    listaEl.appendChild(b);
+    $("s-" + d.s).appendChild(b);
   });
+
+  /* ===== Página publicada (copiada tal cual de index-sencillo) ===== */
+function getPlantillaOverridesCSS(plantilla, colorPrimario, colorSecundario, colorAcento) {
+  // Base "fina" para todas las plantillas. Solo cambian pequeños detalles.
+  if (plantilla === 'clasico') {
+    return `
+      body{background:#F6F1E7;color:#3B2A1A}
+      .l-wrap{background:#FFFDF8;border-color:#E4D9C3}
+      .l-name,.l-sec-title{font-family:Georgia,'Times New Roman',serif}
+      .l-contact-item{background:#FAF5EA}
+    `;
+  }
+  if (plantilla === 'minimalista') {
+    return `
+      .l-gallery{grid-template-columns:1fr}
+      .l-gallery-item img{height:220px}
+    `;
+  }
+  return '';
+}
+
+function construirLandingHTML(n, plantillaOverride) {
+  const plantilla = plantillaOverride || n.plantillaLanding || 'futurista';
+  const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const whatsappDigits = String(n.whatsapp || '').replace(/\D/g, '');
+  const telDigits = String(n.telefono || '').replace(/\D/g, '');
+  const duenoWhatsappDigits = String(n.duenoTelefono || '').replace(/\D/g, '');
+  const fotos = (n.fotos || []).filter(f => f && f.url);
+  const tieneMapa = n.latitud && n.longitud;
+  const colorPrimario = n.colorPrimario || '#7B2FF7';
+  const colorSecundario = n.colorSecundario || '#FF00E5';
+  const colorAcento = n.colorAcento || '#00D4FF';
+  const fuenteLanding = n.fuenteLanding || "'Segoe UI',system-ui,sans-serif";
+  const descParts = (n.descripcion || '').split('&');
+  const descCorta = descParts[0].trim() || '';
+  const descLarga = descParts[1] ? descParts[1].trim() : descCorta;
+  const LIMITE_DESC_FOTO = 90;
+
+  // ---------- Galería ----------
+  const galeriaHTML = fotos.length ? `
+    <section class="l-gallery">${fotos.map((f, i) => {
+      const partes = (f.descripcion || '').split('&');
+      const titulo = partes[0].trim() || 'Foto';
+      const descLargaFoto = partes[1] ? partes[1].trim() : '';
+      let dCorta = descLargaFoto, dResto = '';
+      if (descLargaFoto.length > LIMITE_DESC_FOTO) {
+        let corte = descLargaFoto.lastIndexOf(' ', LIMITE_DESC_FOTO);
+        if (corte === -1) corte = LIMITE_DESC_FOTO;
+        dCorta = descLargaFoto.substring(0, corte);
+        dResto = descLargaFoto.substring(corte);
+      }
+      return `
+        <figure class="l-gallery-item">
+          <img src="${esc(f.url)}" alt="${esc(titulo)}" onclick="lOpenLightbox(${i})">
+          <figcaption class="l-gallery-info">
+            <div class="l-gallery-titulo">${esc(titulo)}</div>
+            ${descLargaFoto ? `<p class="l-gallery-desc"><span>${esc(dCorta)}</span><span id="lDescResto${i}" style="display:none;">${esc(dResto)}</span>${dResto ? ` <button class="l-vermas-btn" onclick="lToggleDescFoto(${i})">Ver más</button>` : ''}</p>` : ''}
+          </figcaption>
+        </figure>`;
+    }).join('')}</section>` : '';
+
+  // ---------- URL externa (Nombre & URL) ----------
+  let urlExternaHTML = '';
+  const urlExternaRaw = (n.Urlexterna || n.urlexterna || '').trim();
+  if (urlExternaRaw) {
+    let idx = urlExternaRaw.indexOf('&');
+    if (idx === -1) idx = urlExternaRaw.indexOf('|');
+    if (idx === -1) idx = urlExternaRaw.indexOf(';');
+    const nombreExt = idx !== -1 ? urlExternaRaw.substring(0, idx).trim() : '';
+    let urlExt = idx !== -1 ? urlExternaRaw.substring(idx + 1).trim() : urlExternaRaw;
+    if (urlExt && !/^https?:\/\//i.test(urlExt)) urlExt = 'https://' + urlExt;
+    if (/^https?:\/\//i.test(urlExt)) {
+      urlExternaHTML = `
+        <section class="l-section l-externo">
+          <a class="l-link-card" href="${esc(urlExt)}" target="_blank" rel="noopener">
+            <span class="l-link-label">${esc(nombreExt || 'Enlace externo')}</span>
+            <span class="l-link-arrow">→</span>
+          </a>
+        </section>`;
+    }
+  }
+
+  // ---------- Video ----------
+  let videoEmbedUrl = '';
+  if (n.video && n.video.trim() !== '') {
+    const link = n.video.trim();
+    if (link.includes('/d/')) {
+      const fid = link.match(/\/d\/([a-zA-Z0-9_-]+)/);
+      if (fid) videoEmbedUrl = 'https://drive.google.com/file/d/' + fid[1] + '/preview';
+    } else if (link.includes('youtube.com') || link.includes('youtu.be')) {
+      const m = link.match(/(?:v=|youtu\.be\/|\/shorts\/|\/embed\/)([a-zA-Z0-9_-]{11})/);
+      videoEmbedUrl = (m && m[1]) ? 'https://www.youtube.com/embed/' + m[1] + '?rel=0' : link;
+    } else {
+      videoEmbedUrl = link;
+    }
+  }
+  const videoHTML = videoEmbedUrl ? `
+    <section class="l-section">
+      <a class="l-link-card" href="${esc(videoEmbedUrl)}" target="_blank" rel="noopener">
+        <span class="l-link-label">Ver video</span>
+        <span class="l-link-arrow">→</span>
+      </a>
+    </section>` : '';
+
+  // ---------- Mapa ----------
+  const mapaHTML = tieneMapa ? `
+    <section class="l-section">
+      <h2 class="l-sec-title">Ubicación</h2>
+      <div class="l-map-card"><iframe loading="lazy" src="https://www.openstreetmap.org/export/embed.html?bbox=${parseFloat(n.longitud) - 0.006}%2C${parseFloat(n.latitud) - 0.006}%2C${parseFloat(n.longitud) + 0.006}%2C${parseFloat(n.latitud) + 0.006}&layer=mapnik&marker=${n.latitud}%2C${n.longitud}"></iframe></div>
+      <p class="l-direccion">${esc(n.direccion || n.ubicacion || '')}</p>
+    </section>` : '';
+
+  // ---------- Contacto ----------
+  const contactoItems = [
+    ['Teléfono', n.telefono],
+    ['WhatsApp', n.whatsapp],
+    ['Horario', n.horario],
+    ['Correo', n.correo]
+  ].filter(([, v]) => v);
+  const contactoBotones = [
+    whatsappDigits ? `<a href="https://wa.me/${whatsappDigits}" class="l-btn l-btn-main" target="_blank" rel="noopener">WhatsApp</a>` : '',
+    telDigits ? `<a href="tel:${telDigits}" class="l-btn">Llamar</a>` : '',
+    tieneMapa ? `<a href="https://www.google.com/maps/dir/?api=1&destination=${n.latitud},${n.longitud}" class="l-btn" target="_blank" rel="noopener">Cómo llegar</a>` : '',
+    n.urlFacebook ? `<a href="${esc(n.urlFacebook)}" class="l-btn" target="_blank" rel="noopener">Facebook</a>` : ''
+  ].join('');
+
+  const fotosJS = JSON.stringify(fotos.map(f => ({ url: f.url, descripcion: f.descripcion || '' }))).replace(/</g, '\\u003c');
+  const msgJS = JSON.stringify(String(n.mensajeEmergente || n.slogan || '')).replace(/</g, '\\u003c');
+  const nombreJS = JSON.stringify(String(n.nombre || '')).replace(/</g, '\\u003c');
+
+  const footerHTML = `
+    <footer>
+      ${n.duenoMensaje ? `<p class="l-footer-msg">${esc(n.duenoMensaje)}</p>` : ''}
+      ${(duenoWhatsappDigits || n.duenoCorreo) ? `<div class="l-footer-contact">
+        ${duenoWhatsappDigits ? `<a href="https://wa.me/${duenoWhatsappDigits}" target="_blank" rel="noopener">${esc(n.duenoTelefono)}</a>` : ''}
+        ${n.duenoCorreo ? `<a href="mailto:${esc(n.duenoCorreo)}">${esc(n.duenoCorreo)}</a>` : ''}
+      </div>` : ''}
+      <p class="l-footer-brand">FrontPage Express · prototipowebapp@gmail.com</p>
+    </footer>`;
+
+  return `<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>${esc(n.nombre || 'Negocio')} | ${esc(n.slogan || 'I.A.')}</title>
+<meta name="description" content="${esc(descLarga.substring(0, 155))}">
+<meta property="og:title" content="${esc(n.nombre || 'Negocio')}">
+<meta property="og:description" content="${esc(descLarga.substring(0, 155))}">
+${n.banner ? `<meta property="og:image" content="${esc(n.banner)}">` : ''}
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:${fuenteLanding};color:#222;background:#F5F5F3;line-height:1.65;padding:20px 14px;font-weight:400;-webkit-font-smoothing:antialiased}
+.l-wrap{max-width:560px;margin:0 auto;background:#fff;border:1px solid #E8E8E4;border-radius:14px;overflow:hidden}
+.l-banner{height:150px;background:${colorPrimario};${n.banner ? `background-image:url('${n.banner}');background-size:cover;background-position:center;` : ''}}
+.l-head{padding:0 24px;margin-top:-34px;display:flex;align-items:flex-end;gap:14px}
+.l-logo{width:68px;height:68px;border-radius:50%;object-fit:cover;border:3px solid #fff;background:#fff;flex-shrink:0}
+.l-logo-ph{width:68px;height:68px;border-radius:50%;border:3px solid #fff;background:#EEE;flex-shrink:0}
+.l-name{font-size:22px;font-weight:600;letter-spacing:-.2px;color:#111;padding-bottom:4px}
+.l-slogan{padding:10px 24px 0;font-size:14px;color:${colorPrimario};font-weight:500}
+.l-desc{padding:10px 24px 0;font-size:14px;color:#555;font-weight:300}
+.l-section{padding:22px 24px 0}
+.l-sec-title{font-size:12px;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;color:#888;margin-bottom:10px}
+.l-sec-text{font-size:14px;color:#444;font-weight:300}
+.l-gallery{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;padding:22px 24px 0}
+.l-gallery-item{margin:0;border:1px solid #EDEDE9;border-radius:10px;overflow:hidden;background:#fff}
+.l-gallery-item img{width:100%;height:140px;object-fit:cover;cursor:pointer;display:block}
+.l-gallery-info{padding:8px 10px 10px}
+.l-gallery-titulo{font-size:13px;font-weight:600;color:#222}
+.l-gallery-desc{font-size:12px;color:#777;font-weight:300;line-height:1.5}
+.l-vermas-btn{background:none;border:none;color:${colorPrimario};font-weight:600;font-size:12px;cursor:pointer}
+.l-link-card{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border:1px solid #E8E8E4;border-radius:10px;text-decoration:none;color:#222;font-size:14px;font-weight:500;transition:border-color .2s}
+.l-link-card:hover{border-color:${colorPrimario}}
+.l-link-arrow{color:${colorPrimario}}
+.l-contact-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:22px 24px 0}
+.l-contact-item{background:#FAFAF8;border-radius:8px;padding:10px 12px}
+.l-contact-item .cl{font-size:10px;letter-spacing:1px;text-transform:uppercase;color:#999;font-weight:600}
+.l-contact-item .cv{font-size:13.5px;color:#222;margin-top:2px;word-break:break-word}
+.l-map-card{border-radius:10px;overflow:hidden;border:1px solid #E8E8E4}
+.l-map-card iframe{width:100%;height:240px;border:0;display:block}
+.l-direccion{margin-top:8px;font-size:13px;color:#777;font-weight:300}
+.l-btn-group{display:flex;flex-wrap:wrap;gap:10px;padding:22px 24px 0}
+.l-btn{flex:1;min-width:120px;text-align:center;padding:12px 16px;border-radius:999px;border:1px solid #D9D9D4;color:#222;background:#fff;font-weight:500;font-size:13.5px;text-decoration:none;transition:all .2s}
+.l-btn:hover{border-color:${colorPrimario};color:${colorPrimario}}
+.l-btn-main{background:${colorPrimario};border-color:${colorPrimario};color:#fff}
+.l-btn-main:hover{color:#fff;opacity:.9}
+.l-share-section{margin-top:26px;padding:22px 24px;text-align:center;border-top:1px solid #EEE}
+.l-qr-img{width:120px;height:120px;border-radius:8px;border:1px solid #E8E8E4;padding:6px;cursor:pointer}
+.l-qr-caption{font-size:12px;color:#999;margin-top:6px}
+.l-qr-caption span{color:${colorPrimario};cursor:pointer;font-weight:500}
+footer{background:#FAFAF8;border-top:1px solid #EEE;text-align:center;padding:18px 20px;font-size:12px;color:#888}
+.l-footer-msg{color:#444;font-weight:500;font-size:13px;margin-bottom:8px}
+.l-footer-contact{margin-bottom:8px}
+.l-footer-contact a{color:#555;text-decoration:none;font-size:12.5px;margin:0 8px}
+.l-footer-brand{font-size:11px;color:#AAA}
+.l-popup-mensaje{position:fixed;left:50%;bottom:-120px;transform:translateX(-50%);background:#222;color:#fff;padding:12px 38px 12px 18px;border-radius:10px 10px 0 0;font-size:13px;text-align:center;max-width:92%;z-index:4000;transition:bottom .5s ease}
+.l-popup-mensaje.mostrar{bottom:0}
+.l-popup-cerrar{position:absolute;top:6px;right:10px;background:none;border:none;color:#fff;font-size:16px;cursor:pointer}
+.l-lightbox{display:none;position:fixed;inset:0;background:rgba(255,255,255,.97);z-index:5000;align-items:center;justify-content:center;flex-direction:column;padding:20px}
+.l-lightbox.active{display:flex}
+.l-lightbox img{max-width:100%;max-height:75vh;border-radius:8px}
+.l-lightbox-cap{color:#444;font-size:13px;margin-top:14px;text-align:center}
+.l-lightbox-back{margin-top:20px;background:#222;color:#fff;border:none;padding:10px 24px;border-radius:999px;font-weight:500;cursor:pointer}
+@media(max-width:480px){.l-contact-grid{grid-template-columns:1fr}}
+${getPlantillaOverridesCSS(plantilla, colorPrimario, colorSecundario, colorAcento)}
+</style></head><body>
+<div class="l-wrap plantilla-${plantilla}">
+  <div class="l-banner"></div>
+  <div class="l-head">
+    ${n.logo ? `<img class="l-logo" src="${esc(n.logo)}" alt="Logo">` : `<div class="l-logo-ph"></div>`}
+    <h1 class="l-name">${esc(n.nombre || '')}</h1>
+  </div>
+  ${n.slogan ? `<p class="l-slogan">${esc(n.slogan)}</p>` : ''}
+  ${descLarga ? `<p class="l-desc">${esc(descLarga)}</p>` : ''}
+  ${n.mision ? `<section class="l-section"><h2 class="l-sec-title">Nuestra misión</h2><p class="l-sec-text">${esc(n.mision)}</p></section>` : ''}
+  ${galeriaHTML}
+  ${videoHTML}
+  ${urlExternaHTML}
+  ${contactoItems.length ? `<div class="l-contact-grid">${contactoItems.map(([label, valor]) => `<div class="l-contact-item"><div class="cl">${label}</div><div class="cv">${esc(valor)}</div></div>`).join('')}</div>` : ''}
+  ${mapaHTML}
+  <div class="l-btn-group">${contactoBotones}</div>
+  <section class="l-share-section">
+    <img class="l-qr-img" id="lQrImg" alt="QR" onclick="compartirQRWhatsApp()">
+    <p class="l-qr-caption"><span onclick="compartirQRWhatsApp()">Escanea para compartir</span></p>
+  </section>
+  ${footerHTML}
+</div>
+<div class="l-lightbox" id="lLightbox">
+  <img id="lLightboxImg" src="" alt="">
+  <p class="l-lightbox-cap" id="lLightboxCap"></p>
+  <button class="l-lightbox-back" onclick="lCloseLightbox()">← Volver</button>
+</div>
+<script>
+(function(){
+  var lFotos = ${fotosJS};
+  window.lOpenLightbox = function(i){
+    var f = lFotos[i]; if(!f) return;
+    document.getElementById('lLightboxImg').src = f.url;
+    var partes = (f.descripcion||'').split('&');
+    document.getElementById('lLightboxCap').textContent = partes[1] ? partes[1].trim() : (partes[0].trim() || '');
+    document.getElementById('lLightbox').classList.add('active');
+  };
+  window.lCloseLightbox = function(){ document.getElementById('lLightbox').classList.remove('active'); };
+  window.lToggleDescFoto = function(i){
+    var r = document.getElementById('lDescResto' + i);
+    if (r) r.style.display = r.style.display === 'none' ? 'inline' : 'none';
+  };
+  document.getElementById('lLightbox').addEventListener('click', function(e){ if (e.target === this) lCloseLightbox(); });
+  var currentUrl = window.location.href;
+  var qrImg = document.getElementById('lQrImg');
+  if (qrImg) qrImg.src = 'https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=' + encodeURIComponent(currentUrl);
+  window.compartirQRWhatsApp = function(){
+    window.open('https://wa.me/?text=' + encodeURIComponent(${nombreJS} + ': ' + currentUrl), '_blank');
+  };
+  var msg = ${msgJS};
+  if (msg) {
+    var popup = document.createElement('div');
+    popup.className = 'l-popup-mensaje';
+    var sp = document.createElement('span'); sp.textContent = msg;
+    var bt = document.createElement('button'); bt.className = 'l-popup-cerrar'; bt.textContent = '×';
+    popup.appendChild(sp); popup.appendChild(bt);
+    document.body.appendChild(popup);
+    function mostrar(){ popup.classList.add('mostrar'); setTimeout(function(){ popup.classList.remove('mostrar'); }, 3000); }
+    bt.onclick = function(){ popup.classList.remove('mostrar'); };
+    setTimeout(mostrar, 2000);
+    setInterval(mostrar, 15000);
+  }
+})();
+<\/script>
+</body></html>`;
+}
+
+// ============================================================
+// SITEMAP
+
+  /* ===== Vista previa ===== */
+  function previsualizar() {
+    if (!ultimoGuardado) return;
+    $("prev-titulo").textContent = ultimoGuardado.nombre || "Landing";
+    $("prev-frame").srcdoc = construirLandingHTML(ultimoGuardado);
+    $("prev-fondo").hidden = false;
+  }
+  function cerrarPreview() {
+    $("prev-fondo").hidden = true;
+    $("prev-frame").srcdoc = "";
+  }
 
   /* ===== Pintar / cargar ===== */
   function visible(d) { return !esCliente || camposCliente.indexOf(d.g) >= 0; }
@@ -351,6 +697,10 @@ button:disabled { opacity: .5; cursor: not-allowed; }
       var on = esCliente && !!negocio && visible(d);
       if (on) hay = true;
       $("b-" + d.k).hidden = !on;
+    });
+    SECCIONES.forEach(function (sc) {
+      var alguno = DEFS.some(function (d) { return d.s === sc[0] && !$("b-" + d.k).hidden; });
+      $("s-" + sc[0]).hidden = !alguno;
     });
     $("vacio").hidden = !(esCliente && negocio && !hay);
     $("guardar").hidden = !(esCliente && negocio && hay);
@@ -413,8 +763,10 @@ button:disabled { opacity: .5; cursor: not-allowed; }
       if (d.t === "img") { if (d.k !== "fotos") datos[d.k] = n[d.k] || ""; pintarImgs(d.k); }
       else $("f-" + d.k).value = n[d.k] == null ? "" : String(n[d.k]);
     });
-    $("titulo").textContent = n.nombre || "Negocio sin nombre";
+    $("titulo").textContent = "✏️ Editar negocio";
     $("titulo").className = "";
+    $("subtitulo").textContent = n.nombre || "";
+    $("subtitulo").hidden = !n.nombre;
     actualizarEnlace();
     aplicarVisibilidad();
   }
@@ -500,7 +852,9 @@ button:disabled { opacity: .5; cursor: not-allowed; }
       btn.disabled = expirado;
       if (r.success) {
         Object.keys(ed).forEach(function (k) { negocio[k] = ed[k]; });
-        setEstado(esCliente ? "✅ Cambios guardados" : "✅ Negocio actualizado", "ok");
+        ultimoGuardado = payload;
+        $("previsualizar").hidden = false;
+        setEstado("✅ Cambios guardados. Puedes previsualizar tu página.", "ok");
       } else setEstado("❌ Error: " + r.error, "warn");
     } catch (e) { btn.disabled = expirado; setEstado(msgErrorEnvio(e), "warn"); }
   }
@@ -531,8 +885,8 @@ button:disabled { opacity: .5; cursor: not-allowed; }
         negocio = { id: r.id, nombre: nombre };
         $("nombre").disabled = true;
         btn.hidden = true;
-        $("titulo").textContent = nombre;
-        $("titulo").className = "";
+        $("subtitulo").textContent = nombre;
+        $("subtitulo").hidden = false;
         setEstado("✅ Negocio creado (" + r.id + "). Ahora envía el enlace a tu cliente.", "ok");
         aplicarVisibilidad();
         compartirEdicion();
@@ -646,6 +1000,9 @@ button:disabled { opacity: .5; cursor: not-allowed; }
     }
   });
   $("guardar").addEventListener("click", guardar);
+  $("previsualizar").addEventListener("click", previsualizar);
+  $("prev-cerrar").addEventListener("click", cerrarPreview);
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape" && !$("prev-fondo").hidden) cerrarPreview(); });
   $("compartir").addEventListener("click", compartirEdicion);
   $("guardar-nombre").addEventListener("click", crearNegocio);
   $("nombre").addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); crearNegocio(); } });
@@ -673,7 +1030,8 @@ button:disabled { opacity: .5; cursor: not-allowed; }
       return;
     }
     aplicarVisibilidad();
-    $("titulo").textContent = "Nuevo negocio";
+    $("titulo").textContent = "➕ Nuevo Negocio";
+    $("titulo").className = "";
     setEstado("Escribe el nombre del negocio y presiona Guardar negocio.", "ok");
   }
   iniciar();
