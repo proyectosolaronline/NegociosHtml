@@ -758,8 +758,7 @@ function detenerVerificacionVideo() {
 async function cargarNegocios() {
   console.log('📡 Cargando negocios...');
    const tokenAdmin = getAdminToken();
-  if (tokenAdmin === null) { showToast('🔒 Clave cancelada: no se cargaron los negocios', 'error'); return; }
-  showLoading();
+  if (tokenAdmin === null) { cerrarPorInactividad(); return; }   // Cancelar: regresa de inmediato a la página anterior  showLoading();
   try {
         const result = await callAPI('obtenerNegocios', { token: tokenAdmin });    hideLoading();
     
