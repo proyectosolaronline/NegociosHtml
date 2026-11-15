@@ -307,6 +307,14 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;color:#00FF41;f
 const GITHUB_PUBLISH_URL = 'https://script.google.com/macros/s/AKfycbwh4EBEepNZrWVibk7L4jq3KZHx9ly_tFsF7OjFDInt6GS-gjdiQcWVrd83tzLNp-aKSw/exec';
 const GITHUB_USER = 'proyectosolaronline';
 const GITHUB_PAGES_BASE = 'https://' + GITHUB_USER + '.github.io';
+/* ===== PIE PROMOCIONAL (modifica aquí el texto) ===== */
+const PROMO_PIE = {
+  activo: true,   // false = no mostrar el bloque
+  texto: '🌐 ¿Quieres una página como esta totalmente <strong>gratis</strong>? Solo pagas la administración de contenido.',
+  correo: 'prototipowebapp@gmail.com',
+  asunto: 'Quiero mi página web gratis',
+  boton: '📧 Escríbenos a prototipowebapp@gmail.com'
+};
   const DIRECTORIO_URL = 'https://proyectosolaronline.github.io/Directorio-negocios/';
 
 let negocioActual = null;
@@ -1251,10 +1259,7 @@ ${productosHTML}
       <div class="mf-nombre">⚡ ${escHTML(nombreLimpio)}</div>
       <div class="mf-slogan">${escHTML(n.slogan || 'Gracias por visitarnos')}</div>
     </div>
-    <div class="promo-final">
-      <p>🌐 ¿Quieres una página como esta totalmente <strong>gratis</strong>? Solo pagas la administración de contenido.</p>
-      <a href="mailto:prototipowebapp@gmail.com?subject=Quiero%20mi%20p%C3%A1gina%20web%20gratis">📧 Escríbenos a prototipowebapp@gmail.com</a>
-    </div>
+        ${PROMO_PIE.activo ? '<div class="promo-final"><p>' + PROMO_PIE.texto + '</p><a href="mailto:' + PROMO_PIE.correo + '?subject=' + encodeURIComponent(PROMO_PIE.asunto) + '">' + PROMO_PIE.boton + '</a></div>' : ''}
   </div>
 </div>
 <div class="modal-pedido-overlay" id="modalProducto" onclick="if(event.target===this)cerrarProducto()">
