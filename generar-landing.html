@@ -1964,6 +1964,139 @@ console.log('✅ Generador de landing activo');
   if (document.body) mostrarVersion(); else document.addEventListener('DOMContentLoaded', mostrarVersion);
 })();
 </script>
+<!-- ===== DIRECTORIO: pregunta antes de publicar =====
+     Pegar justo antes de </body> en generar-landing.html ===== -->
+<style>
+.dir-btn{padding:9px 14px;border:1px solid #00E5FF;border-radius:4px;cursor:pointer;font-weight:700;font-size:12px;min-height:38px;display:inline-flex;align-items:center;justify-content:center;gap:6px;background:rgba(0,0,0,.85);color:#00E5FF;text-shadow:0 0 6px #00E5FF;font-family:'Courier New',monospace;transition:all .2s}
+.dir-btn:hover{background:#00E5FF;color:#000;text-shadow:none}
+.dir-btn:active{transform:scale(.96)}
+.dir-btn .dir-estado{font-size:13px}
+@media (max-width:480px){.dir-btn{padding:8px 10px;font-size:11px;min-height:36px}}
+
+.dir-modal{position:fixed;inset:0;z-index:11500;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(0,0,0,.95);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);font-family:'Courier New',monospace}
+.dir-modal.show{display:flex}
+.dir-box{width:100%;max-width:420px;padding:26px 22px 20px;text-align:center;background:#000;border:2px solid #00E5FF;border-radius:10px;box-shadow:0 0 60px rgba(0,229,255,.45);animation:dirPop .3s ease}
+@keyframes dirPop{from{opacity:0;transform:scale(.92)}to{opacity:1;transform:scale(1)}}
+.dir-ico{font-size:50px;line-height:1;margin-bottom:10px;animation:dirLatido 1.6s ease-in-out infinite}
+@keyframes dirLatido{0%,100%{transform:scale(1);filter:drop-shadow(0 0 8px #00E5FF)}50%{transform:scale(1.1);filter:drop-shadow(0 0 22px #00E5FF)}}
+.dir-box h2{margin:0 0 12px;font-size:16px;letter-spacing:1px;color:#00E5FF;text-shadow:0 0 10px #00E5FF}
+.dir-q{margin:0 0 6px;font-size:14px;line-height:1.5;color:#fff}
+.dir-q b{color:#00FF41;text-shadow:0 0 6px #00FF41}
+.dir-nota{margin:0 0 18px;font-size:11.5px;line-height:1.5;color:#00E5FF;opacity:.65}
+.dir-acciones{display:flex;flex-direction:column;gap:8px}
+.dir-acciones button{min-height:46px;padding:11px;border-radius:6px;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;border:1px solid #00FF41;background:rgba(0,0,0,.85);color:#00FF41;text-shadow:0 0 6px #00FF41;transition:all .2s}
+.dir-acciones button:hover{background:#00FF41;color:#000;text-shadow:none}
+.dir-acciones button.dir-no{border-color:#FF9800;color:#FF9800;text-shadow:0 0 6px #FF9800}
+.dir-acciones button.dir-no:hover{background:#FF9800;color:#000;text-shadow:none}
+.dir-acciones button.dir-cancel{border-color:#444;background:transparent;color:#888;text-shadow:none;min-height:40px;font-weight:400}
+.dir-acciones button.dir-cancel:hover{background:#222;color:#ccc}
+.dir-acciones button.previo{box-shadow:0 0 0 2px rgba(255,255,255,.55)}
+</style>
+
+<div class="dir-modal" id="dirModal" role="dialog" aria-modal="true" aria-labelledby="dirTitulo">
+  <div class="dir-box">
+    <div class="dir-ico">📖</div>
+    <h2 id="dirTitulo">DIRECTORIO_DE_NEGOCIOS</h2>
+    <p class="dir-q">¿Agregar <b id="dirNombre">este negocio</b> al directorio?</p>
+    <p class="dir-nota">Si dices que sí, los clientes podrán encontrarlo en el directorio de negocios.</p>
+    <div class="dir-acciones">
+      <button type="button" class="dir-si" id="dirSi">✅ Sí, agregar al directorio</button>
+      <button type="button" class="dir-no" id="dirNo">🚫 No, solo la landing</button>
+      <button type="button" class="dir-cancel" id="dirCancelar">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  var modal = document.getElementById('dirModal');
+  var btnSi = document.getElementById('dirSi');
+  var btnNo = document.getElementById('dirNo');
+  var btnCancelar = document.getElementById('dirCancelar');
+  var modoPublicar = false;   // true = el modal se abrió al pulsar Publicar
+  var dejarPasar = false;     // true = el clic de Publicar ya fue confirmado
+
+  function hayNegocio() { try { return !!negocioActual; } catch (e) { return false; } }
+  function nombre() { try { return nombreVisible(negocioActual.nombre); } catch (e) { return 'este negocio'; } }
+  function llave() { try { return 'landingDirectorio_' + nombreCarpeta(negocioActual.nombre); } catch (e) { return 'landingDirectorio'; } }
+  function leer() {
+    try { var v = localStorage.getItem(llave()); return v === 'si' ? true : (v === 'no' ? false : null); }
+    catch (e) { return null; }
+  }
+  function aviso(t) { if (typeof mostrarToast === 'function') mostrarToast(t); }
+
+  /* Botón en la barra superior, justo antes de "Publicar" */
+  var abrirBtn = document.createElement('button');
+  abrirBtn.type = 'button';
+  abrirBtn.className = 'dir-btn';
+  abrirBtn.id = 'btnDirectorio';
+  abrirBtn.setAttribute('aria-label', 'Agregar al directorio');
+  var contBarra = document.querySelector('#topbar .actions');
+  var btnPub = document.getElementById('btnPublicar');
+  if (contBarra) contBarra.insertBefore(abrirBtn, btnPub || null);
+  else { abrirBtn.style.cssText = 'position:fixed;top:60px;right:12px;z-index:200'; document.body.appendChild(abrirBtn); }
+
+  function pintarBoton() {
+    var v = leer();
+    abrirBtn.innerHTML = '📖 Directorio <span class="dir-estado">' + (v === true ? '✅' : (v === false ? '🚫' : '❔')) + '</span>';
+  }
+
+  function guardar(valor) {
+    window.AGREGAR_AL_DIRECTORIO = valor;            // true / false: léelo desde el código de publicación
+    try {
+      localStorage.setItem(llave(), valor ? 'si' : 'no');
+      if (hayNegocio()) {
+        negocioActual.enDirectorio = valor;
+        localStorage.setItem('landingData', JSON.stringify(negocioActual));
+      }
+    } catch (e) {}
+    pintarBoton();
+  }
+
+  function abrir(paraPublicar) {
+    if (!hayNegocio()) { aviso('⚠️ Aún no hay datos'); return; }
+    modoPublicar = !!paraPublicar;
+    document.getElementById('dirNombre').textContent = '«' + nombre() + '»';
+    var previo = leer();
+    btnSi.classList.toggle('previo', previo === true);
+    btnNo.classList.toggle('previo', previo === false);
+    btnCancelar.textContent = paraPublicar ? 'Cancelar (no publicar)' : 'Cerrar';
+    modal.classList.add('show');
+    btnSi.focus();
+  }
+  function cerrar() { modal.classList.remove('show'); }
+
+  function responder(valor) {
+    guardar(valor);
+    cerrar();
+    aviso(valor ? '📖 Se agregará al directorio' : '🚫 No se agregará al directorio');
+    if (modoPublicar) {
+      modoPublicar = false;
+      var pub = document.getElementById('btnPublicar');
+      if (pub) { dejarPasar = true; pub.click(); dejarPasar = false; }   // continúa la publicación normal
+    }
+  }
+
+  btnSi.onclick = function () { responder(true); };
+  btnNo.onclick = function () { responder(false); };
+  btnCancelar.onclick = function () { modoPublicar = false; cerrar(); };
+  modal.addEventListener('click', function (e) { if (e.target === modal) { modoPublicar = false; cerrar(); } });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && modal.classList.contains('show')) { modoPublicar = false; cerrar(); } });
+  abrirBtn.onclick = function () { abrir(false); };
+
+  /* Intercepta "Publicar": primero pregunta por el directorio y luego publica */
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest && e.target.closest('#btnPublicar');
+    if (!b || dejarPasar || !hayNegocio()) return;
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    abrir(true);
+  }, true);
+
+  pintarBoton();
+  setTimeout(pintarBoton, 1500);   // por si los datos del negocio cargan después
+})();
+</script>
 
 </body>
 </html>
