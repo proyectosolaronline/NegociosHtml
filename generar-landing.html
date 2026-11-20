@@ -425,6 +425,7 @@ async function resolverRepo(n) {
   return { nombre: base, existe: false };
 }
 function pubTxt(t){ const s = document.querySelector('#btnPublicar .tx'); if (s) s.textContent = t; }
+function obtenerTokenAdmin() {
   let t = '';
   try { t = localStorage.getItem('adminToken') || ''; } catch (e) {}
   if (!t) {
