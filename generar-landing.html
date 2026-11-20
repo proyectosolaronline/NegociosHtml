@@ -11,28 +11,34 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;color:#00FF41;f
 #matrixCanvas{position:fixed;inset:0;z-index:0;opacity:0.35}
 #previewFrame{position:fixed;inset:0;width:100%;height:100%;border:none;background:#fff;z-index:5;opacity:0;transition:opacity .8s ease}
 #previewFrame.visible{opacity:1}
-.topbar{position:fixed;top:0;left:0;right:0;z-index:100;padding:10px 12px;padding-top:calc(10px + env(safe-area-inset-top));background:linear-gradient(180deg,rgba(0,0,0,0.95) 0%,rgba(0,0,0,0) 100%);display:flex;justify-content:space-between;align-items:center;gap:8px;pointer-events:none;transition:opacity .5s;opacity:0}
+.topbar{position:fixed;top:0;left:0;right:0;z-index:100;padding:8px 10px 16px;padding-top:calc(8px + env(safe-area-inset-top));padding-left:calc(10px + env(safe-area-inset-left));padding-right:calc(10px + env(safe-area-inset-right));background:linear-gradient(180deg,rgba(0,0,0,0.95) 0%,rgba(0,0,0,0.85) 70%,rgba(0,0,0,0) 100%);display:flex;flex-direction:column;gap:6px;pointer-events:none;transition:opacity .5s;opacity:0}
 .topbar > *{pointer-events:auto}
 .topbar.visible{opacity:1}
 .topbar.hidden{opacity:0;pointer-events:none}
-.badge{background:rgba(0,0,0,0.85);backdrop-filter:blur(10px);color:#00FF41;padding:6px 14px;border-radius:4px;font-size:11px;font-weight:700;border:1px solid #00FF41;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:50vw;text-shadow:0 0 8px #00FF41}
-.actions{display:flex;gap:6px}
-.btn{padding:9px 14px;border:1px solid #00FF41;border-radius:4px;cursor:pointer;font-weight:700;font-size:12px;min-height:38px;display:inline-flex;align-items:center;justify-content:center;gap:5px;transition:all .2s;background:rgba(0,0,0,0.85);color:#00FF41;text-shadow:0 0 6px #00FF41}
+.topbar.hidden > *{pointer-events:none}
+.tb-row{display:flex;align-items:center;gap:8px;min-width:0}
+.badge{flex:1;min-width:0;background:rgba(0,0,0,0.85);backdrop-filter:blur(10px);color:#00FF41;padding:0 12px;height:36px;line-height:34px;border-radius:6px;font-size:12px;font-weight:700;border:1px solid #00FF41;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 0 8px #00FF41}
+.actions{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:5px;width:100%}
+.btn{padding:5px 2px;border:1px solid #00FF41;border-radius:6px;cursor:pointer;font-family:inherit;font-weight:700;font-size:clamp(9px,2.6vw,11px);min-height:44px;min-width:0;display:inline-flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;line-height:1.1;transition:background .2s,color .2s,transform .2s;background:rgba(0,0,0,0.85);color:#00FF41;text-shadow:0 0 6px #00FF41;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+.btn .ic{font-size:clamp(15px,4.6vw,18px);line-height:1}
+.btn .tx{max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tb-row .btn{flex:0 0 44px;width:44px;padding:0;font-size:16px}
 .btn:active{transform:scale(0.96)}
 .btn:disabled{opacity:.5;cursor:not-allowed}
-.btn:hover{background:#00FF41;color:#000;text-shadow:none}
 .btn-success{background:rgba(0,0,0,0.85);color:#00FF41;border-color:#00FF41}
-.btn-success:hover{background:#00FF41;color:#000}
 .btn-danger{color:#FF0040;border-color:#FF0040;text-shadow:0 0 6px #FF0040}
-.btn-danger:hover{background:#FF0040;color:#000;text-shadow:none}
-.bottombar{position:fixed;bottom:0;left:0;right:0;z-index:100;padding:10px 12px;padding-bottom:calc(10px + env(safe-area-inset-bottom));background:linear-gradient(0deg,rgba(0,0,0,0.95) 0%,rgba(0,0,0,0) 100%);display:flex;gap:6px;justify-content:center;overflow-x:auto;scrollbar-width:none;transition:opacity .5s;opacity:0}
-.bottombar::-webkit-scrollbar{display:none}
+@media (hover:hover){
+  .btn:hover{background:#00FF41;color:#000;text-shadow:none}
+  .btn-danger:hover{background:#FF0040;color:#000;text-shadow:none}
+}
+.bottombar{position:fixed;bottom:0;left:0;right:0;z-index:100;padding:16px 10px 8px;padding-bottom:calc(8px + env(safe-area-inset-bottom));padding-left:calc(10px + env(safe-area-inset-left));padding-right:calc(10px + env(safe-area-inset-right));background:linear-gradient(0deg,rgba(0,0,0,0.95) 0%,rgba(0,0,0,0.85) 70%,rgba(0,0,0,0) 100%);display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px;transition:opacity .5s;opacity:0}
 .bottombar.visible{opacity:1}
 .bottombar.hidden{opacity:0;pointer-events:none}
-.plantilla-btn{background:rgba(0,0,0,0.85);border:1px solid #00FF41;color:#00FF41;padding:9px 16px;border-radius:4px;font-size:12px;font-weight:700;white-space:nowrap;cursor:pointer;transition:all .2s;text-shadow:0 0 6px #00FF41}
+.plantilla-btn{background:rgba(0,0,0,0.85);border:1px solid #00FF41;color:#00FF41;padding:5px 2px;border-radius:6px;font-family:inherit;font-size:clamp(9px,2.7vw,11px);font-weight:700;min-height:44px;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;line-height:1.1;cursor:pointer;transition:background .2s,color .2s;text-shadow:0 0 6px #00FF41;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+.plantilla-btn .ic{font-size:clamp(15px,4.6vw,18px);line-height:1}
+.plantilla-btn .tx{max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .plantilla-btn.activa{background:#00FF41;color:#000;text-shadow:none;box-shadow:0 0 20px rgba(0,255,65,0.7)}
-.fab-toggle{position:fixed;bottom:calc(72px + env(safe-area-inset-bottom));right:16px;width:44px;height:44px;border-radius:50%;background:rgba(0,0,0,0.85);color:#00FF41;border:1px solid #00FF41;font-size:20px;cursor:pointer;z-index:101;display:flex;align-items:center;justify-content:center;transition:transform .2s,opacity .5s;opacity:0;text-shadow:0 0 8px #00FF41}
-.fab-toggle.visible{opacity:1}
+.fab-toggle{position:fixed;bottom:calc(74px + env(safe-area-inset-bottom));right:calc(10px + env(safe-area-inset-right));width:44px;height:44px;border-radius:50%;background:rgba(0,0,0,0.85);color:#00FF41;border:1px solid #00FF41;font-size:20px;cursor:pointer;z-index:101;display:flex;align-items:center;justify-content:center;transition:transform .2s,opacity .5s;opacity:0;text-shadow:0 0 8px #00FF41;-webkit-tap-highlight-color:transparent}.fab-toggle.visible{opacity:1}
 .fab-toggle:active{transform:scale(0.9)}
 .builder{position:fixed;inset:0;z-index:9999;display:flex;flex-direction:column;transition:opacity .6s ease,transform .6s ease;background:transparent}
 .builder.fade-out{opacity:0;transform:scale(1.05);pointer-events:none}
@@ -159,17 +165,29 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;color:#00FF41;f
 .tok-tabla .tok-val{font-family:'Courier New',monospace;word-break:break-all}
 .tok-nota{color:#00FF41;opacity:.6;font-size:11px;margin-top:10px}
 @media (max-width:480px){
-  .badge{font-size:10px;padding:5px 10px}
-  .btn{padding:8px 10px;font-size:11px;min-height:36px}
-  .plantilla-btn{padding:8px 12px;font-size:11px}
-  .fab-toggle{width:40px;height:40px;font-size:18px;bottom:calc(64px + env(safe-area-inset-bottom))}
   .builder-title{font-size:13px}
   .builder-subtitle{font-size:10px}
   .folder-item{width:48px;height:48px;font-size:18px}
   .flying-element{width:48px;height:48px;font-size:22px}
   .hand-cursor{font-size:24px}
+  .link-modal,.seo-modal,.tok-modal{padding:10px}
+  .link-modal-inner,.seo-modal-inner,.tok-inner{padding:16px}
+  .tok-tabla{font-size:11px}
+  .tok-tabla th,.tok-tabla td{padding:6px 4px}
+  .toast{bottom:calc(84px + env(safe-area-inset-bottom));max-width:calc(100vw - 24px);width:max-content}
 }
-  .panel-botones{position:fixed;left:12px;right:12px;bottom:calc(70px + env(safe-area-inset-bottom));z-index:102;background:rgba(0,0,0,.95);border:1px solid #00FF41;border-radius:6px;padding:12px;display:none;flex-direction:column;gap:8px;max-width:420px;max-height:60vh;overflow-y:auto;margin:0 auto}
+@media (max-height:430px) and (orientation:landscape){
+  .topbar{gap:4px;padding-top:calc(4px + env(safe-area-inset-top))}
+  .bottombar{padding-top:10px}
+  .badge{height:30px;line-height:28px}
+  .btn,.plantilla-btn{min-height:34px;flex-direction:row;gap:4px}
+  .tb-row .btn{flex-basis:34px;width:34px}
+  .fab-toggle{bottom:calc(54px + env(safe-area-inset-bottom))}
+}
+.link-modal,.seo-modal,.tok-modal{overflow-y:auto;overscroll-behavior:contain}
+.link-modal-inner{margin:auto}
+.builder-screen{min-height:0}
+.panel-botones{max-height:min(60vh,calc(100dvh - 200px))!important;bottom:calc(74px + env(safe-area-inset-bottom))!important}  .panel-botones{position:fixed;left:12px;right:12px;bottom:calc(70px + env(safe-area-inset-bottom));z-index:102;background:rgba(0,0,0,.95);border:1px solid #00FF41;border-radius:6px;padding:12px;display:none;flex-direction:column;gap:8px;max-width:420px;max-height:60vh;overflow-y:auto;margin:0 auto}
 .panel-botones.show{display:flex}
 .panel-botones b{color:#00FF41;font-size:12px;text-align:center}
 .panel-botones button{background:rgba(0,0,0,.85);border:1px solid #00FF41;color:#00FF41;padding:11px;border-radius:4px;font-size:13px;font-weight:700;cursor:pointer;min-height:44px}
@@ -244,22 +262,23 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;color:#00FF41;f
 <iframe id="previewFrame" sandbox="allow-scripts allow-popups allow-forms allow-modals allow-same-origin"></iframe>
 
 <div class="topbar" id="topbar">
-  <span class="badge" id="previewBadge">👁️ Vista Previa</span>
-  <div class="actions">
-    <button class="btn" onclick="procesarSitemapRobots()" aria-label="Sitemap y robots">🗺️ SEO</button>
-        <button class="btn" id="btnProbarCatalogo">🛍️ Probar catálogo</button>
-    <button class="btn" id="btnTokens" onclick="abrirTokens()" aria-label="Ver tokens">🔑 Tokens</button>
-    <button class="btn" id="btnDescargar">⬇️ Descargar</button>
-    <button class="btn btn-success" id="btnPublicar">🚀 Publicar</button>
+  <div class="tb-row">
+    <span class="badge" id="previewBadge">👁️ Vista Previa</span>
     <button class="btn btn-danger" id="btnCerrar" aria-label="Cerrar">✖</button>
   </div>
+  <div class="actions">
+    <button class="btn" onclick="procesarSitemapRobots()" aria-label="Sitemap y robots"><span class="ic">🗺️</span><span class="tx">SEO</span></button>
+    <button class="btn" id="btnProbarCatalogo" aria-label="Probar catálogo"><span class="ic">🛍️</span><span class="tx">Catálogo</span></button>
+    <button class="btn" id="btnTokens" onclick="abrirTokens()" aria-label="Ver tokens"><span class="ic">🔑</span><span class="tx">Tokens</span></button>
+    <button class="btn" id="btnDescargar" aria-label="Descargar HTML"><span class="ic">⬇️</span><span class="tx">Descargar</span></button>
+    <button class="btn btn-success" id="btnPublicar" aria-label="Publicar"><span class="ic">🚀</span><span class="tx">Publicar</span></button>
+  </div>
 </div>
-
 <div class="bottombar" id="bottombar">
-  <button class="plantilla-btn" data-plantilla="futurista" onclick="cambiarPlantilla('futurista')">⚡ Futurista</button>
-  <button class="plantilla-btn" data-plantilla="minimalista" onclick="cambiarPlantilla('minimalista')">◻️ Minimalista</button>
-  <button class="plantilla-btn" data-plantilla="clasico" onclick="cambiarPlantilla('clasico')">🏛️ Clásico</button>
-  <button class="plantilla-btn" onclick="abrirPanelBotones()">🔘 Botones</button>
+  <button class="plantilla-btn" data-plantilla="futurista" onclick="cambiarPlantilla('futurista')"><span class="ic">⚡</span><span class="tx">Futurista</span></button>
+  <button class="plantilla-btn" data-plantilla="minimalista" onclick="cambiarPlantilla('minimalista')"><span class="ic">◻️</span><span class="tx">Minimalista</span></button>
+  <button class="plantilla-btn" data-plantilla="clasico" onclick="cambiarPlantilla('clasico')"><span class="ic">🏛️</span><span class="tx">Clásico</span></button>
+  <button class="plantilla-btn" onclick="abrirPanelBotones()"><span class="ic">🔘</span><span class="tx">Botones</span></button>
 </div>
 
 <button class="fab-toggle" id="fabToggle" onclick="toggleBarras()" aria-label="Mostrar u ocultar barras">👁️</button>
@@ -405,7 +424,7 @@ async function resolverRepo(n) {
   } catch (e) { console.warn('No se pudo listar repos:', e); }
   return { nombre: base, existe: false };
 }
-function obtenerTokenAdmin() {
+function pubTxt(t){ const s = document.querySelector('#btnPublicar .tx'); if (s) s.textContent = t; }
   let t = '';
   try { t = localStorage.getItem('adminToken') || ''; } catch (e) {}
   if (!t) {
@@ -999,10 +1018,10 @@ document.getElementById('btnProbarCatalogo').onclick = async () => {
     document.getElementById('btnPublicar').onclick = async () => {
   if (!currentPreviewHTML || !negocioActual) return;
   const btClave = document.getElementById('btnPublicar');
-  btClave.disabled = true; btClave.textContent = '> Validando clave...';
-  const claveImportar = await exigirClaveImportar(true);   // si es incorrecta: detiene todo y regresa atrás
-  btClave.disabled = false; btClave.textContent = '🚀 Publicar';
-  if (!claveImportar) return;
+  btClave.disabled = true; pubTxt('Validando');
+      const claveImportar = await exigirClaveImportar(true);   // si es incorrecta: detiene todo y regresa atrás
+  btClave.disabled = false; pubTxt('Publicar');
+      if (!claveImportar) return;
    const verifGoogle = pedirVerificadorGoogle();   // se pide ANTES de publicar; cancelar detiene todo
   if (verifGoogle === null) return;
   googleVerifActual = verifGoogle;
@@ -1011,25 +1030,23 @@ document.getElementById('btnProbarCatalogo').onclick = async () => {
   if (!token) { mostrarToast('Falta la clave de administrador: no se publicó'); return; }
 
   const bt = document.getElementById('btnPublicar');
-  bt.disabled = true; bt.textContent = '> Buscando repo...';
-
+  bt.disabled = true; pubTxt('Buscando');
   const { nombre: carp, existe } = await resolverRepo(negocioActual);
   if (existe && !confirm('Ya existe el repositorio "' + carp + '".\n¿Actualizarlo con esta landing?')) {
-    bt.disabled = false; bt.textContent = '🚀 Publicar'; return;
+    bt.disabled = false; pubTxt('Publicar'); return;
   }
   slugRepo = carp;
   currentPreviewSlug = carp;
   currentPreviewNombre = carp + '.html';
   currentPreviewHTML = construirLandingHTML(negocioActual, plantillaActual);
-bt.textContent = '> Validando catálogo...';
-const catalogoOK = await importarAlCatalogo(negocioActual, claveImportar);
+pubTxt('Catálogo');
+      const catalogoOK = await importarAlCatalogo(negocioActual, claveImportar);
 if (!catalogoOK) {
   bt.disabled = false;
-  bt.textContent = '🚀 Publicar';
+  pubTxt('Publicar');
   return;
 }
-bt.textContent = '> Publicando...';
-
+pubTxt('Publicando');
       const dt = {
     token: token,
     nombreArchivo: currentPreviewNombre,
@@ -1041,8 +1058,8 @@ bt.textContent = '> Publicando...';
   function om(e) {
     if (e.data && typeof e.data === 'object' && 'success' in e.data) {
       window.removeEventListener('message', om);
-      bt.disabled = false; bt.textContent = '🚀 Publicar';
-            if (e.data.success && !(typeof e.data.creado === 'boolean' && String(e.data.url || '').indexOf('/' + carp + '/') !== -1)) {
+      bt.disabled = false; pubTxt('Publicar');
+      if (e.data.success && !(typeof e.data.creado === 'boolean' && String(e.data.url || '').indexOf('/' + carp + '/') !== -1)) {
         alert('⚠️ El servidor NO publicó en un repo nuevo.\nURL devuelta: ' + (e.data.url || '(ninguna)') + '\nEn Apps Script sigue corriendo una función publicarEnGitHub vieja.');
         return;
       }
@@ -1065,8 +1082,7 @@ bt.textContent = '> Publicando...';
   const fm = document.getElementById('hiddenSaveForm');
   fm.action = GITHUB_PUBLISH_URL;
   fm.submit();
-  setTimeout(() => { window.removeEventListener('message', om); bt.disabled = false; bt.textContent = '🚀 Publicar'; }, 30000);
-};
+  setTimeout(() => { window.removeEventListener('message', om); bt.disabled = false; pubTxt('Publicar'); }, 30000);};
 function mostrarModalLink(u, n) {
   document.getElementById('linkBox').textContent = u;
   document.getElementById('linkModalSub').textContent = n ? 'Landing de "' + n + '"' : 'Tu landing está en línea';
