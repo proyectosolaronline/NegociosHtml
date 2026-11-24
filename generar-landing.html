@@ -1235,7 +1235,9 @@ body{font-family:${fn};color:#E0E0E0;background:#0A0E17;line-height:1.6;padding:
 .splash-slogan{margin-top:10px;color:rgba(255,255,255,0.9);font-size:14.5px;font-weight:500;font-style:italic;text-align:center}
 .splash-loader{margin-top:36px;width:44px;height:44px;border:3px solid rgba(255,255,255,0.25);border-top-color:#fff;border-radius:50%;animation:loaderSpin .9s linear infinite}
 @keyframes loaderSpin{to{transform:rotate(360deg)}}
-.banner{width:100%;min-height:180px;background:linear-gradient(135deg,${cp} 0%,${cs} 100%);${n.banner ? "background-image:url('" + n.banner.replace(/'/g, "%27") + "');background-size:cover;background-position:center;background-repeat:no-repeat;" : ''}}
+
+.banner{width:100%;aspect-ratio:40/9;max-height:300px;background:linear-gradient(135deg,${cp} 0%,${cs} 100%);${n.banner ? "background-image:url('" + n.banner.replace(/'/g, "%27") + "');background-size:cover;background-position:center;background-repeat:no-repeat;" : ''}}
+
 .desc{padding:18px 16px 0;font-size:14px;color:#AAA;text-align:center;line-height:1.7}
 .section{padding:24px 16px 0}
 .section h2{font-size:18px;margin-bottom:14px;color:#E0E0E0;font-weight:700}
@@ -1853,6 +1855,9 @@ var CONSTRUCCION = {
     if(m){ var mt = String(n.mision || '').trim(); txt('lMisionTxt', mt); m.style.display = mt ? '' : 'none'; }
     var b = document.getElementById('lBanner');
     if(b && n.banner){
+            var imgB = new Image();
+      imgB.onload = function(){ if(imgB.naturalWidth && imgB.naturalHeight){ b.style.aspectRatio = imgB.naturalWidth + ' / ' + imgB.naturalHeight; } };
+      imgB.src = String(n.banner);
       b.style.backgroundImage = "url('" + String(n.banner).split("'").join('%27') + "')";
       b.style.backgroundSize = 'cover'; b.style.backgroundPosition = 'center'; b.style.backgroundRepeat = 'no-repeat';
     }
