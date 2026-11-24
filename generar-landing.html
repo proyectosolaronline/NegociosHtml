@@ -383,14 +383,18 @@ const PROMO_PIE = {
   asunto: 'Quiero mi página web gratis',
   boton: '📧 Escríbenos a prototipowebapp@gmail.com'
 };
-  const DIRECTORIO_URL = 'https://proyectosolaronline.github.io/Directorio-negocios/';
+     const DIRECTORIOS = [
+    { nombre: 'Directorio general de negocios', url: 'https://proyectosolaronline.github.io/Directorio-negocios/' },
+    { nombre: 'Servicios y artesanos maya en Yucatán', url: 'https://proyectosolaronline.github.io/directorio-servicios-y-artesanos-maya-en-yucatan/' }
+  ];
+  let DIRECTORIO_URL = DIRECTORIOS[0].url;   // se cambia en cada publicación con pedirDirectorio()
   const CATALOGO_URL = 'https://script.google.com/macros/s/AKfycbzrFBrPRMg_aAMe-VijThR09R3kOiyh_Mt6o1oovscXz64fQebKbGfn0X9_NyPOm7_vJA/exec';
 
 /* ===== Repos de GitHub (misma lógica que index.html): un repo por negocio ===== */
 const claveRepo = s => String(s || '').toLowerCase().replace(/\.html$/, '').replace(/^-+|-+$/g, '');
 let slugRepo = '';
 // Repos que NUNCA reciben una landing: generador, directorio y raíz de usuario
-const REPOS_RESERVADOS = ['negocioshtml', 'directorio-negocios', 'index', 'proyectosolaronline.github.io', 'proyectosolaronline', 'landing'];
+const REPOS_RESERVADOS = ['negocioshtml', 'directorio-negocios','directorio-servicios-y-artesanos-maya-en-yucatan', 'index', 'proyectosolaronline.github.io', 'proyectosolaronline', 'landing'];
 const esRepoReservado = nombre => REPOS_RESERVADOS.indexOf(claveRepo(nombre)) !== -1;
 
 // Misma carga de repos que index.html (solo repos con Pages, caché de 10 min compartida: 'repos_cache')
@@ -1132,6 +1136,17 @@ function pedirVerificadorGoogle() {
     const v = extraerVerifGoogle(t);
     if (v) { try { localStorage.setItem('googleVerif', v); } catch (e) {} return v; }
     alert('El código no es válido.\nPega solo el valor (letras, números, - y _; entre 20 y 100 caracteres) o la etiqueta completa.');
+  }
+}
+  // Pregunta qué directorio se enlazará en la landing. Devuelve la URL, o null si se cancela (no se publica)
+function pedirDirectorio() {
+  const lista = DIRECTORIOS.map((d, i) => (i + 1) + ') ' + d.nombre).join('\n');
+  for (;;) {
+    const t = prompt('¿Qué directorio se visualizará en el HTML de esta landing?\n\n' + lista + '\n\nEscribe el número. Cancelar = no publicar.', '1');
+    if (t === null) { mostrarToast('Publicación cancelada: falta elegir el directorio'); return null; }
+    const d = DIRECTORIOS[parseInt(t, 10) - 1];
+    if (d) return d.url;
+    alert('Elige un número de la lista.');
   }
 }
   function construirLandingHTML(n, plantillaOverride) {
