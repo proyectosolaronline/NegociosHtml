@@ -1030,6 +1030,9 @@ document.getElementById('btnProbarCatalogo').onclick = async () => {
    const verifGoogle = pedirVerificadorGoogle();   // se pide ANTES de publicar; cancelar detiene todo
   if (verifGoogle === null) return;
   googleVerifActual = verifGoogle;
+      const dirElegido = pedirDirectorio();   // se pregunta ANTES de publicar; cancelar detiene todo
+  if (dirElegido === null) return;
+  DIRECTORIO_URL = dirElegido;
       if (!asegurarCorreoDueno(negocioActual)) { mostrarToast('Falta el correo del dueño: no se publicó'); return; }
   const token = obtenerTokenAdmin();
   if (!token) { mostrarToast('Falta la clave de administrador: no se publicó'); return; }
